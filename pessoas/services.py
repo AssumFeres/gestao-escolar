@@ -29,3 +29,28 @@ class AssociarHabilitacaoService:
                 funcao_gestao=funcao_gestao,
                 habilitacao=habilitacao
             )
+
+
+class CadastrarPessoaComVinculoService:
+    """
+    SRP: orquestra a criação de Pessoa + seu primeiro Vinculo numa transação única.
+    Não conhece Django View nem API externa — só recebe dados já validados.
+    """
+
+    def executar(self, dados_pessoa: dict, tipo_vinculo: str, dados_vinculo: dict):
+        from .models import Pessoa, VinculoDiscente, VinculoDocente, VinculoGestao
+
+        mapa_vinculo = {
+            'DISCENTE': VinculoDiscente,
+            'DOCENTE': VinculoDocente,
+            'GESTAO': VinculoGestao,
+        }
+        ModelVinculo = mapa_vinculo.get(tipo_vinculo)
+        if ModelVinculo is None:
+            raise ValidationError(f"Tipo de vínculo inválido: {tipo_vinculo}")
+
+        with transaction.atomic():
+            pessoa = Pessoa.objects.create(**dados_pessoa)
+            vinculo = ModelVinculo.objects.create(pessoa=pessoa, **dados_vinculo)
+
+        return pessoa, vinculo
