@@ -7,7 +7,7 @@ ou que precisam de validação além do que o Model sozinho garante.
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-
+from infraestrutura.cep.adapters import ViaCepClient
 from .models import FuncaoGestao, Habilitacao, FuncaoGestaoHabilitacao, TipoFuncaoGestao
 
 
@@ -54,3 +54,14 @@ class CadastrarPessoaComVinculoService:
             vinculo = ModelVinculo.objects.create(pessoa=pessoa, **dados_vinculo)
 
         return pessoa, vinculo
+
+
+class BuscarEnderecoPorCepService:
+    """DIP: depende da abstração (porta), não da implementação concreta (ViaCEP)."""
+
+    def __init__(self, cliente_cep=None):
+        self.cliente_cep = cliente_cep or ViaCepClient()
+
+    def executar(self, cep: str):
+        return self.cliente_cep.buscar_endereco(cep)
+    
