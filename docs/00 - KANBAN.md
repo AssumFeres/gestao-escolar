@@ -7,23 +7,21 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🧊 Backlog
-
-_Ideias e sugestões — ainda não decidido quando/se entram no PI atual_
+*Ideias e sugestões — ainda não decidido quando/se entram no PI atual*
 
 - [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
 - [ ] Decidir estratégia de autenticação para `Pessoa` (aluno/docente) fazer login no sistema — usar `User` padrão do Django vinculado a `Pessoa`, ou solução customizada
 - [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
 - [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas existirem
+- [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver bug registrado em `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
+- [ ] Adicionar campo `sigla` em `Disciplina` (ex: "AVI", "CEL", "GMP") — exige nova migration
 
 ---
 
 ## 📋 A Fazer
+*Já decidido que entra neste PI, ainda não iniciado*
 
-_Já decidido que entra neste PI, ainda não iniciado_
-
-- [ ] Camada de Views/API (DRF) expondo os 3 Services existentes
-- [ ] Serializers de entrada e saída (Input/Output separados, por ISP)
-- [ ] `urls.py` (Template Views) e `api_urls.py` (API Views) separados por prefixo
+- [ ] Endpoint de API para `CadastrarPessoaComVinculoService`
 - [ ] Template Views (HTML) para cadastro visual de Pessoa/Vínculo
 - [ ] JavaScript pontual: busca automática de endereço por CEP, associação de habilitação sem reload
 - [ ] Configurar PostgreSQL (atualmente em SQLite) via variável de ambiente
@@ -38,16 +36,14 @@ _Já decidido que entra neste PI, ainda não iniciado_
 ---
 
 ## 🔨 Em Andamento
+*Sendo trabalhado agora*
 
-_Sendo trabalhado agora_
-
-_(vazio no momento — mova um item de "A Fazer" para cá quando começar)_
+- [ ] Camada de Views/API (DRF) — 2 de 3 Services já expostos (`BuscarEnderecoPorCepService`, `AssociarHabilitacaoService`); falta `CadastrarPessoaComVinculoService`
 
 ---
 
 ## ✅ Concluído
-
-_Feito, testado e versionado_
+*Feito, testado e versionado*
 
 - [x] Repositório Git criado e configurado (branches `main`/`dev`) — 19/08/2026
 - [x] `.gitignore` configurado — 19/08/2026 (`f27cb9f`)
@@ -61,12 +57,15 @@ _Feito, testado e versionado_
 - [x] `CadastrarPessoaComVinculoService` + 4 testes — 20/08/2026 (`b347ae3`)
 - [x] `BuscarEnderecoPorCepService` (Porta/Adaptador ViaCEP) + 1 teste — 20/08/2026 (`662f87f`)
 - [x] Documentação de andamento (diário por etapa) — 20/08/2026
+- [x] Endpoint de API `GET /api/pessoas/cep/<cep>/` (`BuscarCepView`) — 21/08/2026 (`b244774`)
+- [x] Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/` (`AssociarHabilitacaoView`) — 21/08/2026 (`bb01f2e`)
+- [x] `__str__` adicionado em `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `Habilitacao` — 21/08/2026 (`bb01f2e`)
+- [x] Validação de ponta a ponta via API: bloqueio (Diretor) e sucesso (Coordenador) — 21/08/2026
 
 ---
 
 ## 🔭 Fora de Escopo (PI futuro)
-
-_Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5_
+*Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5*
 
 - [ ] Módulo Gestão de Turmas (`Turma`, `Modulo`, relação `Disciplina`↔`Modulo`)
 - [ ] Módulo Atribuição de Instrutor
@@ -77,10 +76,11 @@ _Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_
 
 ## Status Geral
 
-| Métrica                | Valor atual        |
-| ---------------------- | ------------------ |
-| Services implementados | 3                  |
-| Testes automatizados   | 7 (todos passando) |
-| Models implementados   | 9                  |
-| Última branch ativa    | `dev`              |
-| Último commit          | `c395ea0`          |
+| Métrica | Valor atual |
+|---|---|
+| Services implementados | 3 |
+| Endpoints de API implementados | 2 de 3 |
+| Testes automatizados | 7 (todos passando) |
+| Models implementados | 9 |
+| Última branch ativa | `dev` |
+| Último commit | `bb01f2e` |
