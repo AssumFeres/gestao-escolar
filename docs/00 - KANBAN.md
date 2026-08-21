@@ -7,16 +7,19 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🧊 Backlog
-*Ideias e sugestões — ainda não decidido quando/se entram no PI atual*
+
+_Ideias e sugestões — ainda não decidido quando/se entram no PI atual_
 
 - [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
 - [ ] Decidir estratégia de autenticação para `Pessoa` (aluno/docente) fazer login no sistema — usar `User` padrão do Django vinculado a `Pessoa`, ou solução customizada
 - [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
+- [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas existirem
 
 ---
 
 ## 📋 A Fazer
-*Já decidido que entra neste PI, ainda não iniciado*
+
+_Já decidido que entra neste PI, ainda não iniciado_
 
 - [ ] Camada de Views/API (DRF) expondo os 3 Services existentes
 - [ ] Serializers de entrada e saída (Input/Output separados, por ISP)
@@ -35,14 +38,16 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🔨 Em Andamento
-*Sendo trabalhado agora*
 
-*(vazio no momento — mova um item de "A Fazer" para cá quando começar)*
+_Sendo trabalhado agora_
+
+_(vazio no momento — mova um item de "A Fazer" para cá quando começar)_
 
 ---
 
 ## ✅ Concluído
-*Feito, testado e versionado*
+
+_Feito, testado e versionado_
 
 - [x] Repositório Git criado e configurado (branches `main`/`dev`) — 19/08/2026
 - [x] `.gitignore` configurado — 19/08/2026 (`f27cb9f`)
@@ -60,7 +65,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🔭 Fora de Escopo (PI futuro)
-*Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5*
+
+_Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5_
 
 - [ ] Módulo Gestão de Turmas (`Turma`, `Modulo`, relação `Disciplina`↔`Modulo`)
 - [ ] Módulo Atribuição de Instrutor
@@ -71,10 +77,10 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## Status Geral
 
-| Métrica | Valor atual |
-|---|---|
-| Services implementados | 3 |
-| Testes automatizados | 7 (todos passando) |
-| Models implementados | 9 |
-| Última branch ativa | `dev` |
-| Último commit | `c395ea0` |
+| Métrica                | Valor atual        |
+| ---------------------- | ------------------ |
+| Services implementados | 3                  |
+| Testes automatizados   | 7 (todos passando) |
+| Models implementados   | 9                  |
+| Última branch ativa    | `dev`              |
+| Último commit          | `c395ea0`          |

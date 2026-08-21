@@ -20,4 +20,18 @@ class EnderecoOutputSerializer(serializers.Serializer):
     bairro = serializers.CharField()
     cidade = serializers.CharField()
     uf = serializers.CharField()
-    
+
+
+class FuncaoGestaoHabilitacaoInputSerializer(serializers.Serializer):
+    """
+    Serializer de ENTRADA — só valida formato/tipo dos dados.
+    NÃO valida regra de negócio (isso é papel do Service).
+    """
+    funcao_gestao_id = serializers.IntegerField()
+    habilitacao_id = serializers.IntegerField()
+
+
+class FuncaoGestaoHabilitacaoOutputSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    funcao_gestao_id = serializers.IntegerField()
+    habilitacao_id = serializers.IntegerField()

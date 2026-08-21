@@ -87,17 +87,25 @@ class VinculoDiscente(Vinculo):
     numero_matricula = models.CharField(max_length=20, unique=True)
     situacao = models.CharField(max_length=30)
 
+    def __str__(self):
+        return f"{self.pessoa.nome_completo} - Discente ({self.numero_matricula})"
+
 
 class VinculoDocente(Vinculo):
     situacao = models.CharField(max_length=30)
 
+    def __str__(self):
+        return f"{self.pessoa.nome_completo} - Docente"
+
     def possui_treinamento_valido(self) -> bool:
-        # Stub por enquanto — módulo de Treinamentos ainda não existe (PI futuro)
         return True
 
 
 class VinculoGestao(Vinculo):
     situacao = models.CharField(max_length=30)
+
+    def __str__(self):
+        return f"{self.pessoa.nome_completo} - Gestão"
 
 
 class TipoFuncaoGestao(models.TextChoices):
@@ -114,16 +122,25 @@ class FuncaoGestao(models.Model):
     data_fim = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
 
+    def __str__(self):
+        return f"{self.vinculo_gestao.pessoa.nome_completo} - {self.get_tipo_funcao_display()}"
+
 
 class Habilitacao(models.Model):
     codigo = models.CharField(max_length=20, unique=True)
     nome = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
 
 
 class FuncaoGestaoHabilitacao(models.Model):
     """Só deve ter linhas quando FuncaoGestao.tipo_funcao == COORDENADOR (regra aplicada no Service)."""
     funcao_gestao = models.ForeignKey(FuncaoGestao, on_delete=models.CASCADE, related_name='habilitacoes')
     habilitacao = models.ForeignKey(Habilitacao, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f"{self.funcao_gestao} - {self.habilitacao}"
 
 
 class Disciplina(models.Model):
