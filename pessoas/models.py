@@ -22,6 +22,8 @@ from dataclasses import dataclass
 
 from django.db import models
 
+from django.core.validators import RegexValidator
+
 
 @dataclass(frozen=True)
 class Endereco:
@@ -145,11 +147,22 @@ class FuncaoGestaoHabilitacao(models.Model):
 
 class Disciplina(models.Model):
     """Versão mínima — campo 'modulo' será adicionado quando o módulo de Turmas for construído."""
+    sigla = models.CharField(
+        max_length=3,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^[A-Z]{3}$',
+                message="Sigla deve conter exatamente 3 letras maiúsculas (ex: CBA, PSO, TCX)."
+            )
+        ]
+    )
     nome = models.CharField(max_length=100, unique=True)
     carga_horaria = models.IntegerField()
 
     def __str__(self):
-        return self.nome
+        return f"{self.sigla} - {self.nome}"
+    
 
 
 class Capacidade(models.Model):
