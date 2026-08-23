@@ -15,6 +15,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
 - [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
 - [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`)
+- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa já esboçada no capítulo "📐 Especificações Detalhadas" no final deste documento. Resumo: 1 Model único `FormacaoDocente` (tipo via enum), 2 campos novos em `VinculoDocente` para os requisitos de contratação, 1 campo novo (FK) em `Capacidade` para o documento comprobatório.
+- [ ] Campos adicionais de identificação de Pessoa vistos no FE 008 (RG, título de eleitor, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) — avaliar quais são realmente necessários para o escopo atual antes de adicionar
 
 ---
 
@@ -87,4 +89,113 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 | Testes automatizados | 7 (todos passando) |
 | Models implementados | 9 |
 | Última branch ativa | `dev` |
-| Último commit | `78cf27f` |
+| Último commit | `cf7b822` |
+
+---
+---
+
+# 📐 Especificações Detalhadas de Itens do Backlog
+
+*Este capítulo guarda o raciocínio completo e esboços de código para itens do Backlog que já foram discutidos em profundidade, mas ainda não entraram em desenvolvimento. Quando um item daqui for iniciado, mova a entrada correspondente do Backlog para "Em Andamento" e use esta seção como ponto de partida — não como código final, como referência de decisão já tomada.*
+
+## Cadastro de Formação do Docente (baseado no FE 008)
+
+**Origem:** Formulário FE 008 — Formulário de Cadastro de Instrutor e Atribuição de Disciplina (Rev. 01, 24/06/2026). Discutido em 23/08/2026.
+
+### Contexto do formulário
+
+O FE 008 tem, entre outras, estas seções relevantes para `pessoas`:
+- **Seção 3 — Graduação:** tabela com colunas Curso, Entidade, Cidade, UF, Ano de Conclusão.
+- **Seção 4 — Formação Profissional:** mesmas colunas da seção 3.
+- **Seção 5 — Aperfeiçoamento Profissional:** mesmas colunas da seção 3.
+- **Seção 6 — Requisitos de Contratação:** dois critérios fixos, baseados na norma RBAC 141:
+  - 2.3.1 — experiência docente comprovada (6 meses geral + 6 meses na área específica) — evidência em **texto livre** (análise de CV/declarações).
+  - 2.3.2 — formação específica na área de atuação — evidência é uma **referência direta** a um dos cursos cadastrados nas seções 3/4/5 (identificados por numeração tipo "3.2", "4.1").
+- **Seção 7 — Disciplina Habilitado(a) a Ministrar:** já corresponde ao Model `Capacidade` existente; falta o campo de documento comprobatório, que também é uma referência a um curso cadastrado (mesmo padrão do item 2.3.2).
+
+### Decisão 1 — Tabela única para Graduação/Formação/Aperfeiçoamento
+
+As três seções têm exatamente a mesma estrutura de colunas — só a categoria muda. Criar 3 Models seria duplicação (viola DRY) sem ganho de expressividade, diferente do caso `Vinculo` (onde os subtipos têm campos genuinamente diferentes). Aqui, o padrão correto é **uma tabela + campo enum**, seguindo o mesmo raciocínio já usado em `FuncaoGestao.tipo_funcao`.
+
+```python
+class TipoFormacaoDocente(models.TextChoices):
+    GRADUACAO = 'GRADUACAO', 'Graduação'
+    FORMACAO_PROFISSIONAL = 'FORMACAO_PROFISSIONAL', 'Formação Profissional'
+    APERFEICOAMENTO_PROFISSIONAL = 'APERFEICOAMENTO_PROFISSIONAL', 'Aperfeiçoamento Profissional'
+
+
+class FormacaoDocente(models.Model):
+    vinculo_docente = models.ForeignKey(VinculoDocente, on_delete=models.CASCADE, related_name='formacoes')
+    tipo_formacao = models.CharField(max_length=30, choices=TipoFormacaoDocente.choices)
+    curso = models.CharField(max_length=200)
+    entidade = models.CharField(max_length=200)
+    cidade = models.CharField(max_length=100)
+    uf = models.CharField(max_length=2)
+    ano_conclusao = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.curso} ({self.get_tipo_formacao_display()})"
+```
+
+**Nota sobre a numeração "3.1", "4.2", "5.3" do formulário físico:** é a posição do registro dentro do seu próprio tipo, usada como referência cruzada com a pasta física/digital do docente. Não precisa virar campo salvo no banco — pode ser calculada dinamicamente (property que conta a posição entre os registros do mesmo tipo e mesma pessoa) quando for implementado, evitando duplicar informação derivável.
+
+### Decisão 2 — Requisitos de Contratação: campos diretos em `VinculoDocente`, não catálogo
+
+Primeira proposta considerada foi um catálogo (`RequisitoContratacao` + tabela associativa, no padrão de `Habilitacao`) — descartada por ser over-engineering (princípio **YAGNI**) para exatamente 2 critérios fixos, sem sinal de que vão crescer em variedade tão cedo. Os dois requisitos têm naturezas de evidência diferentes entre si, então viram dois campos distintos:
+
+```python
+class VinculoDocente(Vinculo):
+    situacao = models.CharField(max_length=30)
+
+    # Requisito 2.3.1 — texto livre, análise de CV/declarações de serviço
+    experiencia_docente_comprovada = models.TextField(
+        blank=True,
+        help_text="Análise de declarações de serviço, CV, etc. — comprovação de experiência docente (RBAC 141)."
+    )
+
+    # Requisito 2.3.2 — referência única a um curso já cadastrado
+    formacao_especifica_comprobatoria = models.ForeignKey(
+        'FormacaoDocente', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='comprova_requisito_para',
+        help_text="Curso que comprova formação específica na área de atuação (RBAC 141)."
+    )
+
+    def __str__(self):
+        return f"{self.pessoa.nome_completo} - Docente"
+
+    def possui_treinamento_valido(self) -> bool:
+        return True
+```
+
+Se a EMCA um dia ampliar os critérios de contratação, a refatoração para um catálogo genérico deve ser feita **naquele momento**, com informação real sobre o novo formato — não especulativamente hoje.
+
+### Decisão 3 — `Capacidade` ganha referência ao documento comprobatório
+
+A Seção 7 do formulário já é o que `Capacidade` modela; só falta o campo de evidência, seguindo o mesmo padrão de FK única (não M2M) da Decisão 2:
+
+```python
+class Capacidade(models.Model):
+    vinculo_docente = models.ForeignKey(VinculoDocente, on_delete=models.CASCADE, related_name='capacidades')
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='capacidades')
+    formacao_comprobatoria = models.ForeignKey(
+        'FormacaoDocente', on_delete=models.PROTECT, null=True, blank=True,
+        help_text="Curso que comprova a capacidade de ministrar esta disciplina."
+    )
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+    ativo = models.BooleanField(default=True)
+    # ... constraints existentes inalteradas
+```
+
+### Resumo do impacto quando for implementado
+
+| Model | Mudança |
+|---|---|
+| `FormacaoDocente` | **Novo** — Graduação/Formação Profissional/Aperfeiçoamento numa tabela só |
+| `VinculoDocente` | +2 campos (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria`) |
+| `Capacidade` | +1 campo (`formacao_comprobatoria`) |
+| Migrations necessárias | 1 nova migration (novo Model) + 1 alteração em `VinculoDocente` + 1 alteração em `Capacidade` — podem ser feitas numa única migration se aplicadas juntas |
+
+### Campos de identificação vistos no FE 008, ainda não avaliados
+
+O formulário também tem uma seção de identificação/documentos pessoais (RG, título de eleitor, passaporte, CPF, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) mais completa do que o `Pessoa` atual. Não foi discutido em profundidade — fica registrado que existe, para avaliação futura de quais desses campos são realmente necessários no escopo do sistema (nem todo campo de um formulário físico institucional precisa virar campo de banco).
