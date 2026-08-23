@@ -12,18 +12,17 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
 - [ ] Decidir estratégia de autenticação para `Pessoa` (aluno/docente) fazer login no sistema — usar `User` padrão do Django vinculado a `Pessoa`, ou solução customizada
 - [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
-- [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas existirem
-- [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver bug registrado em `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
-- [ ] Adicionar campo `sigla` em `Disciplina` (ex: "AVI", "CEL", "GMP") — exige nova migration
+- [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
+- [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
+- [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`)
 
 ---
 
 ## 📋 A Fazer
 *Já decidido que entra neste PI, ainda não iniciado*
 
-- [ ] Endpoint de API para `CadastrarPessoaComVinculoService`
-- [ ] Template Views (HTML) para cadastro visual de Pessoa/Vínculo
-- [ ] JavaScript pontual: busca automática de endereço por CEP, associação de habilitação sem reload
+- [ ] Formulário de cadastro de Pessoa via Template View (HTML com POST, não só leitura)
+- [ ] JavaScript pontual: busca automática de endereço por CEP no formulário, associação de habilitação sem reload
 - [ ] Configurar PostgreSQL (atualmente em SQLite) via variável de ambiente
 - [ ] Ajustes de `settings.py` para produção (`DEBUG=False`, `ALLOWED_HOSTS`, `SECRET_KEY` via `.env`)
 - [ ] Configurar arquivos estáticos para produção (`whitenoise` ou equivalente)
@@ -38,7 +37,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] Camada de Views/API (DRF) — 2 de 3 Services já expostos (`BuscarEnderecoPorCepService`, `AssociarHabilitacaoService`); falta `CadastrarPessoaComVinculoService`
+*(vazio no momento — mova um item de "A Fazer" para cá quando começar)*
 
 ---
 
@@ -51,16 +50,20 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] Estrutura inicial do projeto Django — 20/08/2026 (`513ca35`)
 - [x] Models completos: Pessoa, Vinculo + 3 subtipos, FuncaoGestao, Habilitacao, Capacidade, Disciplina — 20/08/2026 (`524e6e0`)
 - [x] Django Admin registrado para todas as 9 entidades — 20/08/2026 (`524e6e0`)
-- [x] Ambiente validado em múltiplas máquinas (casa, quartel) — 20/08/2026
+- [x] Ambiente validado em múltiplas máquinas (casa, quartel, escola) — 20-23/08/2026
 - [x] README de setup para o grupo — 20/08/2026
 - [x] `AssociarHabilitacaoService` + 2 testes — 20/08/2026 (`89ed300`)
 - [x] `CadastrarPessoaComVinculoService` + 4 testes — 20/08/2026 (`b347ae3`)
 - [x] `BuscarEnderecoPorCepService` (Porta/Adaptador ViaCEP) + 1 teste — 20/08/2026 (`662f87f`)
-- [x] Documentação de andamento (diário por etapa) — 20/08/2026
 - [x] Endpoint de API `GET /api/pessoas/cep/<cep>/` (`BuscarCepView`) — 21/08/2026 (`b244774`)
 - [x] Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/` (`AssociarHabilitacaoView`) — 21/08/2026 (`bb01f2e`)
-- [x] `__str__` adicionado em `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `Habilitacao` — 21/08/2026 (`bb01f2e`)
-- [x] Validação de ponta a ponta via API: bloqueio (Diretor) e sucesso (Coordenador) — 21/08/2026
+- [x] Endpoint de API `POST /api/pessoas/pessoas/` (`CadastrarPessoaView`) — 23/08/2026 (`97e2915`)
+- [x] Campo `sigla` em `Disciplina` (3 letras maiúsculas, validado por regex) — 23/08/2026 (`fbfc3b1`)
+- [x] Layout base compartilhado (`templates/base.html` + `static/global/css/base.css`) — 23/08/2026 (`f337e0d`)
+- [x] Template View — lista de Pessoas (`ListaPessoasView`) — 23/08/2026 (`f337e0d`)
+- [x] Template View — detalhe de Pessoa com histórico completo de vínculos (`DetalhePessoaView`) — 23/08/2026 (`78cf27f`)
+- [x] Property `tipo_legivel` em `Vinculo` (identifica subtipo Discente/Docente/Gestão de forma legível no template) — 23/08/2026 (`78cf27f`)
+- [x] **Bug de tooling corrigido:** auto-format do VSCode quebrando tags Django em templates HTML — `.vscode/settings.json` versionado — 23/08/2026 (`78cf27f`)
 
 ---
 
@@ -78,9 +81,10 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 | Métrica | Valor atual |
 |---|---|
-| Services implementados | 3 |
-| Endpoints de API implementados | 2 de 3 |
+| Services implementados | 3 (100%) |
+| Endpoints de API implementados | 3 (100% dos Services existentes) |
+| Template Views implementadas | 2 (lista + detalhe de Pessoa) |
 | Testes automatizados | 7 (todos passando) |
 | Models implementados | 9 |
 | Última branch ativa | `dev` |
-| Último commit | `bb01f2e` |
+| Último commit | `78cf27f` |
