@@ -6,7 +6,7 @@ Views (API): traduzem HTTP <-> Service. Não contêm regra de negócio.
 
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -131,3 +131,12 @@ class ListaPessoasView(ListView):
     model = Pessoa
     template_name = 'pessoas/lista.html'
     context_object_name = 'pessoas'
+
+
+class DetalhePessoaView(DetailView):
+    """
+    Template View: mostra os dados completos de uma Pessoa e seus vinculos.
+    """
+    model = Pessoa
+    template_name = 'pessoas/detalhe.html'
+    context_object_name = 'pessoa'

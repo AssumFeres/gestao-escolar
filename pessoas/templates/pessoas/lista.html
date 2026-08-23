@@ -1,29 +1,32 @@
-@' {% extends 'base.html' %} {% block title %}Pessoas - Sistema de Gestao
-Escolar{% endblock %} {% block content %}
+﻿{% extends 'base.html' %}
+
+{% block title %}Pessoas - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
 <h2>Pessoas cadastradas</h2>
 
 {% if pessoas %}
 <table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>CPF</th>
-      <th>E-mail</th>
-      <th>Cidade/UF</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for pessoa in pessoas %}
-    <tr>
-      <td>{{ pessoa.nome_completo }}</td>
-      <td>{{ pessoa.cpf }}</td>
-      <td>{{ pessoa.email }}</td>
-      <td>{{ pessoa.endereco_cidade }}/{{ pessoa.endereco_uf }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>E-mail</th>
+            <th>Cidade/UF</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pessoa in pessoas %}
+        <tr>
+            <td><a href="/pessoas/{{ pessoa.id }}/">{{ pessoa.nome_completo }}</a></td>
+            <td>{{ pessoa.cpf }}</td>
+            <td>{{ pessoa.email }}</td>
+            <td>{{ pessoa.endereco_cidade }}/{{ pessoa.endereco_uf }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
 <p>Nenhuma pessoa cadastrada ainda.</p>
-{% endif %} {% endblock %} '@ | Set-Content -Path
-pessoas\templates\pessoas\lista.html -Encoding utf8
+{% endif %}
+{% endblock %}

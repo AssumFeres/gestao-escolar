@@ -1,0 +1,54 @@
+{% extends 'base.html' %} {% block title %}{{ pessoa.nome_completo }} - Sistema
+de Gestao Escolar{% endblock %} {% block content %}
+<p><a href="/pessoas/">&larr; Voltar para lista</a></p>
+
+<h2>{{ pessoa.nome_completo }}</h2>
+
+<table>
+  <tr>
+    <th>CPF</th>
+    <td>{{ pessoa.cpf }}</td>
+  </tr>
+  <tr>
+    <th>Data de nascimento</th>
+    <td>{{ pessoa.data_nascimento }}</td>
+  </tr>
+  <tr>
+    <th>E-mail</th>
+    <td>{{ pessoa.email }}</td>
+  </tr>
+  <tr>
+    <th>Telefone</th>
+    <td>{{ pessoa.telefone }}</td>
+  </tr>
+  <tr>
+    <th>Endereco</th>
+    <td>{{ pessoa.endereco }}</td>
+  </tr>
+</table>
+
+<h3>Vinculos</h3>
+{% if pessoa.vinculos.all %}
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Data inicio</th>
+      <th>Data fim</th>
+      <th>Ativo</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for vinculo in pessoa.vinculos.all %}
+    <tr>
+      <td>{{ vinculo.tipo_legivel }}</td>
+      <td>{{ vinculo.data_inicio }}</td>
+      <td>{{ vinculo.data_fim|default:"-----" }}</td>
+      <td>{{ vinculo.ativo|yesno:"Sim,Nao" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Nenhum vinculo cadastrado.</p>
+{% endif %} {% endblock %}

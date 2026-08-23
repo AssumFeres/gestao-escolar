@@ -84,6 +84,16 @@ class Vinculo(models.Model):
     data_fim = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
 
+    @property
+    def tipo_legivel(self):
+        if hasattr(self, 'vinculodiscente'):
+            return f"Discente (matricula {self.vinculodiscente.numero_matricula})"
+        if hasattr(self, 'vinculodocente'):
+            return "Docente"
+        if hasattr(self, 'vinculogestao'):
+            return "Gestao"
+        return "Desconhecido"
+
 
 class VinculoDiscente(Vinculo):
     numero_matricula = models.CharField(max_length=20, unique=True)
