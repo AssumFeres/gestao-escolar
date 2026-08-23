@@ -6,12 +6,15 @@ Views (API): traduzem HTTP <-> Service. Não contêm regra de negócio.
 
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
+from django.views.generic import ListView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import FuncaoGestao, Habilitacao
+from .models import FuncaoGestao, Habilitacao, Pessoa
+
 from .services import (
     BuscarEnderecoPorCepService,
     AssociarHabilitacaoService,
@@ -119,3 +122,12 @@ class CadastrarPessoaView(APIView):
             "vinculo_id": vinculo.id,
         })
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ListaPessoasView(ListView):
+    """
+    Template View: renderiza HTML no servidor, sem passar por Serializer/JSON.
+    """
+    model = Pessoa
+    template_name = 'pessoas/lista.html'
+    context_object_name = 'pessoas'
