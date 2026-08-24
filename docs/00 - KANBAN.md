@@ -10,26 +10,39 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 *Ideias e sugestões — ainda não decidido quando/se entram no PI atual*
 
 - [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
-- [ ] Decidir estratégia de autenticação para `Pessoa` (aluno/docente) fazer login no sistema — usar `User` padrão do Django vinculado a `Pessoa`, ou solução customizada
+- [ ] **Tela de login + estratégia de autenticação** — decidir se usuários do sistema (além do superusuário Admin) serão o `User` padrão do Django, vinculado a `Pessoa`, ou solução customizada. Django já oferece views nativas de login/logout em `django.contrib.auth.views`, mas a estratégia de "quem pode logar e o que vê" precisa ser definida antes de construir a tela.
 - [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
 - [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
 - [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
-- [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`)
-- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa já esboçada no capítulo "📐 Especificações Detalhadas" no final deste documento. Resumo: 1 Model único `FormacaoDocente` (tipo via enum), 2 campos novos em `VinculoDocente` para os requisitos de contratação, 1 campo novo (FK) em `Capacidade` para o documento comprobatório.
-- [ ] Campos adicionais de identificação de Pessoa vistos no FE 008 (RG, título de eleitor, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) — avaliar quais são realmente necessários para o escopo atual antes de adicionar
+- [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
+- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa esboçada no capítulo "📐 Especificações Detalhadas" no final deste documento.
+- [ ] Campos adicionais de identificação de Pessoa vistos no FE 008 (RG, título de eleitor, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) — avaliar quais são realmente necessários antes de adicionar
+- [ ] Validação de erros de negócio no formulário HTML mais amigável (hoje aparece como mensagem genérica no topo, sem destacar o campo)
+- [ ] Esconder/mostrar campos do formulário de Pessoa dinamicamente conforme `tipo_vinculo` escolhido (ex: `numero_matricula` só faz sentido para Discente) — candidato a JavaScript
+- [ ] Máscaras de formato nos campos do formulário (CPF, CEP, telefone)
 
 ---
 
-## 📋 A Fazer
-*Já decidido que entra neste PI, ainda não iniciado*
+## 📋 A Fazer — CRUD completo do módulo Pessoas
+*Antes de avançar para PostgreSQL/deploy, o módulo precisa ter Create+Read+Update+Delete funcional via interface, não só via Admin/API. Levantamento feito em 24/08/2026.*
 
-- [ ] Formulário de cadastro de Pessoa via Template View (HTML com POST, não só leitura)
-- [ ] JavaScript pontual: busca automática de endereço por CEP no formulário, associação de habilitação sem reload
+**Ordem sugerida de implementação** (cada item pequeno, testável isoladamente):
+
+1. [ ] **Editar Pessoa** (Update) — reaproveita `CadastrarPessoaForm`, nova View de edição
+2. [ ] **Tela de cadastro de Habilitação** (Create/Read/Update/Delete) — CRUD simples, sem regra de negócio complexa
+3. [ ] **Tela de cadastro de FuncaoGestao** — depende de um `VinculoGestao` existente
+4. [ ] **Tela de Associar Habilitação a Coordenador** — reaproveita `AssociarHabilitacaoService` (já pronto e testado via API), só falta o HTML
+5. [ ] **Adicionar segundo vínculo a uma Pessoa já existente** (hoje só é possível criar o primeiro vínculo, junto com a Pessoa)
+6. [ ] **Editar Vínculo** (situação, datas)
+7. [ ] **Encerrar Vínculo** (`data_fim` + `ativo=False`)
+8. [ ] **Excluir/inativar Pessoa**
+9. [ ] **Tela de cadastro de Disciplina** (Create/Read/Update/Delete) — hoje só existe via Admin
+
+**Outras pendências antes do deploy:**
 - [ ] Configurar PostgreSQL (atualmente em SQLite) via variável de ambiente
 - [ ] Ajustes de `settings.py` para produção (`DEBUG=False`, `ALLOWED_HOSTS`, `SECRET_KEY` via `.env`)
 - [ ] Configurar arquivos estáticos para produção (`whitenoise` ou equivalente)
 - [ ] Escolher e configurar provedor de nuvem (Render ou Railway)
-- [ ] Deploy inicial
 - [ ] Revisão de acessibilidade nos templates HTML
 - [ ] Testes de Views/API (além dos testes de Service já existentes)
 - [ ] Convidar colegas de grupo como collaborators no GitHub
@@ -52,7 +65,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] Estrutura inicial do projeto Django — 20/08/2026 (`513ca35`)
 - [x] Models completos: Pessoa, Vinculo + 3 subtipos, FuncaoGestao, Habilitacao, Capacidade, Disciplina — 20/08/2026 (`524e6e0`)
 - [x] Django Admin registrado para todas as 9 entidades — 20/08/2026 (`524e6e0`)
-- [x] Ambiente validado em múltiplas máquinas (casa, quartel, escola) — 20-23/08/2026
+- [x] Ambiente validado em 5 máquinas (casa, quartel, escola, notebook) — 20-24/08/2026
 - [x] README de setup para o grupo — 20/08/2026
 - [x] `AssociarHabilitacaoService` + 2 testes — 20/08/2026 (`89ed300`)
 - [x] `CadastrarPessoaComVinculoService` + 4 testes — 20/08/2026 (`b347ae3`)
@@ -64,8 +77,11 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] Layout base compartilhado (`templates/base.html` + `static/global/css/base.css`) — 23/08/2026 (`f337e0d`)
 - [x] Template View — lista de Pessoas (`ListaPessoasView`) — 23/08/2026 (`f337e0d`)
 - [x] Template View — detalhe de Pessoa com histórico completo de vínculos (`DetalhePessoaView`) — 23/08/2026 (`78cf27f`)
-- [x] Property `tipo_legivel` em `Vinculo` (identifica subtipo Discente/Docente/Gestão de forma legível no template) — 23/08/2026 (`78cf27f`)
-- [x] **Bug de tooling corrigido:** auto-format do VSCode quebrando tags Django em templates HTML — `.vscode/settings.json` versionado — 23/08/2026 (`78cf27f`)
+- [x] Property `tipo_legivel` em `Vinculo` — 23/08/2026 (`78cf27f`)
+- [x] Bug de tooling corrigido: auto-format do VSCode quebrando templates Django — `.vscode/settings.json` versionado — 23/08/2026 (`78cf27f`)
+- [x] Especificação detalhada de Formação do Docente (FE 008) registrada no Backlog — 23/08/2026 (`9b9a2cd`)
+- [x] Template View — formulário de cadastro de Pessoa (`NovoCadastroPessoaView`, Create) — 24/08/2026 (`3a64172`)
+- [x] JavaScript — busca automática de endereço por CEP no formulário — 24/08/2026 (`3a64172`)
 
 ---
 
@@ -85,11 +101,12 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 |---|---|
 | Services implementados | 3 (100%) |
 | Endpoints de API implementados | 3 (100% dos Services existentes) |
-| Template Views implementadas | 2 (lista + detalhe de Pessoa) |
+| Template Views implementadas | 3 (lista, detalhe, cadastro de Pessoa) |
+| CRUD completo do módulo Pessoas | Parcial — ver checklist "A Fazer" (Create parcial + Read; falta Update/Delete e CRUD de entidades relacionadas) |
 | Testes automatizados | 7 (todos passando) |
 | Models implementados | 9 |
 | Última branch ativa | `dev` |
-| Último commit | `cf7b822` |
+| Último commit | `3a64172` |
 
 ---
 ---
