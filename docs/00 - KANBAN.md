@@ -4,39 +4,53 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 **Como atualizar:** corte o item de uma coluna e cole na outra, mantendo o formato de checklist. Ao mover para "Concluído", adicione a data e o commit relacionado entre parênteses.
 
+> **Nota de contexto (24/08/2026):** o módulo Pessoas está em plena refatoração — o modelo `Vinculo`/`FuncaoGestao`/`Habilitacao` foi substituído, em nível de design, pelo modelo `Funcao`/`AtribuicaoFuncao`. Raciocínio completo em `docs/06 - ANDAMENTO_DO_PROJETO.md`; execução passo a passo em `docs/07 - PLANO_DE_MIGRACAO.md`. Itens deste Kanban que mencionam `Vinculo`/`Habilitacao` estão sendo substituídos pelos itens da nova seção abaixo.
+
+---
+
+## 🔨 Em Andamento
+*Sendo trabalhado agora*
+
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. Nenhuma etapa executada ainda.
+
 ---
 
 ## 🧊 Backlog
+
 *Ideias e sugestões — ainda não decidido quando/se entram no PI atual*
 
 - [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
-- [ ] **Tela de login + estratégia de autenticação** — decidir se usuários do sistema (além do superusuário Admin) serão o `User` padrão do Django, vinculado a `Pessoa`, ou solução customizada. Django já oferece views nativas de login/logout em `django.contrib.auth.views`, mas a estratégia de "quem pode logar e o que vê" precisa ser definida antes de construir a tela.
+- [ ] **Tela de login + estratégia de autenticação** — decidir se usuários do sistema (além do superusuário Admin) serão o `User` padrão do Django, vinculado a `Pessoa`, ou solução customizada.
 - [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
-- [ ] Melhorar Django Admin com Inlines (editar Vinculo/FuncaoGestao na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
-- [ ] **Reforçar `AssociarHabilitacaoService` também no nível do Model/banco** — o Django Admin, por ser genérico, não passa pelo Service e permite hoje criar `FuncaoGestaoHabilitacao` inválida (ver `docs/03 - ANDAMENTO_DO_PROJETO.md`). Opções: `clean()` no Model, `CHECK constraint` no Postgres futuramente, ou restringir o Admin para essa entidade.
+- [ ] Melhorar Django Admin com Inlines (editar `AtribuicaoFuncao`/extensões na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
+- [ ] **Django Admin não aplica a regra "Discente não acumula outra Função"** — mesmo raciocínio pragmático já documentado para o caso antigo do `AssociarHabilitacaoService` (ver `03 - ANDAMENTO_DO_PROJETO.md`): o Admin conversa direto com `AtribuicaoFuncao.objects.create()`, sem passar pelo Service que vai aplicar essa regra. Registrado preventivamente desta vez, antes de alguém encontrar o bug na prática.
 - [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
-- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa esboçada no capítulo "📐 Especificações Detalhadas" no final deste documento.
-- [ ] Campos adicionais de identificação de Pessoa vistos no FE 008 (RG, título de eleitor, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) — avaliar quais são realmente necessários antes de adicionar
+- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa no capítulo "📐 Especificações Detalhadas" no final deste documento. **Referência atualizada:** a especificação foi escrita contra `VinculoDocente`; ao implementar, ligar a `DadosDocente` (ver Migração acima).
+- [ ] Definir quais campos de `Pessoa` são editáveis no fluxo de "segundo preenchimento" (CPF já existente) — hipótese registrada em `06 - ANDAMENTO_DO_PROJETO.md`: tudo exceto CPF, mas ainda não confirmado a fundo
+- [ ] **Curso Inicial (Aviônica/Célula/GMP) + PI Inicial/Final + Ata de Vínculo, da FE 007** — depende do conceito de Módulo, que segue fora de escopo. Fica em branco no FE 007 gerado até então.
+- [ ] **Motivo de encerramento de `AtribuicaoFuncao` para Discente** (Transferido / Reprovado / Aprovado / Matrícula Excluída) — capturar junto quando o item "Encerrar Vínculo/Atribuição" (ver lista "A Fazer") for implementado; não é só desativar, é registrar o motivo.
+- [ ] Fixture versionada para popular o catálogo `Funcao` inicial (Diretor, GQ, Secretaria, Aux Adm, Gestor Responsável, GSO, Docente, Discente, etc.) — decidir se versiona no Git (reprodutível em qualquer máquina) ou cada ambiente popula manualmente pelo Admin
+- [ ] Geração da Ficha de Matrícula FE 007 (e, no futuro, FE 008/FOP 402) preenchida a partir dos dados do sistema — requisito de output confirmado, não modelagem; provável uso futuro do fluxo de geração de `.docx`/PDF
 - [ ] Validação de erros de negócio no formulário HTML mais amigável (hoje aparece como mensagem genérica no topo, sem destacar o campo)
-- [ ] Esconder/mostrar campos do formulário de Pessoa dinamicamente conforme `tipo_vinculo` escolhido (ex: `numero_matricula` só faz sentido para Discente) — candidato a JavaScript
 - [ ] Máscaras de formato nos campos do formulário (CPF, CEP, telefone)
 
 ---
 
 ## 📋 A Fazer — CRUD completo do módulo Pessoas
-*Antes de avançar para PostgreSQL/deploy, o módulo precisa ter Create+Read+Update+Delete funcional via interface, não só via Admin/API. Levantamento feito em 24/08/2026.*
 
-**Ordem sugerida de implementação** (cada item pequeno, testável isoladamente):
+*Bloqueado até a migração em "Em Andamento" ser concluída — os itens abaixo dependem do modelo novo (`Funcao`/`AtribuicaoFuncao`) estar implementado.*
 
-1. [ ] **Editar Pessoa** (Update) — reaproveita `CadastrarPessoaForm`, nova View de edição
-2. [ ] **Tela de cadastro de Habilitação** (Create/Read/Update/Delete) — CRUD simples, sem regra de negócio complexa
-3. [ ] **Tela de cadastro de FuncaoGestao** — depende de um `VinculoGestao` existente
-4. [ ] **Tela de Associar Habilitação a Coordenador** — reaproveita `AssociarHabilitacaoService` (já pronto e testado via API), só falta o HTML
-5. [ ] **Adicionar segundo vínculo a uma Pessoa já existente** (hoje só é possível criar o primeiro vínculo, junto com a Pessoa)
-6. [ ] **Editar Vínculo** (situação, datas)
-7. [ ] **Encerrar Vínculo** (`data_fim` + `ativo=False`)
+**Ordem sugerida, revisada em 24/08/2026 para refletir o novo modelo:**
+
+1. [ ] **Editar Pessoa** (Update) — reaproveita o Form já existente, nova View de edição. Motivou toda a revisão arquitetural desta sessão; retomar assim que a migração estiver pronta.
+2. [ ] **Tela de cadastro (FE 007) — Discente**: Pessoa + extensão Discente, com fluxo de buscar-ou-criar por CPF
+3. [ ] **Tela de cadastro (FE 008) — Docente**: Pessoa + extensão Docente
+4. [ ] **Tela de cadastro (FOP 402) — Gestão**: Pessoa + Experiência Profissional, com seleção da `Funcao` específica do catálogo
+5. [ ] **Adicionar nova Função a uma Pessoa já existente** (acúmulo de cargo, ou segundo curso para Discente) — via busca por CPF
+6. [ ] **Editar Atribuição de Função** (situação, datas)
+7. [ ] **Encerrar Atribuição de Função** (`data_fim` + `ativo=False` + motivo, ver item correspondente no Backlog para o caso Discente)
 8. [ ] **Excluir/inativar Pessoa**
-9. [ ] **Tela de cadastro de Disciplina** (Create/Read/Update/Delete) — hoje só existe via Admin
+9. [ ] **Tela de cadastro de Disciplina** (Create/Read/Update/Delete) — hoje só existe via Admin, não depende da migração
 
 **Outras pendências antes do deploy:**
 - [ ] Configurar PostgreSQL (atualmente em SQLite) via variável de ambiente
@@ -49,13 +63,6 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ---
 
-## 🔨 Em Andamento
-*Sendo trabalhado agora*
-
-*(vazio no momento — mova um item de "A Fazer" para cá quando começar)*
-
----
-
 ## ✅ Concluído
 *Feito, testado e versionado*
 
@@ -63,32 +70,36 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] `.gitignore` configurado — 19/08/2026 (`f27cb9f`)
 - [x] Documentação de arquitetura (DDD/SOLID pragmático, camadas, decisões de modelagem) — 19/08/2026
 - [x] Estrutura inicial do projeto Django — 20/08/2026 (`513ca35`)
-- [x] Models completos: Pessoa, Vinculo + 3 subtipos, FuncaoGestao, Habilitacao, Capacidade, Disciplina — 20/08/2026 (`524e6e0`)
-- [x] Django Admin registrado para todas as 9 entidades — 20/08/2026 (`524e6e0`)
 - [x] Ambiente validado em 5 máquinas (casa, quartel, escola, notebook) — 20-24/08/2026
 - [x] README de setup para o grupo — 20/08/2026
-- [x] `AssociarHabilitacaoService` + 2 testes — 20/08/2026 (`89ed300`)
-- [x] `CadastrarPessoaComVinculoService` + 4 testes — 20/08/2026 (`b347ae3`)
 - [x] `BuscarEnderecoPorCepService` (Porta/Adaptador ViaCEP) + 1 teste — 20/08/2026 (`662f87f`)
 - [x] Endpoint de API `GET /api/pessoas/cep/<cep>/` (`BuscarCepView`) — 21/08/2026 (`b244774`)
-- [x] Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/` (`AssociarHabilitacaoView`) — 21/08/2026 (`bb01f2e`)
-- [x] Endpoint de API `POST /api/pessoas/pessoas/` (`CadastrarPessoaView`) — 23/08/2026 (`97e2915`)
-- [x] Campo `sigla` em `Disciplina` (3 letras maiúsculas, validado por regex) — 23/08/2026 (`fbfc3b1`)
 - [x] Layout base compartilhado (`templates/base.html` + `static/global/css/base.css`) — 23/08/2026 (`f337e0d`)
-- [x] Template View — lista de Pessoas (`ListaPessoasView`) — 23/08/2026 (`f337e0d`)
-- [x] Template View — detalhe de Pessoa com histórico completo de vínculos (`DetalhePessoaView`) — 23/08/2026 (`78cf27f`)
-- [x] Property `tipo_legivel` em `Vinculo` — 23/08/2026 (`78cf27f`)
 - [x] Bug de tooling corrigido: auto-format do VSCode quebrando templates Django — `.vscode/settings.json` versionado — 23/08/2026 (`78cf27f`)
-- [x] Especificação detalhada de Formação do Docente (FE 008) registrada no Backlog — 23/08/2026 (`9b9a2cd`)
-- [x] Template View — formulário de cadastro de Pessoa (`NovoCadastroPessoaView`, Create) — 24/08/2026 (`3a64172`)
 - [x] JavaScript — busca automática de endereço por CEP no formulário — 24/08/2026 (`3a64172`)
+- [x] **Redesenho arquitetural do módulo Pessoas** (`Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`), baseado em 3 formulários institucionais reais (FOP 402, FE 007, FE 008) — decisão de design fechada em 24/08/2026, ver `docs/06 - ANDAMENTO_DO_PROJETO.md`. **Execução ainda pendente**, ver "Em Andamento".
+
+### Itens historicamente concluídos, agora em revisão pela migração
+*Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) e serão removidos ou reescritos como parte da migração em andamento — mantidos aqui só como registro histórico do que já existiu, não como trabalho ainda válido:*
+
+- [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **substituídos**
+- [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **parcialmente substituído**
+- [x] ~~`AssociarHabilitacaoService` + 2 testes~~ — 20/08/2026 (`89ed300`) — **removido, conceito absorvido pelo catálogo aberto `Funcao`**
+- [x] ~~`CadastrarPessoaComVinculoService` + 4 testes~~ — 20/08/2026 (`b347ae3`) — **em reescrita** (evolui para buscar-ou-criar por CPF)
+- [x] ~~Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/`~~ — 21/08/2026 (`bb01f2e`) — **removido**
+- [x] ~~Endpoint de API `POST /api/pessoas/pessoas/`~~ — 23/08/2026 (`97e2915`) — **em revisão**
+- [x] ~~Campo `sigla` em `Disciplina`~~ — 23/08/2026 (`fbfc3b1`) — **não afetado pela migração**, mantido válido
+- [x] ~~Template View — lista de Pessoas~~ — 23/08/2026 (`f337e0d`) — **em revisão**
+- [x] ~~Template View — detalhe de Pessoa com histórico de vínculos~~ — 23/08/2026 (`78cf27f`) — **em revisão**
+- [x] ~~Property `tipo_legivel` em `Vinculo`~~ — 23/08/2026 (`78cf27f`) — **provavelmente desnecessária no modelo novo** (não há mais subtipo por herança)
+- [x] ~~Template View — formulário de cadastro de Pessoa (`NovoCadastroPessoaView`)~~ — 24/08/2026 (`3a64172`) — **em revisão**, vira 3 fluxos distintos por categoria de Função
 
 ---
 
 ## 🔭 Fora de Escopo (PI futuro)
 *Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5*
 
-- [ ] Módulo Gestão de Turmas (`Turma`, `Modulo`, relação `Disciplina`↔`Modulo`)
+- [ ] Módulo Gestão de Turmas (`Turma`, `Modulo`, relação `Disciplina`↔`Modulo`) — confirmado fora de escopo em 24/08/2026, mesmo após a descoberta de que a FE 007 depende parcialmente disso (curso inicial, PI Inicial/Final)
 - [ ] Módulo Atribuição de Instrutor
 - [ ] Módulo Gestão de Treinamentos
 - [ ] Módulo Diário de Classe (frequência, conteúdo, notas)
@@ -99,14 +110,14 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 | Métrica | Valor atual |
 |---|---|
-| Services implementados | 3 (100%) |
-| Endpoints de API implementados | 3 (100% dos Services existentes) |
-| Template Views implementadas | 3 (lista, detalhe, cadastro de Pessoa) |
-| CRUD completo do módulo Pessoas | Parcial — ver checklist "A Fazer" (Create parcial + Read; falta Update/Delete e CRUD de entidades relacionadas) |
-| Testes automatizados | 7 (todos passando) |
-| Models implementados | 9 |
-| Última branch ativa | `dev` |
-| Último commit | `3a64172` |
+| Services implementados (modelo antigo, sob revisão) | 3 (1 removido, 1 em reescrita, 1 não afetado) |
+| Endpoints de API implementados (modelo antigo, sob revisão) | 3 (1 removido, 1 em revisão, 1 não afetado) |
+| Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão) |
+| Testes automatizados | 7 (2 serão removidos com `AssociarHabilitacaoService`) |
+| Models do modelo antigo | 9 (7 serão removidos, ver lista de migração) |
+| Models do modelo novo | 0 implementados / 6 desenhados (`Funcao`, `AtribuicaoFuncao`, `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`, `Pessoa` ampliada) |
+| Última branch ativa | `dev` (migração vai rodar em `feature/refatoracao-funcao`) |
+| Último commit | `3a64172` — nenhum commit novo desde a decisão de redesenho |
 
 ---
 ---
@@ -118,6 +129,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## Cadastro de Formação do Docente (baseado no FE 008)
 
 **Origem:** Formulário FE 008 — Formulário de Cadastro de Instrutor e Atribuição de Disciplina (Rev. 01, 24/06/2026). Discutido em 23/08/2026.
+
+> **⚠️ Nota de atualização (24/08/2026):** os esboços de código abaixo foram escritos contra `VinculoDocente`, que deixou de existir na migração registrada em `docs/06`/`07 - ANDAMENTO_DO_PROJETO.md` / `PLANO_DE_MIGRACAO.md`. O raciocínio de modelagem (tabela única com enum, requisitos como campos diretos por YAGNI, FK de comprovação) continua válido — só troque toda referência a `VinculoDocente` por `DadosDocente` ao implementar.
 
 ### Contexto do formulário
 
@@ -132,7 +145,7 @@ O FE 008 tem, entre outras, estas seções relevantes para `pessoas`:
 
 ### Decisão 1 — Tabela única para Graduação/Formação/Aperfeiçoamento
 
-As três seções têm exatamente a mesma estrutura de colunas — só a categoria muda. Criar 3 Models seria duplicação (viola DRY) sem ganho de expressividade, diferente do caso `Vinculo` (onde os subtipos têm campos genuinamente diferentes). Aqui, o padrão correto é **uma tabela + campo enum**, seguindo o mesmo raciocínio já usado em `FuncaoGestao.tipo_funcao`.
+As três seções têm exatamente a mesma estrutura de colunas — só a categoria muda. Criar 3 Models seria duplicação (viola DRY) sem ganho de expressividade. Aqui, o padrão correto é **uma tabela + campo enum**.
 
 ```python
 class TipoFormacaoDocente(models.TextChoices):
@@ -142,7 +155,7 @@ class TipoFormacaoDocente(models.TextChoices):
 
 
 class FormacaoDocente(models.Model):
-    vinculo_docente = models.ForeignKey(VinculoDocente, on_delete=models.CASCADE, related_name='formacoes')
+    dados_docente = models.ForeignKey('DadosDocente', on_delete=models.CASCADE, related_name='formacoes')
     tipo_formacao = models.CharField(max_length=30, choices=TipoFormacaoDocente.choices)
     curso = models.CharField(max_length=200)
     entidade = models.CharField(max_length=200)
@@ -154,15 +167,15 @@ class FormacaoDocente(models.Model):
         return f"{self.curso} ({self.get_tipo_formacao_display()})"
 ```
 
-**Nota sobre a numeração "3.1", "4.2", "5.3" do formulário físico:** é a posição do registro dentro do seu próprio tipo, usada como referência cruzada com a pasta física/digital do docente. Não precisa virar campo salvo no banco — pode ser calculada dinamicamente (property que conta a posição entre os registros do mesmo tipo e mesma pessoa) quando for implementado, evitando duplicar informação derivável.
+**Nota sobre a numeração "3.1", "4.2", "5.3" do formulário físico:** é a posição do registro dentro do seu próprio tipo, usada como referência cruzada com a pasta física/digital do docente. Não precisa virar campo salvo no banco — pode ser calculada dinamicamente (property que conta a posição entre os registros do mesmo tipo e mesma pessoa) quando for implementado.
 
-### Decisão 2 — Requisitos de Contratação: campos diretos em `VinculoDocente`, não catálogo
+### Decisão 2 — Requisitos de Contratação: campos diretos em `DadosDocente`, não catálogo
 
-Primeira proposta considerada foi um catálogo (`RequisitoContratacao` + tabela associativa, no padrão de `Habilitacao`) — descartada por ser over-engineering (princípio **YAGNI**) para exatamente 2 critérios fixos, sem sinal de que vão crescer em variedade tão cedo. Os dois requisitos têm naturezas de evidência diferentes entre si, então viram dois campos distintos:
+Primeira proposta considerada foi um catálogo (`RequisitoContratacao` + tabela associativa) — descartada por ser over-engineering (**YAGNI**) para exatamente 2 critérios fixos, sem sinal de que vão crescer em variedade tão cedo.
 
 ```python
-class VinculoDocente(Vinculo):
-    situacao = models.CharField(max_length=30)
+class DadosDocente(models.Model):
+    atribuicao = models.OneToOneField('AtribuicaoFuncao', on_delete=models.CASCADE, related_name='dados_docente')
 
     # Requisito 2.3.1 — texto livre, análise de CV/declarações de serviço
     experiencia_docente_comprovada = models.TextField(
@@ -177,9 +190,6 @@ class VinculoDocente(Vinculo):
         help_text="Curso que comprova formação específica na área de atuação (RBAC 141)."
     )
 
-    def __str__(self):
-        return f"{self.pessoa.nome_completo} - Docente"
-
     def possui_treinamento_valido(self) -> bool:
         return True
 ```
@@ -188,11 +198,9 @@ Se a EMCA um dia ampliar os critérios de contratação, a refatoração para um
 
 ### Decisão 3 — `Capacidade` ganha referência ao documento comprobatório
 
-A Seção 7 do formulário já é o que `Capacidade` modela; só falta o campo de evidência, seguindo o mesmo padrão de FK única (não M2M) da Decisão 2:
-
 ```python
 class Capacidade(models.Model):
-    vinculo_docente = models.ForeignKey(VinculoDocente, on_delete=models.CASCADE, related_name='capacidades')
+    dados_docente = models.ForeignKey('DadosDocente', on_delete=models.CASCADE, related_name='capacidades')
     disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='capacidades')
     formacao_comprobatoria = models.ForeignKey(
         'FormacaoDocente', on_delete=models.PROTECT, null=True, blank=True,
@@ -201,7 +209,7 @@ class Capacidade(models.Model):
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
-    # ... constraints existentes inalteradas
+    # ... resto das constraints existentes inalteradas
 ```
 
 ### Resumo do impacto quando for implementado
@@ -209,10 +217,9 @@ class Capacidade(models.Model):
 | Model | Mudança |
 |---|---|
 | `FormacaoDocente` | **Novo** — Graduação/Formação Profissional/Aperfeiçoamento numa tabela só |
-| `VinculoDocente` | +2 campos (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria`) |
-| `Capacidade` | +1 campo (`formacao_comprobatoria`) |
-| Migrations necessárias | 1 nova migration (novo Model) + 1 alteração em `VinculoDocente` + 1 alteração em `Capacidade` — podem ser feitas numa única migration se aplicadas juntas |
+| `DadosDocente` | +2 campos (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria`) |
+| `Capacidade` | FK trocada de `VinculoDocente` para `DadosDocente`, +1 campo (`formacao_comprobatoria`) |
 
-### Campos de identificação vistos no FE 008, ainda não avaliados
+### Campos de identificação vistos no FE 008, já resolvidos
 
-O formulário também tem uma seção de identificação/documentos pessoais (RG, título de eleitor, passaporte, CPF, estado civil, naturalidade, nacionalidade, filiação 1/2, nível de instrução) mais completa do que o `Pessoa` atual. Não foi discutido em profundidade — fica registrado que existe, para avaliação futura de quais desses campos são realmente necessários no escopo do sistema (nem todo campo de um formulário físico institucional precisa virar campo de banco).
+~~O formulário também tem uma seção de identificação/documentos pessoais mais completa do que o `Pessoa` atual.~~ **Resolvido em 24/08/2026** — ver `docs/06 - ANDAMENTO_DO_PROJETO.md`, item 6: os campos de identificação ampliada (RG/identidade, naturalidade, nacionalidade, filiação, nível de instrução, estado civil, etc.) entraram em `Pessoa` como parte da migração.
