@@ -3,18 +3,16 @@ pessoas/views.py
 
 Views (API): traduzem HTTP <-> Service. Não contêm regra de negócio.
 """
-
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render, redirect
 from django.core.exceptions import ValidationError
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, View
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import FuncaoGestao, Habilitacao
 from .models import FuncaoGestao, Habilitacao, Pessoa
-
+from .forms import CadastrarPessoaForm
 from .services import (
     BuscarEnderecoPorCepService,
     AssociarHabilitacaoService,
@@ -140,3 +138,58 @@ class DetalhePessoaView(DetailView):
     model = Pessoa
     template_name = 'pessoas/detalhe.html'
     context_object_name = 'pessoa'
+
+
+class NovoCadastroPessoaView(View):
+    """
+    Template View: formulario HTML de cadastro. Reusa o mesmo Service
+    da API (CadastrarPessoaComVinculoService) — mesma regra de negocio,
+    caminho de entrada diferente.
+    """
+    template_name = 'pessoas/form_pessoa.html'
+
+    def get(self, request):
+        form = CadastrarPessoaForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = CadastrarPessoaForm(request.POST)
+
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
+
+        dados = form.cleaned_data
+
+        dados_pessoa = {
+            "nome_completo": dados["nome_completo"],
+            "cpf": dados["cpf"],
+            "data_nascimento": dados["data_nascimento"],
+            "email": dados["email"],
+            "telefone": dados["telefone"],
+            "endereco_cep": dados["endereco_cep"],
+            "endereco_logradouro": dados["endereco_logradouro"],
+            "endereco_numero": dados["endereco_numero"],
+            "endereco_complemento": dados.get("endereco_complemento", ""),
+            "endereco_bairro": dados["endereco_bairro"],
+            "endereco_cidade": dados["endereco_cidade"],
+            "endereco_uf": dados["endereco_uf"],
+        }
+
+        dados_vinculo = {
+            "data_inicio": dados["data_inicio"],
+            "situacao": dados["situacao"],
+        }
+        if dados["tipo_vinculo"] == "DISCENTE":
+            dados_vinculo["numero_matricula"] = dados.get("numero_matricula", "")
+
+        try:
+            pessoa, vinculo = CadastrarPessoaComVinculoService().executar(
+                dados_pessoa=dados_pessoa,
+                tipo_vinculo=dados["tipo_vinculo"],
+                dados_vinculo=dados_vinculo,
+            )
+        except ValidationError as e:
+            form.add_error(None, str(e))
+            return render(request, self.template_name, {'form': form})
+
+        return redirect('detalhe-pessoa', pk=pessoa.id)

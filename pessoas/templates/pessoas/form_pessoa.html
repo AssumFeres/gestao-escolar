@@ -1,0 +1,24 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nova Pessoa - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="/pessoas/">&larr; Voltar para lista</a></p>
+
+<h2>Cadastrar nova pessoa</h2>
+
+{% if form.non_field_errors %}
+<div style="color: red; margin-bottom: 1rem;">
+    {{ form.non_field_errors }}
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Salvar</button>
+</form>
+
+<script src="{% static 'pessoas/js/buscar-cep.js' %}"></script>
+{% endblock %}
