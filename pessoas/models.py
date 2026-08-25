@@ -46,7 +46,7 @@ class Pessoa(models.Model):
     data_nascimento = models.DateField()
     email = models.EmailField()
     telefone = models.CharField(max_length=20)
-    
+
     # Identificação ampliada (FE 007 / FE 008)
     sexo = models.CharField(max_length=1, blank=True)
     identidade = models.CharField(max_length=20, blank=True)
@@ -204,3 +204,10 @@ class Capacidade(models.Model):
                 name='unique_capacidade_ativa'
             )
         ]
+
+
+class Funcao(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nome
