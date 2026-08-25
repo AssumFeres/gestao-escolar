@@ -227,3 +227,30 @@ class AtribuicaoFuncao(models.Model):
 
     def __str__(self):
         return f"{self.pessoa.nome_completo} - {self.funcao.nome}"
+
+
+class DadosDiscente(models.Model):
+    atribuicao = models.OneToOneField(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='dados_discente')
+
+    codigo_matricula_anac = models.CharField(max_length=20, blank=True, verbose_name="Código de Matrícula ANAC")
+
+    # Documentação de estrangeiro (FE 007)
+    passaporte = models.CharField(max_length=20, blank=True)
+    autorizacao_permanencia = models.CharField(max_length=50, blank=True)
+
+    # Contato de emergência ("quem avisar") — texto simples, sem entidade própria
+    contato_emergencia_nome = models.CharField(max_length=200, blank=True)
+    contato_emergencia_parentesco = models.CharField(max_length=50, blank=True)
+    contato_emergencia_telefone = models.CharField(max_length=20, blank=True)
+    contato_emergencia_endereco = models.CharField(max_length=300, blank=True)
+
+    # Responsável legal (só se menor de idade) — texto simples, reaproveitado nas assinaturas do FE 007
+    responsavel_nome = models.CharField(max_length=200, blank=True)
+    responsavel_endereco = models.CharField(max_length=300, blank=True)
+    responsavel_identidade = models.CharField(max_length=20, blank=True)
+    responsavel_orgao_expedidor = models.CharField(max_length=20, blank=True)
+    responsavel_data_emissao = models.DateField(null=True, blank=True)
+    responsavel_qualificacao = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return f"{self.atribuicao.pessoa.nome_completo} - Dados Discente"
