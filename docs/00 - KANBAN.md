@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. Nenhuma etapa executada ainda.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2 e 3 concluídas (25/08/2026)** — `Pessoa` ampliada, catálogo `Funcao` criado e populado (9 Funções), `AtribuicaoFuncao` criado. Etapa 4 (as 3 extensões — `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`) é a maior do plano, deixada para sessão com mais tempo. Detalhe da sessão em `docs/08 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -29,10 +29,15 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Definir quais campos de `Pessoa` são editáveis no fluxo de "segundo preenchimento" (CPF já existente) — hipótese registrada em `06 - ANDAMENTO_DO_PROJETO.md`: tudo exceto CPF, mas ainda não confirmado a fundo
 - [ ] **Curso Inicial (Aviônica/Célula/GMP) + PI Inicial/Final + Ata de Vínculo, da FE 007** — depende do conceito de Módulo, que segue fora de escopo. Fica em branco no FE 007 gerado até então.
 - [ ] **Motivo de encerramento de `AtribuicaoFuncao` para Discente** (Transferido / Reprovado / Aprovado / Matrícula Excluída) — capturar junto quando o item "Encerrar Vínculo/Atribuição" (ver lista "A Fazer") for implementado; não é só desativar, é registrar o motivo.
-- [ ] Fixture versionada para popular o catálogo `Funcao` inicial (Diretor, GQ, Secretaria, Aux Adm, Gestor Responsável, GSO, Docente, Discente, etc.) — decidir se versiona no Git (reprodutível em qualquer máquina) ou cada ambiente popula manualmente pelo Admin
 - [ ] Geração da Ficha de Matrícula FE 007 (e, no futuro, FE 008/FOP 402) preenchida a partir dos dados do sistema — requisito de output confirmado, não modelagem; provável uso futuro do fluxo de geração de `.docx`/PDF
 - [ ] Validação de erros de negócio no formulário HTML mais amigável (hoje aparece como mensagem genérica no topo, sem destacar o campo)
 - [ ] Máscaras de formato nos campos do formulário (CPF, CEP, telefone)
+- [ ] Configurar `choices` para os campos `sexo`, `estado_civil`, `raca_cor` — usar como etapa disparadora para revisar todos os campos de identificação ampliada quanto à necessidade de lista fechada de valores, em vez de decidir campo a campo de forma avulsa
+- [ ] Ajustar `verbose_name_plural` de `Funcao` no Admin (hoje exibido como "Funcaos")
+- [ ] Avaliar dividir `pessoas/models.py` em uma pasta `models/` com um arquivo por classe/grupo de classes relacionadas, à medida que o arquivo cresce com a migração — refatoração puramente organizacional, sem mudança de comportamento
+- [ ] Manter o docstring de índice no topo de `pessoas/models.py` sincronizado conforme classes são adicionadas/removidas durante a migração — hoje já está desatualizado
+- [ ] **Teste manual a validar quando a Etapa 4/5 estiver pronta:** confirmar que o Admin realmente bloqueia a exclusão de uma `Funcao` que já tem `AtribuicaoFuncao` vinculada (`on_delete=PROTECT`), validando na prática a proteção contra perda de rastreabilidade
+- [ ] Fixture versionada do catálogo `Funcao` — decisão tomada de popular manualmente por enquanto (9 Funções cadastradas via Admin na sessão de 25/08/2026); cada uma das 5 máquinas validadas precisa popular seu próprio catálogo até que isso seja versionado
 
 ---
 
@@ -115,9 +120,10 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 | Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão) |
 | Testes automatizados | 7 (2 serão removidos com `AssociarHabilitacaoService`) |
 | Models do modelo antigo | 9 (7 serão removidos, ver lista de migração) |
-| Models do modelo novo | 0 implementados / 6 desenhados (`Funcao`, `AtribuicaoFuncao`, `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`, `Pessoa` ampliada) |
-| Última branch ativa | `dev` (migração vai rodar em `feature/refatoracao-funcao`) |
-| Último commit | `3a64172` — nenhum commit novo desde a decisão de redesenho |
+| Models do modelo novo | 3 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅ — faltam `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`) |
+| Catálogo `Funcao` populado | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`) |
+| Última branch ativa | `feature/refatoracao-funcao` |
+| Último commit | `193fd99` — `feat: model AtribuicaoFuncao` |
 
 ---
 ---

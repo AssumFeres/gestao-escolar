@@ -2,7 +2,7 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** não iniciado. Nenhum passo abaixo foi executado ainda.
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2 e 3 concluídas e commitadas (25/08/2026) — ver `docs/08 - ANDAMENTO_DO_PROJETO.md` para o relato da sessão. Etapa 4 identificada como a maior do plano (3 sub-partes independentes) — deixada para sessão com mais tempo disponível.
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -10,41 +10,55 @@
 
 ## Antes de começar
 
-- [x] Criar uma branch nova a partir de `dev`: `git checkout -b feature/refatoracao-funcao`
-- [x] Confirmar que a suíte de testes atual passa antes de qualquer mudança (`pytest`) — ponto de partida limpo, para isolar qualquer erro novo como consequência da migração, não de algo pré-existente
-- [ ] Fazer backup do `db.sqlite3` local antes de começar a mexer em migrations (cópia simples do arquivo, fora do Git) — o banco de desenvolvimento local não é crítico, mas evita ter que recriar dados de teste do zero se algo sair errado no meio do caminho
+- [x] Criar uma branch nova a partir de `dev`: `git checkout -b feature/refatoracao-funcao` — 25/08/2026
+- [x] Confirmar que a suíte de testes atual passa antes de qualquer mudança (`pytest`) — 25/08/2026, `7 passed`
+- [ ] Fazer backup do `db.sqlite3` local antes de começar a mexer em migrations — não confirmado como feito; sem incidente até agora, mas o passo em si não foi formalmente executado
 
 ---
 
-## Etapa 1 — Ampliar `Pessoa`
+## Etapa 1 — Ampliar `Pessoa` ✅ Concluída (25/08/2026)
 
 A menor mudança, sem dependência de nada mais, e não quebra nada existente (só adiciona campos).
 
-- [ ] Adicionar em `Pessoa`: `sexo`, `identidade` (nº), `data_emissao_identidade`, `orgao_expedidor_identidade`, `naturalidade`, `uf_naturalidade`, `nacionalidade`, `filiacao_1`, `filiacao_2`, `nivel_instrucao`, `data_nascimento`, `estado_civil`, `raca_cor`
-- [ ] Decidir e aplicar: todos esses campos devem ser `blank=True` (opcionais) nesta etapa, já que cadastros existentes não vão ter esses dados preenchidos, e forçar obrigatoriedade quebraria dados já no banco
-- [ ] Adicionar `unique=True` ao campo `cpf` (confirmar primeiro se já não existe — checar `models.py` atual). **Atenção:** se já houver dados de teste no banco local com CPF duplicado ou vazio, a migration vai falhar — limpar esses registros antes, ou popular CPFs distintos
-- [ ] Gerar e aplicar migration: `python manage.py makemigrations pessoas`, `python manage.py migrate`
-- [ ] Rodar `pytest` — deve continuar tudo passando (nenhum teste existente depende desses campos novos)
-- [ ] Commit: `feat: amplia Pessoa com campos de identificacao (FE 007/FE 008)`
+- [x] Adicionar em `Pessoa`: `sexo`, `identidade` (nº), `data_emissao_identidade`, `orgao_expedidor_identidade`, `naturalidade`, `uf_naturalidade`, `nacionalidade`, `filiacao_1`, `filiacao_2`, `nivel_instrucao`, `estado_civil`, `raca_cor` (`data_nascimento` já existia em `Pessoa` antes desta etapa — não precisou ser criado)
+- [x] Todos os campos novos `blank=True`
+- [x] `cpf` já tinha `unique=True` desde antes — nada a alterar
+- [x] Migration `0004_pessoa_data_emissao_identidade_pessoa_estado_civil_and_more` gerada e aplicada. Uma migration pendente de sessão anterior (`0003_alter_disciplina_sigla` — só adicionava a mensagem de erro do `RegexValidator` de `Disciplina.sigla`, sem efeito sobre dados) foi identificada e aplicada junto, por ser inofensiva.
+- [x] `pytest` — `7 passed`
+- [x] Commit: `feat: amplia Pessoa com campos de identificacao (FE 007/FE 008)`
+- [ ] **Registrado no Backlog do Kanban, não executado nesta etapa:** configurar `choices` para `sexo`, `estado_civil`, `raca_cor` (e reavaliar os demais campos de identificação quanto à necessidade de `choices`) — decisão adiada deliberadamente
 
 ---
 
-## Etapa 2 — Criar `Funcao` (catálogo) e popular dados iniciais
+## Etapa 2 — Criar `Funcao` (catálogo) e popular dados iniciais ✅ Concluída (25/08/2026)
 
-- [ ] Criar Model `Funcao`: `id`, `nome` (`CharField`, provavelmente `unique=True` para evitar duplicata de cadastro por engano)
-- [ ] Registrar `Funcao` no Django Admin (cadastro simples, sem regra de negócio — Admin é apropriado aqui)
-- [ ] Gerar e aplicar migration
-- [ ] Popular manualmente (via Admin, ou via `data migration`/fixture, a critério de quem for aplicar) as Funções já conhecidas: Diretor, Gerente da Qualidade, Secretaria, Auxiliar Administrativo, Gestor Responsável, Gerente de Segurança Operacional, Docente, Discente, e quaisquer "Coordenador de Curso de X" já em uso — **decisão a tomar na hora:** popular via fixture versionada no Git (reprodutível em qualquer máquina) ou deixar cada ambiente popular manualmente pelo Admin
-- [ ] Commit: `feat: catalogo aberto Funcao`
+- [x] Criar Model `Funcao`: `id`, `nome` (`CharField`, `unique=True`) — mantido `unique=True` após esclarecer que isso trava duplicata de *nome no catálogo*, não a quantidade de pessoas que podem ocupar aquela Função (ver nota de design abaixo)
+- [x] `__str__` retornando `nome`, já incluído desde o início — evita repetir o problema já visto com `Habilitacao`/`Vinculo` antes de terem `__str__` (ver `03 - ANDAMENTO_DO_PROJETO.md`)
+- [x] Registrar `Funcao` no Django Admin
+- [x] Migration `0005_funcao` gerada e aplicada
+- [x] `pytest` — `7 passed`
+- [x] Popular dados iniciais — via Admin, sem fixture versionada (decisão tomada na hora): 9 Funções cadastradas (Auxiliar Administrativo, Secretária, Coordenador de Curso GMP, Coordenador de Curso Célula, Coordenador de Curso Aviônicos, Gerente de Qualidade, Diretor, Discente - Aluno, Docente - Instrutor). **GSO não entra** (não se aplica à organização); **Diretor = Gestor Responsável** (mesmo cargo, nomenclatura EMCA vs. ANAC/FOP 402) — uma linha só, não duas. Cada ambiente (das 5 máquinas já validadas) vai precisar popular seu próprio catálogo manualmente, já que não foi versionada fixture.
+- [x] Commit: `feat: catalogo aberto Funcao` (`44c142c`)
+
+### ⚠️ Nota de design importante, registrada durante esta etapa
+
+**`Funcao.nome` é editável a qualquer momento sem risco de perda de histórico** — uma `AtribuicaoFuncao` referencia uma `Funcao` pelo `id` interno, não pelo texto do nome. Renomear "Discente" para "Aluno", por exemplo, não quebra nem apaga nenhuma atribuição existente; todo o histórico permanece ligado à mesma linha do catálogo, só exibindo o rótulo atualizado.
+
+**Isso tem uma implicação direta e obrigatória para a Etapa 3/6 (regra "Discente não acumula outra Função"):** essa regra de negócio **nunca deve ser implementada comparando `Funcao.nome`** (ex: `if funcao.nome == "Discente"`). Se o catálogo for renomeado no futuro, uma regra baseada em texto pararia de funcionar silenciosamente, sem erro nenhum — uma falha de segurança de dados sutil e perigosa. A regra deve ser implementada verificando a **estrutura**: se a `AtribuicaoFuncao` em questão possui (ou vai possuir) um `DadosDiscente` associado, não se o nome da Função bate com uma string específica. Isso ancora a regra em algo que só muda deliberadamente (a extensão de dados), não em um rótulo editável livremente por qualquer pessoa com acesso ao Admin.
+
+**Ação obrigatória para quem for implementar a Etapa 3/6:** ao escrever a validação de acúmulo de Função, checar a presença de `DadosDiscente`, nunca o texto do nome da Função.
 
 ---
 
-## Etapa 3 — Criar `AtribuicaoFuncao`
+## Etapa 3 — Criar `AtribuicaoFuncao` ✅ Concluída (25/08/2026)
 
-- [ ] Criar Model `AtribuicaoFuncao`: `pessoa` (FK → `Pessoa`), `funcao` (FK → `Funcao`, `on_delete=PROTECT` — não faz sentido apagar uma Função do catálogo que já tem gente atribuída), `situacao`, `data_inicio`, `data_fim` (nullable), `ativo`
-- [ ] Registrar no Admin (mesmo sabendo que, assim como o antigo `FuncaoGestaoHabilitacao`, o Admin não vai aplicar a regra de negócio de "Discente não acumula" — isso é aceitável pelo mesmo raciocínio pragmático já documentado em `03 - ANDAMENTO_DO_PROJETO.md`, mas vale já anotar como novo item de Backlog, não repetir o mesmo susto sem registro)
-- [ ] Gerar e aplicar migration
-- [ ] Commit: `feat: model AtribuicaoFuncao`
+- [x] Criar Model `AtribuicaoFuncao`: `pessoa` (FK → `Pessoa`, `CASCADE`, `related_name='atribuicoes'`), `funcao` (FK → `Funcao`, `PROTECT`, `related_name='atribuicoes'`), `situacao`, `data_inicio`, `data_fim` (nullable), `ativo`
+- [x] Registrado no Admin. Item de Backlog já anotado (Etapa 2) sobre a regra "Discente não acumula" não ser aplicada pelo Admin — mesmo raciocínio pragmático de `03 - ANDAMENTO_DO_PROJETO.md`.
+- [x] Migration `0006_atribuicaofuncao` gerada e aplicada
+- [x] `pytest` — `7 passed`
+- [x] Commit: `feat: model AtribuicaoFuncao` (`193fd99`)
+
+**Dois erros de ordem de definição/import encontrados e resolvidos** (ver `docs/08 - ANDAMENTO_DO_PROJETO.md` para o relato completo): (1) `AtribuicaoFuncao` colada antes de `Funcao` no `models.py` — Python exige que uma classe referenciada já esteja definida acima no arquivo; (2) `AtribuicaoFuncao` registrada no `admin.py` sem estar no bloco de `import`. Nenhum dos dois teve relação com lógica de negócio — categoria de erro puramente sintática/organizacional.
 
 ---
 
