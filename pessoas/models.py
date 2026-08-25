@@ -41,11 +41,15 @@ class Endereco:
 
 
 class Pessoa(models.Model):
+    # Identificadores específicos (comuns a qualquer categoria)
     nome_completo = models.CharField(max_length=200)
     cpf = models.CharField(max_length=11, unique=True)
     data_nascimento = models.DateField()
     email = models.EmailField()
     telefone = models.CharField(max_length=20)
+    registro_aluno = models.CharField(max_length=20, unique=True, blank=True, verbose_name="RA")
+    registro_matricula = models.CharField(max_length=20, unique=True, blank=True, verbose_name="RM")
+    codigo_anac = models.CharField(max_length=20, unique=True, blank=True, verbose_name="CANAC")
 
     # Identificação ampliada (FE 007 / FE 008)
     sexo = models.CharField(max_length=1, blank=True)
