@@ -10,8 +10,8 @@
 
 ## Antes de começar
 
-- [ ] Criar uma branch nova a partir de `dev`: `git checkout -b feature/refatoracao-funcao`
-- [ ] Confirmar que a suíte de testes atual passa antes de qualquer mudança (`pytest`) — ponto de partida limpo, para isolar qualquer erro novo como consequência da migração, não de algo pré-existente
+- [x] Criar uma branch nova a partir de `dev`: `git checkout -b feature/refatoracao-funcao`
+- [x] Confirmar que a suíte de testes atual passa antes de qualquer mudança (`pytest`) — ponto de partida limpo, para isolar qualquer erro novo como consequência da migração, não de algo pré-existente
 - [ ] Fazer backup do `db.sqlite3` local antes de começar a mexer em migrations (cópia simples do arquivo, fora do Git) — o banco de desenvolvimento local não é crítico, mas evita ter que recriar dados de teste do zero se algo sair errado no meio do caminho
 
 ---
