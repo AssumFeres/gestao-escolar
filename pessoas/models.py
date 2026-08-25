@@ -211,3 +211,15 @@ class Funcao(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class AtribuicaoFuncao(models.Model):
+    pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='atribuicoes')
+    funcao = models.ForeignKey(Funcao, on_delete=models.PROTECT, related_name='atribuicoes')
+    situacao = models.CharField(max_length=30)
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.pessoa.nome_completo} - {self.funcao.nome}"
