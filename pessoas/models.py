@@ -138,41 +138,6 @@ class VinculoGestao(Vinculo):
         return f"{self.pessoa.nome_completo} - Gestão"
 
 
-class TipoFuncaoGestao(models.TextChoices):
-    DIRETOR = 'DIRETOR', 'Diretor'
-    GERENTE_DA_QUALIDADE = 'GERENTE_DA_QUALIDADE', 'Gerente da Qualidade'
-    COORDENADOR = 'COORDENADOR', 'Coordenador'
-    SECRETARIA = 'SECRETARIA', 'Secretaria'
-
-
-class FuncaoGestao(models.Model):
-    vinculo_gestao = models.ForeignKey(VinculoGestao, on_delete=models.CASCADE, related_name='funcoes')
-    tipo_funcao = models.CharField(max_length=30, choices=TipoFuncaoGestao.choices)
-    data_inicio = models.DateField()
-    data_fim = models.DateField(null=True, blank=True)
-    ativo = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.vinculo_gestao.pessoa.nome_completo} - {self.get_tipo_funcao_display()}"
-
-
-class Habilitacao(models.Model):
-    codigo = models.CharField(max_length=20, unique=True)
-    nome = models.CharField(max_length=100)
-
-    def __str__(self):
-        return f"{self.codigo} - {self.nome}"
-
-
-class FuncaoGestaoHabilitacao(models.Model):
-    """Só deve ter linhas quando FuncaoGestao.tipo_funcao == COORDENADOR (regra aplicada no Service)."""
-    funcao_gestao = models.ForeignKey(FuncaoGestao, on_delete=models.CASCADE, related_name='habilitacoes')
-    habilitacao = models.ForeignKey(Habilitacao, on_delete=models.PROTECT)
-
-    def __str__(self):
-        return f"{self.funcao_gestao} - {self.habilitacao}"
-
-
 class Disciplina(models.Model):
     """Versão mínima — campo 'modulo' será adicionado quando o módulo de Turmas for construído."""
     sigla = models.CharField(
