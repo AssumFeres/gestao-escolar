@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2 e 3 concluídas (25/08/2026)** — `Pessoa` ampliada, catálogo `Funcao` criado e populado (9 Funções), `AtribuicaoFuncao` criado. Etapa 4 (as 3 extensões — `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`) é a maior do plano, deixada para sessão com mais tempo. Detalhe da sessão em `docs/08 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2, 3 e 4 concluídas (25/08/2026)** — `Pessoa` ampliada (incluindo RM/RA/CANAC), catálogo `Funcao` criado e populado (9 Funções), `AtribuicaoFuncao` criado, e as 3 extensões (`DadosDiscente`, `DadosDocente` com ajuste de FK em `Capacidade`, `ExperienciaProfissional`) implementadas. Faltam as Etapas 5 a 9 (remoção do modelo antigo, reescrita do Service, ajuste de Views/Templates, endpoint de API, fechamento). Detalhe da sessão em `docs/08 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -25,7 +25,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Melhorar Django Admin com Inlines (editar `AtribuicaoFuncao`/extensões na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
 - [ ] **Django Admin não aplica a regra "Discente não acumula outra Função"** — mesmo raciocínio pragmático já documentado para o caso antigo do `AssociarHabilitacaoService` (ver `03 - ANDAMENTO_DO_PROJETO.md`): o Admin conversa direto com `AtribuicaoFuncao.objects.create()`, sem passar pelo Service que vai aplicar essa regra. Registrado preventivamente desta vez, antes de alguém encontrar o bug na prática.
 - [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
-- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa no capítulo "📐 Especificações Detalhadas" no final deste documento. **Referência atualizada:** a especificação foi escrita contra `VinculoDocente`; ao implementar, ligar a `DadosDocente` (ver Migração acima).
+- [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa no capítulo "📐 Especificações Detalhadas" no final deste documento, já atualizada para referenciar `DadosDocente` (implementado em 25/08/2026).
 - [ ] Definir quais campos de `Pessoa` são editáveis no fluxo de "segundo preenchimento" (CPF já existente) — hipótese registrada em `06 - ANDAMENTO_DO_PROJETO.md`: tudo exceto CPF, mas ainda não confirmado a fundo
 - [ ] **Curso Inicial (Aviônica/Célula/GMP) + PI Inicial/Final + Ata de Vínculo, da FE 007** — depende do conceito de Módulo, que segue fora de escopo. Fica em branco no FE 007 gerado até então.
 - [ ] **Motivo de encerramento de `AtribuicaoFuncao` para Discente** (Transferido / Reprovado / Aprovado / Matrícula Excluída) — capturar junto quando o item "Encerrar Vínculo/Atribuição" (ver lista "A Fazer") for implementado; não é só desativar, é registrar o motivo.
@@ -120,10 +120,10 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 | Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão) |
 | Testes automatizados | 7 (2 serão removidos com `AssociarHabilitacaoService`) |
 | Models do modelo antigo | 9 (7 serão removidos, ver lista de migração) |
-| Models do modelo novo | 3 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅ — faltam `DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`) |
+| Models do modelo novo | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) — Etapa 4 do plano de migração completa |
 | Catálogo `Funcao` populado | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`) |
 | Última branch ativa | `feature/refatoracao-funcao` |
-| Último commit | `193fd99` — `feat: model AtribuicaoFuncao` |
+| Último commit | `1b7046a` — `feat: model ExperienciaProfissional` |
 
 ---
 ---
@@ -136,7 +136,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 **Origem:** Formulário FE 008 — Formulário de Cadastro de Instrutor e Atribuição de Disciplina (Rev. 01, 24/06/2026). Discutido em 23/08/2026.
 
-> **⚠️ Nota de atualização (24/08/2026):** os esboços de código abaixo foram escritos contra `VinculoDocente`, que deixou de existir na migração registrada em `docs/06`/`07 - ANDAMENTO_DO_PROJETO.md` / `PLANO_DE_MIGRACAO.md`. O raciocínio de modelagem (tabela única com enum, requisitos como campos diretos por YAGNI, FK de comprovação) continua válido — só troque toda referência a `VinculoDocente` por `DadosDocente` ao implementar.
+> **✅ Nota de atualização (25/08/2026):** `VinculoDocente` foi removido do design e `DadosDocente` já está implementado (ver `docs/08 - ANDAMENTO_DO_PROJETO.md`, Etapa 4.2). Os esboços de código abaixo já referenciam `DadosDocente` corretamente. O raciocínio de modelagem (tabela única com enum, requisitos como campos diretos por YAGNI, FK de comprovação) continua válido e ainda não foi implementado — segue no Backlog.
 
 ### Contexto do formulário
 

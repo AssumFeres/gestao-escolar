@@ -2,7 +2,7 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2 e 3 concluídas e commitadas (25/08/2026) — ver `docs/08 - ANDAMENTO_DO_PROJETO.md` para o relato da sessão. Etapa 4 identificada como a maior do plano (3 sub-partes independentes) — deixada para sessão com mais tempo disponível.
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3 e 4 concluídas e commitadas (25/08/2026) — ver `docs/08 - ANDAMENTO_DO_PROJETO.md` para o relato da sessão. Faltam as Etapas 5 a 9 (remoção do modelo antigo, reescrita do Service, ajuste de Views/Templates, endpoint de API, fechamento).
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -62,26 +62,32 @@ A menor mudança, sem dependência de nada mais, e não quebra nada existente (s
 
 ---
 
-## Etapa 4 — Criar as extensões (`DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`)
+## Etapa 4 — Criar as extensões (`DadosDiscente`, `DadosDocente`, `ExperienciaProfissional`) ✅ Concluída (25/08/2026)
 
 Fazer uma de cada vez, cada uma com seu próprio commit — são independentes entre si.
 
-### 4.1 — `DadosDiscente`
+### Correção de escopo, feita antes de 4.1: RM, RA e CANAC movidos para `Pessoa`
 
-- [ ] Criar Model: `atribuicao` (`OneToOneField` → `AtribuicaoFuncao`), matrícula (RM, RA, código ANAC, código de matrícula ANAC), documentação de estrangeiro (passaporte, autorização de permanência — `blank=True`, já que a maioria não vai preencher), contato de emergência (nome, grau de parentesco, telefone, endereço — campos de texto simples), responsável legal (nome, endereço, identidade, órgão expedidor, data de emissão, grau/qualificação — campos de texto simples, todos `blank=True`, já que só se aplica a menores de idade)
-- [ ] Migration + commit: `feat: extensao DadosDiscente`
+Ao desenhar `DadosDiscente`, ficou claro que RM, RA e Código ANAC (CANAC) **não mudam nunca** e são identificadores da **pessoa**, não do vínculo — diferente de "Código de Matrícula ANAC", que muda a cada novo vínculo com a EMCA. Como `DadosDiscente` nasce um registro novo por `AtribuicaoFuncao`, manter RM/RA/CANAC ali forçaria redigitação (com risco de inconsistência) a cada novo curso da mesma pessoa. Decisão: os 3 campos migraram para `Pessoa` (`registro_matricula`/RM, `registro_aluno`/RA, `codigo_anac`/CANAC — os três com `unique=True`, `blank=True`), fora do escopo original desta etapa mas tecnicamente uma continuação da Etapa 1. Só `codigo_matricula_anac` (o que de fato muda por vínculo) ficou em `DadosDiscente`. Duas migrations (`0007` criando os campos, `0008` renomeando `rm`/`ra` para os nomes finais com `verbose_name`) geradas, aplicadas e commitadas (`9ddf529`) antes de seguir para 4.1.
 
-### 4.2 — `DadosDocente`
+### 4.1 — `DadosDiscente` ✅
 
-- [ ] Criar Model: `atribuicao` (`OneToOneField` → `AtribuicaoFuncao`). Este Model **substitui** o que hoje é `VinculoDocente` — reavaliar quais campos de `VinculoDocente` (ex: `situacao`, que já existe em `AtribuicaoFuncao` agora) migram para cá vs. quais já ficam cobertos pela tabela comum
-- [ ] `Capacidade` precisa de ajuste: hoje tem FK para `VinculoDocente`; passa a ter FK para `DadosDocente` (ou diretamente para `AtribuicaoFuncao` — decidir qual faz mais sentido semântico na hora)
-- [ ] Migration + commit: `feat: extensao DadosDocente, ajusta FK de Capacidade`
-- [ ] **Atualizar a especificação de `FormacaoDocente`** no Kanban (seção "📐 Especificações Detalhadas") — ela referencia `VinculoDocente`, precisa passar a referenciar `DadosDocente`
+- [x] Criar Model: `atribuicao` (`OneToOneField` → `AtribuicaoFuncao`), `codigo_matricula_anac`, documentação de estrangeiro (passaporte, autorização de permanência), contato de emergência (texto simples), responsável legal (texto simples)
+- [x] Migration `0009_dadosdiscente` + commit: `feat: extensao DadosDiscente` (`6550d94`)
 
-### 4.3 — `ExperienciaProfissional`
+### 4.2 — `DadosDocente` ✅
 
-- [ ] Criar Model: `atribuicao` (FK → `AtribuicaoFuncao`, não 1:1 — é repetível, uma `AtribuicaoFuncao` pode ter várias experiências), `organizacao`, `cargo`, `periodo` (avaliar se `periodo` vira texto livre como no FOP 402, ou dois campos `data_inicio`/`data_fim` — mais estruturado, mas o formulário original usa texto livre tipo "1999 a 2009")
-- [ ] Migration + commit: `feat: model ExperienciaProfissional`
+- [x] Criar Model minimalista: só `atribuicao` (`OneToOneField` → `AtribuicaoFuncao`) + `possui_treinamento_valido()` migrado de `VinculoDocente`. Os campos de requisitos de contratação/formação do FE 008 permanecem no Backlog, não implementados agora — decisão consciente de manter escopo mínimo nesta etapa.
+- [x] `Capacidade` ajustada: FK trocada de `vinculo_docente`/`VinculoDocente` para `dados_docente`/`DadosDocente`, incluindo a `UniqueConstraint` em `Meta` (fácil de esquecer, não é óbvia à primeira vista)
+- [x] Migration `0010_dadosdocente_and_more` (Django pediu um valor default one-off para popular linhas existentes — sem risco, banco local vazio) + commit: `feat: extensao DadosDocente, ajusta FK de Capacidade` (`4ed57e4`)
+- [x] **Especificação de `FormacaoDocente` no Kanban já atualizada** para referenciar `DadosDocente` (havia sido corrigida numa atualização de documentação anterior a esta sessão de código)
+
+**Dois erros de indentação/ordem de definição encontrados e resolvidos** (ver `docs/08 - ANDAMENTO_DO_PROJETO.md`): (1) `class Meta:` de `Capacidade` com indentação incorreta (8 espaços em vez de 4) após a edição da FK — `IndentationError`; (2) `Capacidade` posicionada antes de `DadosDocente` no arquivo, mas referenciando-a — resolvido movendo `Capacidade` para depois de `DadosDocente`.
+
+### 4.3 — `ExperienciaProfissional` ✅
+
+- [x] Criar Model: `atribuicao` (`ForeignKey` normal, não 1:1 — uma `AtribuicaoFuncao` pode ter várias experiências, refletindo a tabela repetível do FOP 402), `organizacao`, `cargo`, **`data_inicio`/`data_fim` estruturados** (decisão tomada: não texto livre, para permitir cálculo futuro sobre tempo de experiência)
+- [x] Migration `0011_experienciaprofissional` + commit: `feat: model ExperienciaProfissional` (`1b7046a`)
 
 ---
 
