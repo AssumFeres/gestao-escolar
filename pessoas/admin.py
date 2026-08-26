@@ -3,6 +3,7 @@ from .models import (
     Pessoa, VinculoDiscente, VinculoDocente, VinculoGestao,
     FuncaoGestao, Habilitacao, FuncaoGestaoHabilitacao,
     Disciplina, Capacidade, Funcao, AtribuicaoFuncao, DadosDiscente,
+    DadosDocente,
 )
 
 
@@ -18,3 +19,4 @@ admin.site.register(Capacidade)
 admin.site.register(Funcao)
 admin.site.register(AtribuicaoFuncao)
 admin.site.register(DadosDiscente)
+admin.site.register(DadosDocente)

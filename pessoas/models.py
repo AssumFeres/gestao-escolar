@@ -193,21 +193,6 @@ class Disciplina(models.Model):
     
 
 
-class Capacidade(models.Model):
-    vinculo_docente = models.ForeignKey(VinculoDocente, on_delete=models.CASCADE, related_name='capacidades')
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='capacidades')
-    data_inicio = models.DateField()
-    data_fim = models.DateField(null=True, blank=True)
-    ativo = models.BooleanField(default=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['vinculo_docente', 'disciplina'],
-                condition=models.Q(ativo=True),
-                name='unique_capacidade_ativa'
-            )
-        ]
 
 
 class Funcao(models.Model):
@@ -254,3 +239,30 @@ class DadosDiscente(models.Model):
 
     def __str__(self):
         return f"{self.atribuicao.pessoa.nome_completo} - Dados Discente"
+
+
+class DadosDocente(models.Model):
+    atribuicao = models.OneToOneField(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='dados_docente')
+
+    def __str__(self):
+        return f"{self.atribuicao.pessoa.nome_completo} - Dados Docente"
+
+    def possui_treinamento_valido(self) -> bool:
+        return True
+
+
+class Capacidade(models.Model):
+    dados_docente = models.ForeignKey(DadosDocente, on_delete=models.CASCADE, related_name='capacidades')
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='capacidades')
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['dados_docente', 'disciplina'],
+                condition=models.Q(ativo=True),
+                name='unique_capacidade_ativa'
+            )
+            ]
