@@ -2,7 +2,7 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3 e 4 concluídas e commitadas (25/08/2026) — ver `docs/08 - ANDAMENTO_DO_PROJETO.md` para o relato da sessão. Faltam as Etapas 5 a 9 (remoção do modelo antigo, reescrita do Service, ajuste de Views/Templates, endpoint de API, fechamento).
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4 e 5a concluídas e commitadas (25/08/2026) — ver `docs/08`, `09` e `10 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Etapa 5b combinada com a Etapa 6 (interdependentes), a fazer na mesma sessão. Faltam Etapas 5b, 6, 7, 8 e 9.
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -95,14 +95,30 @@ Ao desenhar `DadosDiscente`, ficou claro que RM, RA e Código ANAC (CANAC) **nã
 
 **Fazer só depois que a Etapa 4 estiver completa e testada** — remover cedo demais deixa o projeto num estado quebrado por mais tempo do que necessário.
 
-- [ ] Remover testes que dependem do que vai sumir: `test_services.py` (testes de `AssociarHabilitacaoService`)
-- [ ] Remover `AssociarHabilitacaoService` de `services.py`
-- [ ] Remover endpoint `POST /api/pessoas/funcoes-gestao/habilitacoes/`: view, serializers (`FuncaoGestaoHabilitacaoInputSerializer`/`OutputSerializer`), rota em `api_urls.py`
-- [ ] Remover Models: `FuncaoGestaoHabilitacao`, `Habilitacao`, `FuncaoGestao`, `VinculoGestao`, `VinculoDocente` (⚠️ só depois de confirmar que `DadosDocente` já assumiu tudo que era necessário), `VinculoDiscente`, `Vinculo`
-- [ ] Remover do Admin o registro desses Models
-- [ ] Gerar migration de remoção (`makemigrations` vai detectar as remoções automaticamente)
-- [ ] Rodar `pytest` — checar o que quebrou e corrigir (Template Views de lista/detalhe de Pessoa provavelmente referenciam `pessoa.vinculos.all()` — precisam ser reescritas para `pessoa.atribuicoes.all()` ou nome equivalente)
-- [ ] Commit: `refactor: remove Vinculo, FuncaoGestao, Habilitacao e AssociarHabilitacaoService`
+Dividida em duas partes, decisão tomada na execução (25/08/2026): **5a** cobre o que é isolado no projeto (nada mais depende disso), seguro de remover de uma vez; **5b** cobre `Vinculo` e subtipos, que estão espalhados por Service/Views/Templates e precisam ser removidos junto com a reescrita do Service (Etapa 6), para não deixar o projeto quebrado no meio do caminho.
+
+### 5a — Remover `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`, `AssociarHabilitacaoService` ✅ Concluída (25/08/2026)
+
+- [x] Remover testes que dependem do que vai sumir: `test_services.py` (testes de `AssociarHabilitacaoService`) — arquivo apagado inteiro
+- [x] Remover `AssociarHabilitacaoService` de `services.py` (e o import de `FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao`/`TipoFuncaoGestao` que só ela usava)
+- [x] Remover endpoint `POST /api/pessoas/funcoes-gestao/habilitacoes/`: a classe `AssociarHabilitacaoView` inteira em `views.py` (não estava mapeada de antemão no plano — só apareceu ao rodar `makemigrations`, via `ImportError`), rota em `api_urls.py`, e os imports de `FuncaoGestao`/`Habilitacao`/`get_object_or_404`/os 2 serializers correspondentes que só essa View usava
+- [x] Remover Models: `TipoFuncaoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao` — as 4 partes precisam sair juntas (uma tentativa parcial gerou `NameError`, porque `FuncaoGestaoHabilitacao` referencia as outras duas)
+- [x] Remover do Admin o registro dessas 3 entidades, e aproveitado para registrar `ExperienciaProfissional`, que tinha ficado de fora quando foi criada (Etapa 4.3)
+- [x] Migration `0012_remove_funcaogestaohabilitacao_funcao_gestao_and_more` gerada e aplicada
+- [x] `pytest` — `5 passed` (queda de 7 para 5 é esperada: os 2 testes de `AssociarHabilitacaoService` foram removidos)
+- [x] Commit: `refactor: remove FuncaoGestao, Habilitacao, FuncaoGestaoHabilitacao e AssociarHabilitacaoService` (`49142fa`)
+
+**Nota sobre o percurso real:** a remoção não foi tão isolada quanto o plano original supunha — `AssociarHabilitacaoView` em `views.py` era uma dependência não mapeada, só descoberta quando `makemigrations` disparou um `ImportError` em cadeia (`config/urls.py` → `pessoas/urls.py` → `views.py` → `services.py`). Lição registrada: mesmo um Service "isolado" pode ter consumidores em camadas diferentes (Model → Service → View → URL) que só aparecem ao tentar rodar o projeto de ponta a ponta, não ao inspecionar um arquivo por vez. Ver `docs/10 - ANDAMENTO_DO_PROJETO.md` para o relato completo dos erros e como foram diagnosticados.
+
+### 5b — Remover `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`
+
+*Pendente. Fazer na mesma sessão que a Etapa 6 (reescrita do Service), já que ambas são interdependentes — remover `Vinculo` sem já ter o Service novo pronto deixaria o projeto quebrado.*
+
+- [ ] Remover Models: `VinculoGestao`, `VinculoDocente` (⚠️ confirmar que `DadosDocente` já assumiu tudo que era necessário — `possui_treinamento_valido()` já foi migrado na Etapa 4.2), `VinculoDiscente`, `Vinculo`
+- [ ] Remover do Admin o registro desses 4 Models
+- [ ] Gerar migration de remoção
+- [ ] Rodar `pytest` — checar o que quebrou (esperado: bastante coisa, até a Etapa 6 estar pronta) e corrigir junto com a Etapa 6
+- [ ] Commit, provavelmente combinado com o commit da Etapa 6
 
 ---
 

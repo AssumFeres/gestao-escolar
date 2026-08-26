@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2, 3 e 4 concluídas (25/08/2026)** — `Pessoa` ampliada (incluindo RM/RA/CANAC), catálogo `Funcao` criado e populado (9 Funções), `AtribuicaoFuncao` criado, e as 3 extensões (`DadosDiscente`, `DadosDocente` com ajuste de FK em `Capacidade`, `ExperienciaProfissional`) implementadas. Faltam as Etapas 5 a 9 (remoção do modelo antigo, reescrita do Service, ajuste de Views/Templates, endpoint de API, fechamento). Detalhe da sessão em `docs/08 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2, 3, 4 e 5a concluídas (25/08/2026)** — modelo novo completo, e `FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao`/`AssociarHabilitacaoService` já removidos do código. Etapa 5b (remover `Vinculo` e subtipos) foi deliberadamente combinada com a Etapa 6 (reescrita do Service), por serem interdependentes — fica para sessão dedicada. Detalhe das sessões em `docs/08`, `09` e `10 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -87,11 +87,11 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ### Itens historicamente concluídos, agora em revisão pela migração
 *Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) e serão removidos ou reescritos como parte da migração em andamento — mantidos aqui só como registro histórico do que já existiu, não como trabalho ainda válido:*
 
-- [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **substituídos**
-- [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **parcialmente substituído**
-- [x] ~~`AssociarHabilitacaoService` + 2 testes~~ — 20/08/2026 (`89ed300`) — **removido, conceito absorvido pelo catálogo aberto `Funcao`**
-- [x] ~~`CadastrarPessoaComVinculoService` + 4 testes~~ — 20/08/2026 (`b347ae3`) — **em reescrita** (evolui para buscar-ou-criar por CPF)
-- [x] ~~Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/`~~ — 21/08/2026 (`bb01f2e`) — **removido**
+- [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **`FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao` já removidos de fato (25/08/2026, `49142fa`); `Vinculo` e subtipos ainda em uso, remoção prevista na Etapa 5b**
+- [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **registro de `FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao` já removido (25/08/2026)**
+- [x] ~~`AssociarHabilitacaoService` + 2 testes~~ — 20/08/2026 (`89ed300`) — **removido de fato em 25/08/2026 (`49142fa`)**, conceito absorvido pelo catálogo aberto `Funcao`
+- [x] ~~`CadastrarPessoaComVinculoService` + 4 testes~~ — 20/08/2026 (`b347ae3`) — **em reescrita** (evolui para buscar-ou-criar por CPF, Etapa 6)
+- [x] ~~Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/`~~ — 21/08/2026 (`bb01f2e`) — **removido de fato em 25/08/2026 (`49142fa`)**
 - [x] ~~Endpoint de API `POST /api/pessoas/pessoas/`~~ — 23/08/2026 (`97e2915`) — **em revisão**
 - [x] ~~Campo `sigla` em `Disciplina`~~ — 23/08/2026 (`fbfc3b1`) — **não afetado pela migração**, mantido válido
 - [x] ~~Template View — lista de Pessoas~~ — 23/08/2026 (`f337e0d`) — **em revisão**
@@ -115,15 +115,15 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 | Métrica | Valor atual |
 |---|---|
-| Services implementados (modelo antigo, sob revisão) | 3 (1 removido, 1 em reescrita, 1 não afetado) |
-| Endpoints de API implementados (modelo antigo, sob revisão) | 3 (1 removido, 1 em revisão, 1 não afetado) |
-| Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão) |
-| Testes automatizados | 7 (2 serão removidos com `AssociarHabilitacaoService`) |
-| Models do modelo antigo | 9 (7 serão removidos, ver lista de migração) |
-| Models do modelo novo | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) — Etapa 4 do plano de migração completa |
+| Services implementados (modelo antigo, sob revisão) | 1 (`AssociarHabilitacaoService` já removido; `CadastrarPessoaComVinculoService` em reescrita na Etapa 6; `BuscarEnderecoPorCepService` não afetado) |
+| Endpoints de API implementados (modelo antigo, sob revisão) | 2 (endpoint de Habilitação já removido; `CadastrarPessoaView` em revisão; `BuscarCepView` não afetado) |
+| Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão, aguardando Etapa 5b/6) |
+| Testes automatizados | 5 (todos passando; os 2 de `AssociarHabilitacaoService` foram removidos na Etapa 5a) |
+| Models do modelo antigo restantes | 4 (`Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`) — a sair na Etapa 5b, junto da reescrita do Service (Etapa 6) |
+| Models do modelo novo | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) |
 | Catálogo `Funcao` populado | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`) |
 | Última branch ativa | `feature/refatoracao-funcao` |
-| Último commit | `1b7046a` — `feat: model ExperienciaProfissional` |
+| Último commit | `49142fa` — `refactor: remove FuncaoGestao, Habilitacao, FuncaoGestaoHabilitacao e AssociarHabilitacaoService` |
 
 ---
 ---
