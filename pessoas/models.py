@@ -266,3 +266,15 @@ class Capacidade(models.Model):
                 name='unique_capacidade_ativa'
             )
             ]
+
+class ExperienciaProfissional(models.Model):
+    atribuicao = models.ForeignKey(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='experiencias_profissionais')
+    organizacao = models.CharField(max_length=200)
+    cargo = models.CharField(max_length=100)
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cargo} em {self.organizacao}"
+
+        
