@@ -4,24 +4,35 @@ pessoas/models.py
 Módulo de domínio: Gestão de Pessoas.
 
 Classes:
-    Pessoa                — dados cadastrais da pessoa física, com Endereco como VO embutido;
-                            inclui identificação ampliada (FE 007/FE 008) e identificadores
-                            específicos (RM, RA, CANAC).
-    Disciplina             — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
-    CategoriaFuncao        — enum que classifica uma Funcao como Discente/Docente/Gestão,
-                            usado pela interface para decidir qual formulário exibir
-                            (não é regra de negócio — essa mora nas extensões, por estrutura).
-    Funcao                 — catálogo aberto de cargos/funções (Diretor, Coordenador de
-                            Curso de X, Docente, Discente, etc.); id + nome livre + categoria.
-    AtribuicaoFuncao       — liga Pessoa a Funcao; dados comuns a qualquer atribuição
-                            (situação, datas, ativo). Substitui o antigo Vinculo.
-    DadosDiscente          — extensão de AtribuicaoFuncao (OneToOne) para Discente:
-                            matrícula ANAC, documentação de estrangeiro, contato de
-                            emergência, responsável legal.
-    DadosDocente           — extensão de AtribuicaoFuncao (OneToOne) para Docente.
-    Capacidade             — aptidão de um DadosDocente para ministrar uma Disciplina.
-    ExperienciaProfissional — histórico profissional ligado a uma AtribuicaoFuncao,
-                            relevante apenas para Funções de categoria Gestão (FOP 402).
+    Pessoa                  — dados cadastrais da pessoa física, com Endereco como VO embutido;
+                              inclui identificação ampliada (FE 007/FE 008) e identificadores
+                              específicos (RM, RA, CANAC).
+    Disciplina               — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
+    CategoriaFuncao          — enum que classifica uma Funcao como Discente/Docente/Gestão,
+                              usado pela interface para decidir qual formulário exibir
+                              (não é regra de negócio — essa mora nas extensões, por estrutura).
+    Funcao                   — catálogo aberto de cargos/funções (Diretor, Coordenador de
+                              Curso de X, Docente, Discente, etc.); id + nome livre + categoria.
+    VinculoFormal            — catálogo aberto de entidades de vínculo formal/contratual
+                              (ex: FAPETI, PMT) — evita erro de digitação num dado repetido.
+    AtribuicaoFuncao         — liga Pessoa a Funcao; dados comuns a qualquer atribuição
+                              (situação, datas, ativo). Substitui o antigo Vinculo.
+    HistoricoVinculoFormal   — histórico de VinculoFormal ao longo de uma AtribuicaoFuncao;
+                              repetível (a entidade contratante pode mudar com o tempo).
+                              Aplica-se só a categorias Docente e Gestão, nunca Discente.
+    DadosDiscente            — extensão de AtribuicaoFuncao (OneToOne) para Discente:
+                              matrícula ANAC, documentação de estrangeiro, contato de
+                              emergência, responsável legal.
+    DadosDocente             — extensão de AtribuicaoFuncao (OneToOne) para Docente;
+                              inclui os Requisitos de Contratação da FE 008 (RBAC 141).
+    FormacaoDocente          — Graduação/Formação Profissional/Aperfeiçoamento (FE 008,
+                              seções 3/4/5), tabela única com campo tipo_formacao (DRY).
+                              Guarda atualizado_em para futura detecção de FE 008 desatualizada.
+    Capacidade               — aptidão de um DadosDocente para ministrar uma Disciplina;
+                              referencia o FormacaoDocente que comprova a capacidade.
+                              Guarda atualizado_em pelo mesmo motivo de FormacaoDocente.
+    ExperienciaProfissional  — histórico profissional ligado a uma AtribuicaoFuncao,
+                              relevante apenas para Funções de categoria Gestão (FOP 402).
 
 Regras de negócio complexas ficam em services.py, não aqui.
 """
@@ -143,6 +154,18 @@ class Funcao(models.Model):
         return self.nome
 
 
+class VinculoFormal(models.Model):
+    """
+    Catálogo aberto de entidades de vínculo formal/contratual (ex: FAPETI, PMT).
+    Evita erro de digitação num dado que se repete e pode mudar com o tempo — mesmo
+    raciocínio já aplicado a Funcao. Aplica-se só a Docente e Gestão, nunca a Discente.
+    """
+    nome = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nome
+
+
 class AtribuicaoFuncao(models.Model):
     pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='atribuicoes')
     funcao = models.ForeignKey(Funcao, on_delete=models.PROTECT, related_name='atribuicoes')
@@ -153,6 +176,21 @@ class AtribuicaoFuncao(models.Model):
 
     def __str__(self):
         return f"{self.pessoa.nome_completo} - {self.funcao.nome}"
+
+
+class HistoricoVinculoFormal(models.Model):
+    """
+    Histórico de VinculoFormal ao longo de uma AtribuicaoFuncao — repetível, porque a
+    entidade contratante pode mudar com o tempo sem que a pessoa mude de Função na escola
+    (ex: FAPETI de 2025 a 2026, depois FUSSUSS a partir de 2026, em aberto).
+    """
+    atribuicao = models.ForeignKey(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='historico_vinculo_formal')
+    vinculo_formal = models.ForeignKey(VinculoFormal, on_delete=models.PROTECT, related_name='historicos')
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.vinculo_formal.nome} ({self.data_inicio} - {self.data_fim or 'atual'})"
 
 
 class DadosDiscente(models.Model):
@@ -185,6 +223,17 @@ class DadosDiscente(models.Model):
 class DadosDocente(models.Model):
     atribuicao = models.OneToOneField(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='dados_docente')
 
+    # Requisitos de Contratação (FE 008, seção 6, RBAC 141)
+    experiencia_docente_comprovada = models.TextField(
+        blank=True,
+        help_text="Análise de declarações de serviço, CV, etc. — comprovação de experiência docente (RBAC 141)."
+    )
+    formacao_especifica_comprobatoria = models.ForeignKey(
+        'FormacaoDocente', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='comprova_requisito_para',
+        help_text="Curso que comprova formação específica na área de atuação (RBAC 141)."
+    )
+
     def __str__(self):
         return f"{self.atribuicao.pessoa.nome_completo} - Dados Docente"
 
@@ -192,12 +241,47 @@ class DadosDocente(models.Model):
         return True
 
 
+class TipoFormacaoDocente(models.TextChoices):
+    GRADUACAO = 'GRADUACAO', 'Graduação'
+    FORMACAO_PROFISSIONAL = 'FORMACAO_PROFISSIONAL', 'Formação Profissional'
+    APERFEICOAMENTO_PROFISSIONAL = 'APERFEICOAMENTO_PROFISSIONAL', 'Aperfeiçoamento Profissional'
+
+
+class FormacaoDocente(models.Model):
+    """
+    Graduação/Formação Profissional/Aperfeiçoamento (FE 008, seções 3/4/5) — tabela única
+    com campo tipo_formacao, evitando 3 Models quase idênticos (DRY).
+
+    'atualizado_em' guarda quando este registro mudou pela última vez — não usado ainda,
+    mas preparado para a futura funcionalidade de alertar quando a FE 008 impressa ficar
+    desatualizada em relação ao banco (numeração "4.1" etc. é calculada, pode mudar com
+    edições; ver item de Backlog "Alerta de FE 008 desatualizada").
+    """
+    dados_docente = models.ForeignKey(DadosDocente, on_delete=models.CASCADE, related_name='formacoes')
+    tipo_formacao = models.CharField(max_length=30, choices=TipoFormacaoDocente.choices)
+    curso = models.CharField(max_length=200)
+    entidade = models.CharField(max_length=200)
+    cidade = models.CharField(max_length=100)
+    uf = models.CharField(max_length=2)
+    ano_conclusao = models.IntegerField()
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.curso} ({self.get_tipo_formacao_display()})"
+
+
 class Capacidade(models.Model):
+    """'atualizado_em': mesmo propósito de FormacaoDocente.atualizado_em, ver docstring acima."""
     dados_docente = models.ForeignKey(DadosDocente, on_delete=models.CASCADE, related_name='capacidades')
     disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='capacidades')
+    formacao_comprobatoria = models.ForeignKey(
+        FormacaoDocente, on_delete=models.PROTECT, null=True, blank=True,
+        help_text="Curso (FormacaoDocente) que comprova a capacidade de ministrar esta disciplina."
+    )
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
