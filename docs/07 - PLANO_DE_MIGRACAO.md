@@ -2,9 +2,9 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08`, `09`, `10`, `11` e `12 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08`, `09`, `10`, `11`, `12` e `13 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
 
-**Etapa 7 completa (os 3 formulários especializados) em andamento desde 25/08/2026:** decisão de escopo — **formulário mais completo possível desde já**, para evitar retrabalho futuro. Sub-etapas 7.1 a 7.5 detalhadas na seção da Etapa 7 abaixo. **7.1 concluída** (categoria em `Funcao`, commit `36bf1fd`); **7.2 parada em ponto de decisão de design** (formato de entrada do Service para criar extensões) — retomar por ali. Falta ainda: testes de View/API (Etapa 8, parte pendente) e a Etapa 9 (fechamento formal, PR para `dev`).
+**Etapa 7 completa (os 3 formulários especializados) em andamento desde 25/08/2026:** decisão de escopo — **formulário mais completo possível desde já**, para evitar retrabalho futuro. Sub-etapas 7.1 a 7.5 detalhadas na seção da Etapa 7 abaixo. **7.1 concluída** (categoria em `Funcao`, commit `36bf1fd`); **inventário de dados completo** (`VinculoFormal`, `HistoricoVinculoFormal`, `FormacaoDocente`, ajustes em `DadosDocente`/`Capacidade`, commit `f086f57`); **7.2 concluída** (`CadastrarPessoaComFuncaoService` expandido + `PreencherRequisitosEDisciplinasDocenteService` novo, fluxo em 2 etapas para Docente, commit `04b461d`). Falta: 7.3 (Form), 7.4 (Template + JS + ajuste de Views quebradas pelo retorno de 3 valores), 7.5 (testes). ⚠️ **`views.py`/`serializers.py` estão quebrados neste momento** — ainda desempacotam 2 valores do Service, que agora retorna 3; corrigir só na 7.4, quando o formulário completo existir (decisão consciente, não esquecimento).
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -167,29 +167,57 @@ Feita na mesma sessão que a Etapa 6, como planejado — ambas interdependentes.
 - [x] `pytest` — `5 passed` em ambas as migrations
 - [x] Commit: `feat: adiciona categoria a Funcao (Discente/Docente/Gestao), em duas migrations` (`36bf1fd`)
 
-### 7.2 — Expandir o Service para criar extensões ⏸️ Parada em ponto de decisão
+### Inventário de dados completo ✅ Concluído (25/08/2026)
 
-*Sessão interrompida antes de codar — decisões de formato ficaram em aberto, registradas aqui para retomar exatamente daqui:*
+*Descoberto durante o desenho de 7.2/7.3: faltavam Models inteiros, não só ajustes — a análise detalhada do FE 008 preenchido (documento real de referência) revelou 4 peças que ainda não existiam.*
 
-**Decisão de mecanismo (já fechada):** o Service decide qual extensão criar checando `funcao.categoria` (estrutural, o campo novo da 7.1) — nunca por nome da `Funcao`, mesmo princípio já aplicado à regra "Discente não acumula".
+- [x] **`VinculoFormal`** — catálogo aberto (mesmo padrão de `Funcao`) para a entidade contratante (ex: FAPETI, PMT), evitando erro de digitação
+- [x] **`HistoricoVinculoFormal`** — tabela repetível ligada a `AtribuicaoFuncao` (FK normal, não 1:1), pois a entidade contratante pode mudar ao longo do tempo sem a pessoa mudar de Função na escola. Aplica-se a **Docente e Gestão**, nunca a Discente.
+- [x] **`FormacaoDocente`** — promovida do Backlog para código real (Graduação/Formação Profissional/Aperfeiçoamento, FE 008 seções 3-5), exatamente conforme a especificação já registrada no Kanban, com `atualizado_em` adicionado (novo, ver abaixo)
+- [x] **`DadosDocente`** ganhou os Requisitos de Contratação (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria` — FK para `FormacaoDocente` **por string**, `'FormacaoDocente'`, por causa de referência circular: `DadosDocente` aponta para `FormacaoDocente`, que aponta de volta para `DadosDocente`)
+- [x] **`Capacidade`** ganhou `formacao_comprobatoria` (FK para `FormacaoDocente`) e `atualizado_em`
+- [x] **Campo `atualizado_em`** (`auto_now=True`) adicionado a `FormacaoDocente` e `Capacidade` — não usado ainda, mas prepara terreno para uma futura funcionalidade: alertar quando a FE 008 impressa ficar desatualizada em relação ao banco (a numeração "4.1" etc. é calculada, pode mudar silenciosamente com edições — ver item de Backlog "Alerta de FE 008 desatualizada")
+- [x] Migration `0016_vinculoformal_capacidade_atualizado_em_and_more` — sem pedido de valor one-off (todos os campos novos `blank=True`/`null=True`)
+- [x] `pytest` — `5 passed`
+- [x] Commit: `feat: adiciona VinculoFormal, HistoricoVinculoFormal, FormacaoDocente e requisitos de contratacao de DadosDocente` (`f086f57`)
 
-**Decisão de formato de entrada (ainda em aberto, retomar por aqui):** proposta em discussão era o Service ganhar dois parâmetros novos:
-- `dados_extensao: dict = None` — para `DadosDiscente` ou `DadosDocente` (extensões 1:1, um dict só)
-- `experiencias: list = None` — para `ExperienciaProfissional` (repetível, precisa de lista de dicts, um `.create()` por item, só quando `categoria == GESTAO`)
+**Esclarecido durante a discussão:** o "documento comprobatório" da seção 7 do FE 008 (ex: "4.1") **não é um upload de arquivo** — é uma referência numérica a um item já cadastrado nas seções 3-5. A FK `Capacidade.formacao_comprobatoria → FormacaoDocente` já resolve isso por completo, sem campo de link/anexo adicional.
 
-Não decidido ainda: se esse formato (dois parâmetros separados) é o melhor, ou se vale um formato de entrada mais unificado. Retomar essa decisão antes de escrever qualquer código da 7.2.
+**Decisão sobre a UI do "código" (ex: 4.1):** não deve ser um campo de texto livre para digitar — vira um **dropdown** de `FormacaoDocente` (mostrando algo como "4.1 - Mecânico..." como rótulo visual, familiar ao formulário físico), mas salvando a referência real ao registro, não o texto do código. Detalhe a implementar na 7.3/7.4, registrado aqui para não se perder.
+
+### 7.2 — Expandir o Service para criar extensões ✅ Concluída (25/08/2026)
+
+**Decisão de formato de entrada, fechada:** parâmetros nomeados e separados por natureza (Opção A, preferida à unificação num dict genérico): `dados_extensao: dict` (1:1), `formacoes: list`, `experiencias: list`, `historico_vinculo_formal: list`.
+
+**Descoberta no meio do caminho — referência circular funcional, não só de código:** ao desenhar a criação de `DadosDocente` + Requisitos de Contratação na mesma chamada, ficou claro que `formacao_especifica_comprobatoria` não pode ser preenchido na mesma passada — ele referencia um `FormacaoDocente` que só existe (com `id`) **depois** que `DadosDocente` já foi criado e as Formações já foram salvas. Não é um erro de sintaxe (esse já foi resolvido com FK por string), é uma dependência real de **ordem no tempo**.
+
+**Decisão de fluxo, motivada pela divisão real de responsabilidade na EMCA:** Secretaria/Auxiliar Administrativo preenchem os dados básicos do Docente + Formações (tabelas 3-5) — botão **"Salvar"**. Depois, quem preenche Requisitos de Contratação e Disciplinas/Capacidade (seções 6-7) aperta um botão **"Preencher Requisitos de Contratação"**, que salva o que estiver preenchido e abre a segunda parte do formulário direto no registro certo (via `id` na URL — sem precisar buscar o Docente de novo). O Coordenador de Curso nunca mexe no sistema — só assina o papel impresso.
+
+**Dois Services resultantes:**
+- `CadastrarPessoaComFuncaoService` (existente, expandido) — Pessoa + `AtribuicaoFuncao` + extensão 1:1 (`DadosDiscente`/`DadosDocente`) + `FormacaoDocente` (0-N, só Docente) + `ExperienciaProfissional` (0-N, só Gestão) + `HistoricoVinculoFormal` (1-N, Docente ou Gestão). Retorna `(pessoa, atribuicao, dados_docente)` — 3 valores agora, não 2; `dados_docente` vem `None` para Discente/Gestão.
+- `PreencherRequisitosEDisciplinasDocenteService` (novo) — recebe um `DadosDocente` já existente, completa `experiencia_docente_comprovada`/`formacao_especifica_comprobatoria`, e cria as `Capacidade` (1-N), agora com `FormacaoDocente` já disponível para referenciar.
+
+- [x] Os 4 testes de `test_cadastrar_pessoa.py` reajustados para desempacotar 3 valores (não 2) e para passar `categoria` ao criar `Funcao` de teste (campo obrigatório desde a 7.1)
+- [x] `pytest` — `5 passed`
+- [x] Commit: `feat: expande Service com PreencherRequisitosEDisciplinasDocenteService, fluxo em 2 etapas para Docente` (`04b461d`)
+
+**⚠️ Estado consciente de "quebrado" até a 7.4:** `pessoas/views.py` e `pessoas/serializers.py` ainda desempacotam `pessoa, atribuicao = Service().executar(...)` (2 valores) — vão falhar com `ValueError` se alguém tentar cadastrar pelo formulário HTML ou API agora. Decisão consciente de não corrigir isso ainda, porque o ajuste de verdade (Form completo, dropdown de Função, campos dinâmicos) é da 7.4 — corrigir a View isoladamente agora seria retrabalho.
 
 ### 7.3 — Expandir o Form ⏳ Não iniciada
 
-Form ganha todos os campos possíveis das 3 categorias (a maioria opcional/condicional, já que só uma categoria de campos é preenchida por vez, dependendo da Função escolhida no dropdown único).
+Form ganha todos os campos possíveis das 3 categorias (a maioria opcional/condicional, já que só uma categoria de campos é preenchida por vez, dependendo da Função escolhida no dropdown único). Inclui os campos repetíveis (Formação, Capacidade, Experiência Profissional, Histórico de Vínculo Formal) como blocos de "adicionar linha" no HTML.
 
-### 7.4 — Template + JavaScript ⏳ Não iniciada
+### 7.4 — Template + JavaScript + correção de Views ⏳ Não iniciada
 
-Agrupar os campos em blocos por categoria no HTML (ex: `<div>` com `data-categoria="DISCENTE"` etc.), e o JS mostra/esconde o bloco certo conforme o dropdown de Função muda — decisão de fluxo já fechada acima.
+- Agrupar os campos em blocos por categoria no HTML (ex: `<div>` com `data-categoria="DISCENTE"` etc.), e o JS mostra/esconde o bloco certo conforme o dropdown de Função muda
+- JS também para os blocos "adicionar linha" das tabelas repetíveis (Formação, Capacidade, etc.) — mesmo espírito do JS de busca de CEP, com propósito de negócio real (objetivo do PI)
+- Corrigir `views.py`/`serializers.py` para o retorno de 3 valores do Service (item pendente desde a 7.2)
+- Nova View + URL para a segunda etapa do cadastro de Docente (`PreencherRequisitosEDisciplinasDocenteService`), com o `id` do `DadosDocente` na URL
+- Dropdown de `FormacaoDocente` na seção de Disciplinas (Capacidade), mostrando o rótulo "4.1 - Curso..." mas salvando a referência real, não o texto do código
 
 ### 7.5 — Testes do Service expandido ⏳ Não iniciada
 
-Cobrir a criação de `DadosDiscente`/`DadosDocente`/`ExperienciaProfissional` junto do cadastro, conforme a categoria escolhida.
+Cobrir a criação de `DadosDiscente`/`DadosDocente`/`FormacaoDocente`/`ExperienciaProfissional`/`HistoricoVinculoFormal` junto do cadastro, conforme a categoria escolhida, e o fluxo em 2 etapas do Docente (`PreencherRequisitosEDisciplinasDocenteService`).
 
 ---
 
