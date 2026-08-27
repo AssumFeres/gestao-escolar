@@ -96,48 +96,6 @@ class Pessoa(models.Model):
         return self.nome_completo
 
 
-class Vinculo(models.Model):
-    pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='vinculos')
-    data_inicio = models.DateField()
-    data_fim = models.DateField(null=True, blank=True)
-    ativo = models.BooleanField(default=True)
-
-    @property
-    def tipo_legivel(self):
-        if hasattr(self, 'vinculodiscente'):
-            return f"Discente (matricula {self.vinculodiscente.numero_matricula})"
-        if hasattr(self, 'vinculodocente'):
-            return "Docente"
-        if hasattr(self, 'vinculogestao'):
-            return "Gestao"
-        return "Desconhecido"
-
-
-class VinculoDiscente(Vinculo):
-    numero_matricula = models.CharField(max_length=20, unique=True)
-    situacao = models.CharField(max_length=30)
-
-    def __str__(self):
-        return f"{self.pessoa.nome_completo} - Discente ({self.numero_matricula})"
-
-
-class VinculoDocente(Vinculo):
-    situacao = models.CharField(max_length=30)
-
-    def __str__(self):
-        return f"{self.pessoa.nome_completo} - Docente"
-
-    def possui_treinamento_valido(self) -> bool:
-        return True
-
-
-class VinculoGestao(Vinculo):
-    situacao = models.CharField(max_length=30)
-
-    def __str__(self):
-        return f"{self.pessoa.nome_completo} - Gestão"
-
-
 class Disciplina(models.Model):
     """Versão mínima — campo 'modulo' será adicionado quando o módulo de Turmas for construído."""
     sigla = models.CharField(

@@ -10,29 +10,42 @@ from django.db import transaction
 from infraestrutura.cep.adapters import ViaCepClient
 
 
-class CadastrarPessoaComVinculoService:
+class CadastrarPessoaComFuncaoService:
     """
-    SRP: orquestra a criação de Pessoa + seu primeiro Vinculo numa transação única.
-    Não conhece Django View nem API externa — só recebe dados já validados.
+    SRP: orquestra o cadastro de Pessoa + AtribuicaoFuncao numa transação única,
+    buscando Pessoa existente pelo CPF antes de criar uma nova (evita duplicidade
+    quando a mesma pessoa acumula uma nova Função ou repete curso).
+
+    Não cria extensões (DadosDiscente/DadosDocente) — isso é responsabilidade
+    da Etapa 7, quando os formulários especializados por categoria existirem.
+
+    Regra de negócio: uma Pessoa com Função de Discente (identificada pela
+    existência de DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca
+    pelo texto de Funcao.nome — nome é editável, estrutura não) não pode acumular
+    outra Função.
     """
 
-    def executar(self, dados_pessoa: dict, tipo_vinculo: str, dados_vinculo: dict):
-        from .models import Pessoa, VinculoDiscente, VinculoDocente, VinculoGestao
-
-        mapa_vinculo = {
-            'DISCENTE': VinculoDiscente,
-            'DOCENTE': VinculoDocente,
-            'GESTAO': VinculoGestao,
-        }
-        ModelVinculo = mapa_vinculo.get(tipo_vinculo)
-        if ModelVinculo is None:
-            raise ValidationError(f"Tipo de vínculo inválido: {tipo_vinculo}")
+    def executar(self, dados_pessoa: dict, funcao, dados_atribuicao: dict):
+        from .models import Pessoa, AtribuicaoFuncao
 
         with transaction.atomic():
-            pessoa = Pessoa.objects.create(**dados_pessoa)
-            vinculo = ModelVinculo.objects.create(pessoa=pessoa, **dados_vinculo)
+            pessoa, criada = Pessoa.objects.get_or_create(
+                cpf=dados_pessoa['cpf'],
+                defaults=dados_pessoa,
+            )
 
-        return pessoa, vinculo
+            if not criada:
+                ja_e_discente = pessoa.atribuicoes.filter(dados_discente__isnull=False).exists()
+                if ja_e_discente:
+                    raise ValidationError(
+                        "Esta pessoa já possui a Função Discente e não pode acumular outra Função."
+                    )
+
+            atribuicao = AtribuicaoFuncao.objects.create(
+                pessoa=pessoa, funcao=funcao, **dados_atribuicao
+            )
+
+        return pessoa, atribuicao
 
 
 class BuscarEnderecoPorCepService:

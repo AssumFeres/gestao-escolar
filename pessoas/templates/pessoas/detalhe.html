@@ -27,28 +27,30 @@ de Gestao Escolar{% endblock %} {% block content %}
   </tr>
 </table>
 
-<h3>Vinculos</h3>
-{% if pessoa.vinculos.all %}
+<h3>Funcoes</h3>
+{% if pessoa.atribuicoes.all %}
 <table>
   <thead>
     <tr>
-      <th>Tipo</th>
+      <th>Funcao</th>
+      <th>Situacao</th>
       <th>Data inicio</th>
       <th>Data fim</th>
       <th>Ativo</th>
     </tr>
   </thead>
   <tbody>
-    {% for vinculo in pessoa.vinculos.all %}
+    {% for atribuicao in pessoa.atribuicoes.all %}
     <tr>
-      <td>{{ vinculo.tipo_legivel }}</td>
-      <td>{{ vinculo.data_inicio }}</td>
-      <td>{{ vinculo.data_fim|default:"-----" }}</td>
-      <td>{{ vinculo.ativo|yesno:"Sim,Nao" }}</td>
+      <td>{{ atribuicao.funcao.nome }}</td>
+      <td>{{ atribuicao.situacao }}</td>
+      <td>{{ atribuicao.data_inicio }}</td>
+      <td>{{ atribuicao.data_fim|default:"-----" }}</td>
+      <td>{{ atribuicao.ativo|yesno:"Sim,Nao" }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% else %}
-<p>Nenhum vinculo cadastrado.</p>
+<p>Nenhuma funcao cadastrada.</p>
 {% endif %} {% endblock %}

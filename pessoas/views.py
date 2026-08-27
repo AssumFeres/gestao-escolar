@@ -3,7 +3,7 @@ pessoas/views.py
 
 Views (API): traduzem HTTP <-> Service. Não contêm regra de negócio.
 """
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.core.exceptions import ValidationError
 from django.views.generic import ListView, DetailView, View
 
@@ -11,11 +11,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Pessoa
+from .models import Pessoa, Funcao
 from .forms import CadastrarPessoaForm
 from .services import (
     BuscarEnderecoPorCepService,
-    CadastrarPessoaComVinculoService,
+    CadastrarPessoaComFuncaoService,
 )
 from .serializers import (
     BuscarCepInputSerializer, EnderecoOutputSerializer,
@@ -43,7 +43,7 @@ class BuscarCepView(APIView):
 
 class CadastrarPessoaView(APIView):
     """
-    SRP: única responsabilidade é traduzir HTTP <-> CadastrarPessoaComVinculoService.
+    SRP: única responsabilidade é traduzir HTTP <-> CadastrarPessoaComFuncaoService.
     """
 
     def post(self, request):
@@ -66,18 +66,18 @@ class CadastrarPessoaView(APIView):
             "endereco_uf": dados["endereco_uf"],
         }
 
-        dados_vinculo = {
+        funcao = get_object_or_404(Funcao, pk=dados["funcao_id"])
+
+        dados_atribuicao = {
             "data_inicio": dados["data_inicio"],
             "situacao": dados["situacao"],
         }
-        if dados["tipo_vinculo"] == "DISCENTE":
-            dados_vinculo["numero_matricula"] = dados.get("numero_matricula", "")
 
         try:
-            pessoa, vinculo = CadastrarPessoaComVinculoService().executar(
+            pessoa, atribuicao = CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=dados_pessoa,
-                tipo_vinculo=dados["tipo_vinculo"],
-                dados_vinculo=dados_vinculo,
+                funcao=funcao,
+                dados_atribuicao=dados_atribuicao,
             )
         except ValidationError as e:
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -85,8 +85,8 @@ class CadastrarPessoaView(APIView):
         output_serializer = CadastrarPessoaOutputSerializer({
             "pessoa_id": pessoa.id,
             "nome_completo": pessoa.nome_completo,
-            "tipo_vinculo": dados["tipo_vinculo"],
-            "vinculo_id": vinculo.id,
+            "funcao": funcao.nome,
+            "atribuicao_id": atribuicao.id,
         })
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -102,7 +102,7 @@ class ListaPessoasView(ListView):
 
 class DetalhePessoaView(DetailView):
     """
-    Template View: mostra os dados completos de uma Pessoa e seus vinculos.
+    Template View: mostra os dados completos de uma Pessoa e suas Funções.
     """
     model = Pessoa
     template_name = 'pessoas/detalhe.html'
@@ -112,7 +112,7 @@ class DetalhePessoaView(DetailView):
 class NovoCadastroPessoaView(View):
     """
     Template View: formulario HTML de cadastro. Reusa o mesmo Service
-    da API (CadastrarPessoaComVinculoService) — mesma regra de negocio,
+    da API (CadastrarPessoaComFuncaoService) — mesma regra de negocio,
     caminho de entrada diferente.
     """
     template_name = 'pessoas/form_pessoa.html'
@@ -144,21 +144,20 @@ class NovoCadastroPessoaView(View):
             "endereco_uf": dados["endereco_uf"],
         }
 
-        dados_vinculo = {
+        dados_atribuicao = {
             "data_inicio": dados["data_inicio"],
             "situacao": dados["situacao"],
         }
-        if dados["tipo_vinculo"] == "DISCENTE":
-            dados_vinculo["numero_matricula"] = dados.get("numero_matricula", "")
 
         try:
-            pessoa, vinculo = CadastrarPessoaComVinculoService().executar(
+            pessoa, atribuicao = CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=dados_pessoa,
-                tipo_vinculo=dados["tipo_vinculo"],
-                dados_vinculo=dados_vinculo,
+                funcao=dados["funcao"],
+                dados_atribuicao=dados_atribuicao,
             )
         except ValidationError as e:
             form.add_error(None, str(e))
             return render(request, self.template_name, {'form': form})
 
         return redirect('detalhe-pessoa', pk=pessoa.id)
+

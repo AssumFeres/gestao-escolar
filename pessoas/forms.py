@@ -1,20 +1,16 @@
 """
 pessoas/forms.py
 
-Form de entrada para a Template View de cadastro. Espelha os campos
-do CadastrarPessoaInputSerializer (API), mas é usado pela interface HTML.
+Form de entrada para a Template View de cadastro. Versão de transição:
+cadastra Pessoa + Função genérica, sem os campos específicos por categoria
+(FE 007/FE 008/FOP 402) — isso é responsabilidade da Etapa 7.
 """
 
 from django import forms
+from .models import Funcao
 
 
 class CadastrarPessoaForm(forms.Form):
-    TIPO_VINCULO_CHOICES = [
-        ('DISCENTE', 'Discente'),
-        ('DOCENTE', 'Docente'),
-        ('GESTAO', 'Gestao'),
-    ]
-
     nome_completo = forms.CharField(max_length=200, label="Nome completo")
     cpf = forms.CharField(max_length=11, label="CPF")
     data_nascimento = forms.DateField(
@@ -31,12 +27,10 @@ class CadastrarPessoaForm(forms.Form):
     endereco_cidade = forms.CharField(max_length=100, label="Cidade")
     endereco_uf = forms.CharField(max_length=2, label="UF")
 
-    tipo_vinculo = forms.ChoiceField(choices=TIPO_VINCULO_CHOICES, label="Tipo de vinculo")
+    funcao = forms.ModelChoiceField(queryset=Funcao.objects.all(), label="Funcao")
     data_inicio = forms.DateField(
-        label="Data de inicio do vinculo", widget=forms.DateInput(attrs={'type': 'date'})
+        label="Data de inicio", widget=forms.DateInput(attrs={'type': 'date'})
     )
     situacao = forms.CharField(max_length=30, initial="ATIVO", label="Situacao")
-    numero_matricula = forms.CharField(
-        max_length=20, required=False, label="Numero de matricula (somente Discente)"
-    )
 
+    
