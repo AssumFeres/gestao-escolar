@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1, 2, 3, 4 e 5a concluídas (25/08/2026)** — modelo novo completo, e `FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao`/`AssociarHabilitacaoService` já removidos do código. Etapa 5b (remover `Vinculo` e subtipos) foi deliberadamente combinada com a Etapa 6 (reescrita do Service), por serem interdependentes — fica para sessão dedicada. Detalhe das sessões em `docs/08`, `09` e `10 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 concluídas (25/08/2026)**, com boa parte das Etapas 7 e 8 já resolvidas como efeito colateral necessário da reescrita do Service. O modelo antigo (`Vinculo` e subtipos, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`, `AssociarHabilitacaoService`) foi **totalmente removido** do código — o sistema roda inteiramente sobre `Funcao`/`AtribuicaoFuncao`. Testado automatizado (`pytest`) e manualmente pelo navegador, de ponta a ponta. Faltam: os 3 formulários especializados por categoria (Etapa 7, tratada como bloco próprio), testes de View/API (Etapa 8), e o fechamento formal (Etapa 9, PR para `dev`). Detalhe das sessões em `docs/08` a `11 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -43,15 +43,15 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## 📋 A Fazer — CRUD completo do módulo Pessoas
 
-*Bloqueado até a migração em "Em Andamento" ser concluída — os itens abaixo dependem do modelo novo (`Funcao`/`AtribuicaoFuncao`) estar implementado.*
+*Desbloqueado (25/08/2026): a base do modelo novo (`Funcao`/`AtribuicaoFuncao` + extensões) está implementada, testada e commitada em `feature/refatoracao-funcao`. Um formulário de cadastro **simplificado de transição** já existe e funciona (Pessoa + `Funcao` genérica do catálogo, sem os campos específicos por categoria) — os itens 2-4 abaixo evoluem esse formulário para a experiência completa por categoria.*
 
-**Ordem sugerida, revisada em 24/08/2026 para refletir o novo modelo:**
+**Ordem sugerida, revisada em 25/08/2026:**
 
-1. [ ] **Editar Pessoa** (Update) — reaproveita o Form já existente, nova View de edição. Motivou toda a revisão arquitetural desta sessão; retomar assim que a migração estiver pronta.
-2. [ ] **Tela de cadastro (FE 007) — Discente**: Pessoa + extensão Discente, com fluxo de buscar-ou-criar por CPF
-3. [ ] **Tela de cadastro (FE 008) — Docente**: Pessoa + extensão Docente
-4. [ ] **Tela de cadastro (FOP 402) — Gestão**: Pessoa + Experiência Profissional, com seleção da `Funcao` específica do catálogo
-5. [ ] **Adicionar nova Função a uma Pessoa já existente** (acúmulo de cargo, ou segundo curso para Discente) — via busca por CPF
+1. [ ] **Editar Pessoa** (Update) — reaproveita o Form já existente, nova View de edição.
+2. [ ] **Tela de cadastro (FE 007) — Discente**: Pessoa + extensão `DadosDiscente`, com fluxo de buscar-ou-criar por CPF (Service já pronto — falta a criação da extensão e os campos específicos no Form)
+3. [ ] **Tela de cadastro (FE 008) — Docente**: Pessoa + extensão `DadosDocente`
+4. [ ] **Tela de cadastro (FOP 402) — Gestão**: Pessoa + `ExperienciaProfissional`, com seleção da `Funcao` específica do catálogo
+5. [ ] **Adicionar nova Função a uma Pessoa já existente** (acúmulo de cargo, ou segundo curso para Discente) — via busca por CPF (Service já suporta isso; falta a tela)
 6. [ ] **Editar Atribuição de Função** (situação, datas)
 7. [ ] **Encerrar Atribuição de Função** (`data_fim` + `ativo=False` + motivo, ver item correspondente no Backlog para o caso Discente)
 8. [ ] **Excluir/inativar Pessoa**
@@ -63,8 +63,11 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Configurar arquivos estáticos para produção (`whitenoise` ou equivalente)
 - [ ] Escolher e configurar provedor de nuvem (Render ou Railway)
 - [ ] Revisão de acessibilidade nos templates HTML
-- [ ] Testes de Views/API (além dos testes de Service já existentes)
+- [ ] Testes de Views/API (além dos testes de Service já existentes) — inclui o endpoint `CadastrarPessoaView`, já reescrito mas ainda sem teste próprio
 - [ ] Convidar colegas de grupo como collaborators no GitHub
+- [ ] Fechar Etapa 9 do plano de migração (PR de `feature/refatoracao-funcao` para `dev`) antes ou junto dos itens acima
+
+
 
 ---
 
@@ -82,22 +85,22 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] Layout base compartilhado (`templates/base.html` + `static/global/css/base.css`) — 23/08/2026 (`f337e0d`)
 - [x] Bug de tooling corrigido: auto-format do VSCode quebrando templates Django — `.vscode/settings.json` versionado — 23/08/2026 (`78cf27f`)
 - [x] JavaScript — busca automática de endereço por CEP no formulário — 24/08/2026 (`3a64172`)
-- [x] **Redesenho arquitetural do módulo Pessoas** (`Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`), baseado em 3 formulários institucionais reais (FOP 402, FE 007, FE 008) — decisão de design fechada em 24/08/2026, ver `docs/06 - ANDAMENTO_DO_PROJETO.md`. **Execução ainda pendente**, ver "Em Andamento".
+- [x] **Redesenho arquitetural do módulo Pessoas** (`Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`), baseado em 3 formulários institucionais reais (FOP 402, FE 007, FE 008) — decisão de design fechada em 24/08/2026, ver `docs/06 - ANDAMENTO_DO_PROJETO.md`. **Execução completa em 25/08/2026** (Etapas 1 a 6 do plano de migração, ver `docs/07`, `08`, `09`, `10`, `11`) — modelo antigo totalmente removido do código, sistema rodando sobre o modelo novo, testado automatizado e manualmente.
 
 ### Itens historicamente concluídos, agora em revisão pela migração
-*Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) e serão removidos ou reescritos como parte da migração em andamento — mantidos aqui só como registro histórico do que já existiu, não como trabalho ainda válido:*
+*Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) — mantidos aqui como registro histórico do que já existiu. A maioria já foi removida ou reescrita de fato (25/08/2026); os que restam "em revisão" aguardam a Etapa 7 completa (os 3 formulários especializados por categoria):*
 
-- [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **`FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao` já removidos de fato (25/08/2026, `49142fa`); `Vinculo` e subtipos ainda em uso, remoção prevista na Etapa 5b**
-- [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **registro de `FuncaoGestao`/`Habilitacao`/`FuncaoGestaoHabilitacao` já removido (25/08/2026)**
+- [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **todos removidos de fato (25/08/2026, `49142fa` e `cf7846f`)**
+- [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **registro das 7 entidades antigas removido por completo (25/08/2026)**
 - [x] ~~`AssociarHabilitacaoService` + 2 testes~~ — 20/08/2026 (`89ed300`) — **removido de fato em 25/08/2026 (`49142fa`)**, conceito absorvido pelo catálogo aberto `Funcao`
-- [x] ~~`CadastrarPessoaComVinculoService` + 4 testes~~ — 20/08/2026 (`b347ae3`) — **em reescrita** (evolui para buscar-ou-criar por CPF, Etapa 6)
+- [x] ~~`CadastrarPessoaComVinculoService` + 4 testes~~ — 20/08/2026 (`b347ae3`) — **reescrito por completo em 25/08/2026 (`cf7846f`)**, renomeado para `CadastrarPessoaComFuncaoService`, com fluxo buscar-ou-criar por CPF e a regra "Discente não acumula" implementada
 - [x] ~~Endpoint de API `POST /api/pessoas/funcoes-gestao/habilitacoes/`~~ — 21/08/2026 (`bb01f2e`) — **removido de fato em 25/08/2026 (`49142fa`)**
-- [x] ~~Endpoint de API `POST /api/pessoas/pessoas/`~~ — 23/08/2026 (`97e2915`) — **em revisão**
-- [x] ~~Campo `sigla` em `Disciplina`~~ — 23/08/2026 (`fbfc3b1`) — **não afetado pela migração**, mantido válido
-- [x] ~~Template View — lista de Pessoas~~ — 23/08/2026 (`f337e0d`) — **em revisão**
-- [x] ~~Template View — detalhe de Pessoa com histórico de vínculos~~ — 23/08/2026 (`78cf27f`) — **em revisão**
-- [x] ~~Property `tipo_legivel` em `Vinculo`~~ — 23/08/2026 (`78cf27f`) — **provavelmente desnecessária no modelo novo** (não há mais subtipo por herança)
-- [x] ~~Template View — formulário de cadastro de Pessoa (`NovoCadastroPessoaView`)~~ — 24/08/2026 (`3a64172`) — **em revisão**, vira 3 fluxos distintos por categoria de Função
+- [x] ~~Endpoint de API `POST /api/pessoas/pessoas/`~~ — 23/08/2026 (`97e2915`) — **atualizado para o modelo novo em 25/08/2026 (`cf7846f`)**; falta só teste próprio (ver "A Fazer")
+- [x] ~~Campo `sigla` em `Disciplina`~~ — 23/08/2026 (`fbfc3b1`) — não afetado pela migração, mantido válido
+- [x] ~~Template View — lista de Pessoas~~ — 23/08/2026 (`f337e0d`) — confirmado que não dependia de `Vinculo`, mantida sem alteração
+- [x] ~~Template View — detalhe de Pessoa com histórico de vínculos~~ — 23/08/2026 (`78cf27f`) — **atualizada em 25/08/2026 (`cf7846f`)** para exibir Funções em vez de Vínculos
+- [x] ~~Property `tipo_legivel` em `Vinculo`~~ — 23/08/2026 (`78cf27f`) — **removida junto com `Vinculo`**; não fez falta, `funcao.nome` já é legível por si só
+- [x] ~~Template View — formulário de cadastro de Pessoa (`NovoCadastroPessoaView`)~~ — 24/08/2026 (`3a64172`) — **versão de transição implementada em 25/08/2026** (Pessoa + Função genérica via dropdown); a evolução para 3 fluxos distintos por categoria (FE 007/008/402) é a Etapa 7, ainda pendente
 
 ---
 
@@ -115,15 +118,16 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 | Métrica | Valor atual |
 |---|---|
-| Services implementados (modelo antigo, sob revisão) | 1 (`AssociarHabilitacaoService` já removido; `CadastrarPessoaComVinculoService` em reescrita na Etapa 6; `BuscarEnderecoPorCepService` não afetado) |
-| Endpoints de API implementados (modelo antigo, sob revisão) | 2 (endpoint de Habilitação já removido; `CadastrarPessoaView` em revisão; `BuscarCepView` não afetado) |
-| Template Views implementadas (modelo antigo, sob revisão) | 3 (todas em revisão, aguardando Etapa 5b/6) |
-| Testes automatizados | 5 (todos passando; os 2 de `AssociarHabilitacaoService` foram removidos na Etapa 5a) |
-| Models do modelo antigo restantes | 4 (`Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`) — a sair na Etapa 5b, junto da reescrita do Service (Etapa 6) |
+| Services implementados | 2 (`CadastrarPessoaComFuncaoService` reescrito, `BuscarEnderecoPorCepService` inalterado) — modelo antigo totalmente removido |
+| Endpoints de API implementados | 2 (`CadastrarPessoaView` atualizado para o modelo novo, `BuscarCepView` inalterado) |
+| Template Views implementadas | 3 (lista inalterada, detalhe atualizada para Funções, cadastro em versão de transição — evolução completa é a Etapa 7) |
+| Testes automatizados | 5 (todos passando, todos contra o modelo novo) |
+| Models do modelo antigo restantes | 0 — `Vinculo` e subtipos removidos em 25/08/2026 (`cf7846f`) |
 | Models do modelo novo | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) |
 | Catálogo `Funcao` populado | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`) |
+| Validação end-to-end | Testada manualmente pelo navegador em 25/08/2026 (cadastro → detalhe), além do `pytest` |
 | Última branch ativa | `feature/refatoracao-funcao` |
-| Último commit | `49142fa` — `refactor: remove FuncaoGestao, Habilitacao, FuncaoGestaoHabilitacao e AssociarHabilitacaoService` |
+| Último commit | `cf7846f` — `refactor: remove Vinculo e subtipos, reescreve CadastrarPessoaComFuncaoService com fluxo buscar-ou-criar por CPF` |
 
 ---
 ---

@@ -2,7 +2,7 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4 e 5a concluídas e commitadas (25/08/2026) — ver `docs/08`, `09` e `10 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Etapa 5b combinada com a Etapa 6 (interdependentes), a fazer na mesma sessão. Faltam Etapas 5b, 6, 7, 8 e 9.
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026), com boa parte das Etapas 7 e 8 já resolvidas como efeito colateral necessário da Etapa 6 (ver notas em cada uma) — ver `docs/08`, `09`, `10` e `11 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`. Falta: os 3 formulários especializados por categoria (Etapa 7, parte pendente), testes de View/API (Etapa 8, parte pendente), e a Etapa 9 (fechamento formal, PR para `dev`).
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -110,40 +110,51 @@ Dividida em duas partes, decisão tomada na execução (25/08/2026): **5a** cobr
 
 **Nota sobre o percurso real:** a remoção não foi tão isolada quanto o plano original supunha — `AssociarHabilitacaoView` em `views.py` era uma dependência não mapeada, só descoberta quando `makemigrations` disparou um `ImportError` em cadeia (`config/urls.py` → `pessoas/urls.py` → `views.py` → `services.py`). Lição registrada: mesmo um Service "isolado" pode ter consumidores em camadas diferentes (Model → Service → View → URL) que só aparecem ao tentar rodar o projeto de ponta a ponta, não ao inspecionar um arquivo por vez. Ver `docs/10 - ANDAMENTO_DO_PROJETO.md` para o relato completo dos erros e como foram diagnosticados.
 
-### 5b — Remover `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`
+### 5b — Remover `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao` ✅ Concluída (25/08/2026)
 
-*Pendente. Fazer na mesma sessão que a Etapa 6 (reescrita do Service), já que ambas são interdependentes — remover `Vinculo` sem já ter o Service novo pronto deixaria o projeto quebrado.*
+Feita na mesma sessão que a Etapa 6, como planejado — ambas interdependentes.
 
-- [ ] Remover Models: `VinculoGestao`, `VinculoDocente` (⚠️ confirmar que `DadosDocente` já assumiu tudo que era necessário — `possui_treinamento_valido()` já foi migrado na Etapa 4.2), `VinculoDiscente`, `Vinculo`
-- [ ] Remover do Admin o registro desses 4 Models
-- [ ] Gerar migration de remoção
-- [ ] Rodar `pytest` — checar o que quebrou (esperado: bastante coisa, até a Etapa 6 estar pronta) e corrigir junto com a Etapa 6
-- [ ] Commit, provavelmente combinado com o commit da Etapa 6
+- [x] Remover Models: `VinculoGestao`, `VinculoDocente` (`possui_treinamento_valido()` já tinha sido migrado para `DadosDocente` na Etapa 4.2), `VinculoDiscente`, `Vinculo`
+- [x] Remover do Admin o registro desses 4 Models
+- [x] Migration `0013_remove_vinculo_pessoa_and_more` gerada e aplicada — removeu também as FKs internas de herança (`vinculo_ptr`) que o Multi-table Inheritance criava automaticamente
+- [x] `pytest` — `5 passed`
+- [x] Commit combinado com a Etapa 6 (ver abaixo)
 
 ---
 
-## Etapa 6 — Reescrever o Service de cadastro (buscar-ou-criar por CPF)
+## Etapa 6 — Reescrever o Service de cadastro (buscar-ou-criar por CPF) ✅ Concluída (25/08/2026)
 
-- [ ] Revisar `CadastrarPessoaComVinculoService`: hoje sempre cria `Pessoa` nova; passa a **buscar por CPF primeiro** e só criar se não existir
-- [ ] Decidir nome do Service atualizado — manter o nome atual (o comportamento mudou, mas o propósito geral — "cadastrar pessoa com uma função" — continua parecido) ou renomear para refletir melhor o novo comportamento (ex: `CadastrarOuAtribuirFuncaoService`) — **decisão de nomenclatura a tomar na hora, não antecipar aqui**
-- [ ] Escrever teste novo: cadastro com CPF já existente não deve criar segunda `Pessoa`, deve criar só a nova `AtribuicaoFuncao`
-- [ ] Escrever/ajustar teste da regra de negócio única: Pessoa com Função de Discente não pode acumular outra Função — decidir onde essa validação mora (no Service, seguindo o mesmo padrão do antigo `AssociarHabilitacaoService`)
-- [ ] Commit: `feat: fluxo buscar-ou-criar Pessoa por CPF`
+- [x] `CadastrarPessoaComVinculoService` revisado: passou a **buscar por CPF primeiro** (`Pessoa.objects.get_or_create`) e só cria `AtribuicaoFuncao` nova — não recria `Pessoa` se o CPF já existir
+- [x] **Renomeado para `CadastrarPessoaComFuncaoService`** — decisão tomada na hora, refletindo que "vínculo" saiu do vocabulário do domínio
+- [x] Escopo definido explicitamente: o Service cria Pessoa + `AtribuicaoFuncao`, mas **não cria extensões** (`DadosDiscente`/`DadosDocente`) — isso fica para a Etapa 7, quando os formulários especializados por categoria (FE 007/008/402) existirem. Decisão consciente para manter a Etapa 6 enxuta.
+- [x] Teste novo escrito: `test_reaproveita_pessoa_existente_pelo_cpf` — confirma que uma segunda Função para o mesmo CPF não duplica `Pessoa`, e que a pessoa acumula 2 atribuições
+- [x] Regra de negócio implementada: `test_rejeita_acumulo_de_funcao_para_discente` e `test_nao_cria_segunda_atribuicao_quando_discente_tenta_acumular` — validação por **estrutura** (`pessoa.atribuicoes.filter(dados_discente__isnull=False).exists()`), nunca por texto de `Funcao.nome`, conforme a nota de segurança registrada na Etapa 2
+- [x] Teste antigo de "tipo de vínculo inválido" **não tem mais equivalente direto** — não faz sentido no modelo novo, já que `Funcao` é catálogo aberto sem um conjunto fechado de tipos para validar. Substituído pelos dois testes de regra de negócio acima.
+- [x] Commit: `refactor: remove Vinculo e subtipos, reescreve CadastrarPessoaComFuncaoService com fluxo buscar-ou-criar por CPF` (`cf7846f`)
+
+**Efeito colateral em cascata, ajustado na mesma sessão** (documentado em detalhe em `docs/11 - ANDAMENTO_DO_PROJETO.md`): a troca do Service exigiu ajustar, em sequência, `CadastrarPessoaView` (API), `CadastrarPessoaInputSerializer`/`OutputSerializer` (trocado `tipo_vinculo`/`numero_matricula` por `funcao_id`; removidos os serializers órfãos de Habilitação que tinham sobrado da Etapa 5a), `CadastrarPessoaForm` (trocado `ChoiceField` fixo por `ModelChoiceField` sobre o catálogo `Funcao` — versão de transição, sem os campos de FE 007/008/402), `NovoCadastroPessoaView`, e `detalhe.html` (trocado `pessoa.vinculos.all()`/`tipo_legivel` por `pessoa.atribuicoes.all()`/`atribuicao.funcao.nome`). `form_pessoa.html` não precisou de nenhuma mudança, por usar `{{ form.as_p }}` (renderização automática por campo do Form).
 
 ---
 
 ## Etapa 7 — Ajustar Views e Templates existentes
 
-- [ ] `ListaPessoasView` / `lista.html`: revisar se depende de algo específico de `Vinculo`
-- [ ] `DetalhePessoaView` / `detalhe.html`: troca `pessoa.vinculos.all()` (ou equivalente) para o novo relacionamento via `AtribuicaoFuncao`; a property `tipo_legivel` criada para `Vinculo` provavelmente não é mais necessária do mesmo jeito, já que não há mais subtipo por herança — reavaliar
-- [ ] `NovoCadastroPessoaView` / `form_pessoa.html` / `CadastrarPessoaForm`: repensar como três fluxos distintos (FE 007/FE 008/FOP 402), conforme desenhado em `06 - ANDAMENTO_DO_PROJETO.md`, seção 10 — isso provavelmente é trabalho suficiente para ser tratado como uma etapa própria, não um ajuste rápido dentro desta
-- [ ] JS de busca de CEP (`buscar-cep.js`): não deveria ser afetado, mas confirmar que o formulário reestruturado ainda tem os mesmos `id`s de campo que o script espera
+**Parcialmente concluída (25/08/2026), como efeito colateral necessário da Etapa 6** — a parte de "não deixar quebrado" está feita; a experiência dinâmica completa por categoria ainda não.
+
+- [x] `ListaPessoasView` / `lista.html`: confirmado que não dependia de nada de `Vinculo` — nenhuma mudança necessária
+- [x] `DetalhePessoaView` / `detalhe.html`: trocado `pessoa.vinculos.all()`/`tipo_legivel` por `pessoa.atribuicoes.all()`/`atribuicao.funcao.nome` — a property `tipo_legivel` não existe mais e não faz falta, já que o nome da Função já é legível por si só (ex: "Coordenador de Curso Aviônicos"), sem precisar de lógica para decidir entre subtipos
+- [x] `NovoCadastroPessoaView` / `form_pessoa.html` / `CadastrarPessoaForm`: versão de **transição** implementada — form simplificado com `ModelChoiceField` sobre o catálogo `Funcao` completo (dropdown com as 9), cadastrando só Pessoa + `AtribuicaoFuncao`, sem os campos específicos de FE 007/008/402. `form_pessoa.html` não precisou de nenhuma alteração, por usar `{{ form.as_p }}`.
+- [ ] **Pendente, propositalmente adiado:** os 3 formulários especializados por categoria (FE 007/Discente, FE 008/Docente, FOP 402/Gestão), com seleção inicial de categoria e campos dinâmicos por extensão — decisão explícita de tratar como etapa própria, dado o tamanho e as decisões de UX envolvidas (ver Kanban, itens 2-4 de "A Fazer")
+- [ ] JS de busca de CEP (`buscar-cep.js`): não foi afetado pela mudança de hoje — os campos de endereço no form continuam com os mesmos `id`s
 
 ---
 
-## Etapa 8 — Endpoint de API para `CadastrarPessoaComVinculoService`
+## Etapa 8 — Endpoint de API para `CadastrarPessoaComFuncaoService`
 
-- [ ] Revisar `CadastrarPessoaInputSerializer`/`OutputSerializer`/`CadastrarPessoaView` para refletir o novo formato de entrada (Função em vez de tipo de vínculo fixo, campos condicionais por categoria)
+**Parcialmente concluída (25/08/2026), como efeito colateral da Etapa 6.**
+
+- [x] `CadastrarPessoaInputSerializer`/`OutputSerializer`/`CadastrarPessoaView` revisados para o novo formato: `funcao_id` no lugar de `tipo_vinculo`/`numero_matricula`; output com `funcao`/`atribuicao_id` no lugar de `tipo_vinculo`/`vinculo_id`
+- [x] Serializers órfãos de Habilitação (`FuncaoGestaoHabilitacaoInputSerializer`/`OutputSerializer`), que tinham sobrado da Etapa 5a sem uso, removidos nesta sessão
+- [ ] Testes de View/API para o endpoint atualizado — ainda não escritos (item já registrado no Kanban, "Testes automatizados para as Template Views" — vale ampliar para incluir também os endpoints de API)
 
 ---
 
