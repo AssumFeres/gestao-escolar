@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 concluídas (25/08/2026)**, com boa parte das Etapas 7 e 8 já resolvidas como efeito colateral necessário da reescrita do Service. O modelo antigo (`Vinculo` e subtipos, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`, `AssociarHabilitacaoService`) foi **totalmente removido** do código — o sistema roda inteiramente sobre `Funcao`/`AtribuicaoFuncao`. Testado automatizado (`pytest`) e manualmente pelo navegador, de ponta a ponta. Faltam: os 3 formulários especializados por categoria (Etapa 7, tratada como bloco próprio), testes de View/API (Etapa 8), e o fechamento formal (Etapa 9, PR para `dev`). Detalhe das sessões em `docs/08` a `11 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 concluídas**; base do modelo antigo totalmente removida, sistema roda sobre `Funcao`/`AtribuicaoFuncao`. **Etapa 7 completa (os 3 formulários especializados) em andamento**: decisão de escopo (mais completo possível) e fluxo (1 tela, dropdown único, JavaScript alternando campos por categoria) fechadas; sub-etapa 7.1 concluída (campo `categoria` em `Funcao`); 7.2 (expandir o Service) parada em ponto de decisão de design — retomar por ali. Detalhe das sessões em `docs/08` a `12 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 

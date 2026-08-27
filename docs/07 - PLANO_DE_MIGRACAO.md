@@ -2,7 +2,9 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026), com boa parte das Etapas 7 e 8 já resolvidas como efeito colateral necessário da Etapa 6 (ver notas em cada uma) — ver `docs/08`, `09`, `10` e `11 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`. Falta: os 3 formulários especializados por categoria (Etapa 7, parte pendente), testes de View/API (Etapa 8, parte pendente), e a Etapa 9 (fechamento formal, PR para `dev`).
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08`, `09`, `10`, `11` e `12 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
+
+**Etapa 7 completa (os 3 formulários especializados) em andamento desde 25/08/2026:** decisão de escopo — **formulário mais completo possível desde já**, para evitar retrabalho futuro. Sub-etapas 7.1 a 7.5 detalhadas na seção da Etapa 7 abaixo. **7.1 concluída** (categoria em `Funcao`, commit `36bf1fd`); **7.2 parada em ponto de decisão de design** (formato de entrada do Service para criar extensões) — retomar por ali. Falta ainda: testes de View/API (Etapa 8, parte pendente) e a Etapa 9 (fechamento formal, PR para `dev`).
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -143,8 +145,51 @@ Feita na mesma sessão que a Etapa 6, como planejado — ambas interdependentes.
 - [x] `ListaPessoasView` / `lista.html`: confirmado que não dependia de nada de `Vinculo` — nenhuma mudança necessária
 - [x] `DetalhePessoaView` / `detalhe.html`: trocado `pessoa.vinculos.all()`/`tipo_legivel` por `pessoa.atribuicoes.all()`/`atribuicao.funcao.nome` — a property `tipo_legivel` não existe mais e não faz falta, já que o nome da Função já é legível por si só (ex: "Coordenador de Curso Aviônicos"), sem precisar de lógica para decidir entre subtipos
 - [x] `NovoCadastroPessoaView` / `form_pessoa.html` / `CadastrarPessoaForm`: versão de **transição** implementada — form simplificado com `ModelChoiceField` sobre o catálogo `Funcao` completo (dropdown com as 9), cadastrando só Pessoa + `AtribuicaoFuncao`, sem os campos específicos de FE 007/008/402. `form_pessoa.html` não precisou de nenhuma alteração, por usar `{{ form.as_p }}`.
-- [ ] **Pendente, propositalmente adiado:** os 3 formulários especializados por categoria (FE 007/Discente, FE 008/Docente, FOP 402/Gestão), com seleção inicial de categoria e campos dinâmicos por extensão — decisão explícita de tratar como etapa própria, dado o tamanho e as decisões de UX envolvidas (ver Kanban, itens 2-4 de "A Fazer")
+- [ ] **Pendente, propositalmente adiado na sessão de 25/08:** os 3 formulários especializados por categoria (FE 007/Discente, FE 008/Docente, FOP 402/Gestão), com seleção inicial de categoria e campos dinâmicos por extensão — ver detalhamento em "Etapa 7 completa" logo abaixo, já iniciada em sessão posterior
 - [ ] JS de busca de CEP (`buscar-cep.js`): não foi afetado pela mudança de hoje — os campos de endereço no form continuam com os mesmos `id`s
+
+---
+
+## Etapa 7 completa — os 3 formulários especializados (em andamento)
+
+**Decisão de escopo (25/08/2026):** implementar o formulário **mais completo possível desde já** — todos os campos das 3 extensões de uma vez (matrícula/estrangeiro/contato de emergência/responsável legal para Discente; campos de Docente; Experiência Profissional para Gestão) — para evitar retrabalho futuro, mesmo custando mais tempo agora. Decisão explícita da pessoa responsável pelo projeto, registrada para não ser reconsiderada por engano numa sessão futura.
+
+**Decisão de fluxo:** uma única tela de cadastro, com **um dropdown único** listando todas as 9 Funções do catálogo (não 3 telas separadas por categoria). Depois que a pessoa escolhe a Função, **JavaScript** mostra/esconde o bloco de campos correspondente à categoria daquela Função — decisão foi explicitamente ligada ao objetivo do PI de ter "script web com propósito de negócio real" (mesmo espírito do JS de busca de CEP, diário 05).
+
+**Sub-etapas planejadas:**
+
+### 7.1 — Adicionar `categoria` a `Funcao` ✅ Concluída (25/08/2026)
+
+- [x] Criado enum `CategoriaFuncao` (Discente/Docente/Gestão) e campo `categoria` em `Funcao` — usado **só para a interface saber qual formulário exibir**, nunca para regra de negócio (essa continua por estrutura de extensão, `DadosDiscente`/`DadosDocente`)
+- [x] Migration em **duas etapas**, deliberadamente: (1) campo `categoria` criado com `blank=True` temporário; (2) depois de classificar manualmente as 9 Funções existentes pelo Admin, campo tornado obrigatório numa segunda migration (`AlterField`, sem `blank`). Caminho escolhido conscientemente como aprendizado de técnica de migração seguindo dado real já existente, mesmo cogitando (e descartando) "apagar e recriar os 9 registros" como atalho — descartado porque `AtribuicaoFuncao` já tinha registro real apontando para essas Funções (`on_delete=PROTECT` bloquearia a exclusão de qualquer forma).
+- [x] Migrations `0014_funcao_categoria` e `0015_alter_funcao_categoria` geradas e aplicadas; nenhuma pediu valor one-off (a segunda não pediu porque as 9 Funções já estavam corretamente classificadas antes de rodar)
+- [x] As 9 Funções classificadas manualmente pelo Admin: Discente - Aluno → Discente; Docente - Instrutor → Docente; as demais 7 (Auxiliar Administrativo, Secretária, Coordenador de Curso GMP/Célula/Aviônicos, Gerente de Qualidade, Diretor) → Gestão
+- [x] `pytest` — `5 passed` em ambas as migrations
+- [x] Commit: `feat: adiciona categoria a Funcao (Discente/Docente/Gestao), em duas migrations` (`36bf1fd`)
+
+### 7.2 — Expandir o Service para criar extensões ⏸️ Parada em ponto de decisão
+
+*Sessão interrompida antes de codar — decisões de formato ficaram em aberto, registradas aqui para retomar exatamente daqui:*
+
+**Decisão de mecanismo (já fechada):** o Service decide qual extensão criar checando `funcao.categoria` (estrutural, o campo novo da 7.1) — nunca por nome da `Funcao`, mesmo princípio já aplicado à regra "Discente não acumula".
+
+**Decisão de formato de entrada (ainda em aberto, retomar por aqui):** proposta em discussão era o Service ganhar dois parâmetros novos:
+- `dados_extensao: dict = None` — para `DadosDiscente` ou `DadosDocente` (extensões 1:1, um dict só)
+- `experiencias: list = None` — para `ExperienciaProfissional` (repetível, precisa de lista de dicts, um `.create()` por item, só quando `categoria == GESTAO`)
+
+Não decidido ainda: se esse formato (dois parâmetros separados) é o melhor, ou se vale um formato de entrada mais unificado. Retomar essa decisão antes de escrever qualquer código da 7.2.
+
+### 7.3 — Expandir o Form ⏳ Não iniciada
+
+Form ganha todos os campos possíveis das 3 categorias (a maioria opcional/condicional, já que só uma categoria de campos é preenchida por vez, dependendo da Função escolhida no dropdown único).
+
+### 7.4 — Template + JavaScript ⏳ Não iniciada
+
+Agrupar os campos em blocos por categoria no HTML (ex: `<div>` com `data-categoria="DISCENTE"` etc.), e o JS mostra/esconde o bloco certo conforme o dropdown de Função muda — decisão de fluxo já fechada acima.
+
+### 7.5 — Testes do Service expandido ⏳ Não iniciada
+
+Cobrir a criação de `DadosDiscente`/`DadosDocente`/`ExperienciaProfissional` junto do cadastro, conforme a categoria escolhida.
 
 ---
 
