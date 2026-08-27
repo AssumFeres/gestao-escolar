@@ -17,27 +17,42 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## 🧊 Backlog
 
-*Ideias e sugestões — ainda não decidido quando/se entram no PI atual*
+*Product Backlog único, ordenado por prioridade — etiquetado por `[Cadastro]` (módulo em desenvolvimento ativo, prioridade maior) ou `[Projeto]` (infraestrutura/arquitetura geral, sem módulo específico). Reorganizado em 25/08/2026 para reduzir a mistura que dificultava a leitura; nenhum item foi removido ou repriorizado além da ordenação por etiqueta.*
 
-- [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
-- [ ] **Tela de login + estratégia de autenticação** — decidir se usuários do sistema (além do superusuário Admin) serão o `User` padrão do Django, vinculado a `Pessoa`, ou solução customizada.
-- [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
-- [ ] Melhorar Django Admin com Inlines (editar `AtribuicaoFuncao`/extensões na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
-- [ ] **Django Admin não aplica a regra "Discente não acumula outra Função"** — mesmo raciocínio pragmático já documentado para o caso antigo do `AssociarHabilitacaoService` (ver `03 - ANDAMENTO_DO_PROJETO.md`): o Admin conversa direto com `AtribuicaoFuncao.objects.create()`, sem passar pelo Service que vai aplicar essa regra. Registrado preventivamente desta vez, antes de alguém encontrar o bug na prática.
-- [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
+**`[Cadastro]`**
+
+- [ ] Configurar `choices` para os campos `sexo`, `estado_civil`, `raca_cor` — usar como etapa disparadora para revisar todos os campos de identificação ampliada quanto à necessidade de lista fechada de valores, em vez de decidir campo a campo de forma avulsa
 - [ ] **Cadastro de Formação do Docente (Graduação/Formação Profissional/Aperfeiçoamento) + vínculo com Requisitos de Contratação e Disciplina Habilitada, baseado no FE 008** — especificação completa no capítulo "📐 Especificações Detalhadas" no final deste documento, já atualizada para referenciar `DadosDocente` (implementado em 25/08/2026).
 - [ ] Definir quais campos de `Pessoa` são editáveis no fluxo de "segundo preenchimento" (CPF já existente) — hipótese registrada em `06 - ANDAMENTO_DO_PROJETO.md`: tudo exceto CPF, mas ainda não confirmado a fundo
 - [ ] **Curso Inicial (Aviônica/Célula/GMP) + PI Inicial/Final + Ata de Vínculo, da FE 007** — depende do conceito de Módulo, que segue fora de escopo. Fica em branco no FE 007 gerado até então.
-- [ ] **Motivo de encerramento de `AtribuicaoFuncao` para Discente** (Transferido / Reprovado / Aprovado / Matrícula Excluída) — capturar junto quando o item "Encerrar Vínculo/Atribuição" (ver lista "A Fazer") for implementado; não é só desativar, é registrar o motivo.
+- [ ] **Motivo de encerramento de `AtribuicaoFuncao` para Discente** (Transferido / Reprovado / Aprovado / Matrícula Excluída) — capturar junto quando o item "Encerrar Atribuição de Função" (ver lista "A Fazer") for implementado; não é só desativar, é registrar o motivo.
 - [ ] Geração da Ficha de Matrícula FE 007 (e, no futuro, FE 008/FOP 402) preenchida a partir dos dados do sistema — requisito de output confirmado, não modelagem; provável uso futuro do fluxo de geração de `.docx`/PDF
 - [ ] Validação de erros de negócio no formulário HTML mais amigável (hoje aparece como mensagem genérica no topo, sem destacar o campo)
 - [ ] Máscaras de formato nos campos do formulário (CPF, CEP, telefone)
-- [ ] Configurar `choices` para os campos `sexo`, `estado_civil`, `raca_cor` — usar como etapa disparadora para revisar todos os campos de identificação ampliada quanto à necessidade de lista fechada de valores, em vez de decidir campo a campo de forma avulsa
+- [ ] **Django Admin não aplica a regra "Discente não acumula outra Função"** — mesmo raciocínio pragmático já documentado para o caso antigo do `AssociarHabilitacaoService` (ver `03 - ANDAMENTO_DO_PROJETO.md`): o Admin conversa direto com `AtribuicaoFuncao.objects.create()`, sem passar pelo Service que vai aplicar essa regra. Registrado preventivamente desta vez, antes de alguém encontrar o bug na prática.
+- [ ] Melhorar Django Admin com Inlines (editar `AtribuicaoFuncao`/extensões na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
 - [ ] Ajustar `verbose_name_plural` de `Funcao` no Admin (hoje exibido como "Funcaos")
-- [ ] Avaliar dividir `pessoas/models.py` em uma pasta `models/` com um arquivo por classe/grupo de classes relacionadas, à medida que o arquivo cresce com a migração — refatoração puramente organizacional, sem mudança de comportamento
-- [ ] Manter o docstring de índice no topo de `pessoas/models.py` sincronizado conforme classes são adicionadas/removidas durante a migração — hoje já está desatualizado
 - [ ] **Teste manual a validar quando a Etapa 4/5 estiver pronta:** confirmar que o Admin realmente bloqueia a exclusão de uma `Funcao` que já tem `AtribuicaoFuncao` vinculada (`on_delete=PROTECT`), validando na prática a proteção contra perda de rastreabilidade
 - [ ] Fixture versionada do catálogo `Funcao` — decisão tomada de popular manualmente por enquanto (9 Funções cadastradas via Admin na sessão de 25/08/2026); cada uma das 5 máquinas validadas precisa popular seu próprio catálogo até que isso seja versionado
+- [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
+- [ ] Avaliar dividir `pessoas/models.py` em uma pasta `models/` com um arquivo por classe/grupo de classes relacionadas, à medida que o arquivo cresce com a migração — refatoração puramente organizacional, sem mudança de comportamento
+- [ ] Manter o docstring de índice no topo de `pessoas/models.py` sincronizado conforme classes são adicionadas/removidas durante a migração — hoje já está desatualizado
+
+**`[Projeto]`**
+
+- [ ] Recuperação de senha para usuários administradores (Django já oferece nativo via `django.contrib.auth` — falta configurar backend de e-mail e templates)
+- [ ] **Tela de login + estratégia de autenticação** — decidir se usuários do sistema (além do superusuário Admin) serão o `User` padrão do Django, vinculado a `Pessoa`, ou solução customizada.
+- [ ] **Reestruturação em múltiplos apps Django (arquitetura "módulo por módulo")** — decisão de arquitetura registrada em 25/08/2026, **para implementar depois** que a migração `Vinculo`→`Funcao` (Etapas 7-9) estiver concluída e mesclada em `dev`. Motivo de adiar: renomear/reestruturar um app em cima de uma migração grande já em andamento arrisca empilhar dois refatores simultâneos, com risco de dependências escondidas se manifestando em cascata (mesmo padrão de risco já visto nas Etapas 5a/6 desta migração).
+
+  **Decisões já fechadas, a executar quando chegar a hora:**
+  - App `pessoas` **renomeado para `cadastros`** — nome mais preciso, já que o app sempre misturou catálogo (`Funcao`, `Disciplina`) com cadastro de fato (`Pessoa`, `AtribuicaoFuncao`). **O conceito de "pré-cadastro" como app/camada separada morre** — não haverá separação futura entre `pre_cadastros` e `cadastros`; tudo fica junto num único módulo `cadastros`, como já está hoje, só com o nome corrigido.
+  - Estrutura de app Django por Bounded Context, replicando o padrão de `pessoas` hoje (`models.py`, `views.py`, `forms.py`, `services.py`, `urls.py`, `tests/`, `static/<app>/`, `templates/<app>/`) para cada módulo futuro: `cadastros` (ex-`pessoas`), `treinamentos`, `instrucao`, e outros Bounded Contexts já mapeados em `documentacao_arquitetura.md` seção 5.
+  - **App novo `core`** — página inicial, login, e estrutura/templates comuns entre os módulos (distinto de `infraestrutura/`, que fica na raiz do projeto por ser capacidade técnica genérica sem UI, como já decidido para o cliente ViaCEP).
+  - **Site público/institucional** (ideia nova, ainda não detalhada) — como porta de entrada de acesso público, servindo de landing antes da área restrita (que abriga `cadastros`/`treinamentos`/`instrucao` etc., atrás de login). Conecta diretamente com o item de login acima, que só foi possível retomar depois que `Funcao`/`AtribuicaoFuncao` passou a existir de fato no código.
+
+  **Ainda em aberto, decidir quando a reestruturação começar:** onde exatamente o site público/institucional mora na estrutura de apps (dentro de `core`, ou app próprio); se `cadastros` continua sendo um único app amplo (catálogo + cadastro de pessoa junto) para sempre, ou se algum dia é dividido — por ora a resposta é "não divide", mas vale reconfirmar quando a reestruturação for iniciada, com mais contexto de como o sistema cresceu até lá.
+
+- [ ] Avaliar GitHub Student Developer Pack (PyCharm Professional gratuito, entre outros benefícios)
 
 ---
 
