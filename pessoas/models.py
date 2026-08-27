@@ -4,16 +4,24 @@ pessoas/models.py
 Módulo de domínio: Gestão de Pessoas.
 
 Classes:
-    Pessoa                    — dados cadastrais da pessoa física, com Endereco como VO embutido.
-    Vinculo                   — classe base para os tipos de vínculo com a instituição.
-    VinculoDiscente            — vínculo de aluno; possui numero_matricula.
-    VinculoDocente             — vínculo de instrutor; possui Capacidade e Treinamento.
-    VinculoGestao              — vínculo de função administrativa; possui FuncaoGestao.
-    FuncaoGestao               — cargo de gestão (Diretor, GQ, Coordenador, Secretaria).
-    Habilitacao                — habilitação técnica, associável apenas a Coordenador.
-    FuncaoGestaoHabilitacao     — tabela associativa entre FuncaoGestao e Habilitacao.
-    Disciplina                 — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
-    Capacidade                 — aptidão de um VinculoDocente para ministrar uma Disciplina.
+    Pessoa                — dados cadastrais da pessoa física, com Endereco como VO embutido;
+                            inclui identificação ampliada (FE 007/FE 008) e identificadores
+                            específicos (RM, RA, CANAC).
+    Disciplina             — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
+    CategoriaFuncao        — enum que classifica uma Funcao como Discente/Docente/Gestão,
+                            usado pela interface para decidir qual formulário exibir
+                            (não é regra de negócio — essa mora nas extensões, por estrutura).
+    Funcao                 — catálogo aberto de cargos/funções (Diretor, Coordenador de
+                            Curso de X, Docente, Discente, etc.); id + nome livre + categoria.
+    AtribuicaoFuncao       — liga Pessoa a Funcao; dados comuns a qualquer atribuição
+                            (situação, datas, ativo). Substitui o antigo Vinculo.
+    DadosDiscente          — extensão de AtribuicaoFuncao (OneToOne) para Discente:
+                            matrícula ANAC, documentação de estrangeiro, contato de
+                            emergência, responsável legal.
+    DadosDocente           — extensão de AtribuicaoFuncao (OneToOne) para Docente.
+    Capacidade             — aptidão de um DadosDocente para ministrar uma Disciplina.
+    ExperienciaProfissional — histórico profissional ligado a uma AtribuicaoFuncao,
+                            relevante apenas para Funções de categoria Gestão (FOP 402).
 
 Regras de negócio complexas ficam em services.py, não aqui.
 """
@@ -113,13 +121,23 @@ class Disciplina(models.Model):
 
     def __str__(self):
         return f"{self.sigla} - {self.nome}"
-    
 
 
+class CategoriaFuncao(models.TextChoices):
+    """
+    Classifica uma Funcao para fins de interface (qual formulário/extensão exibir).
+    NÃO é usado para regra de negócio — isso continua sendo decidido pela existência
+    estrutural de DadosDiscente/DadosDocente, nunca por este campo nem pelo nome da Funcao.
+    """
+    DISCENTE = 'DISCENTE', 'Discente'
+    DOCENTE = 'DOCENTE', 'Docente'
+    GESTAO = 'GESTAO', 'Gestão'
 
 
 class Funcao(models.Model):
+    """Catálogo aberto: id + nome livre + categoria (para a interface saber qual formulário exibir)."""
     nome = models.CharField(max_length=100, unique=True)
+    categoria = models.CharField(max_length=10, choices=CategoriaFuncao.choices)
 
     def __str__(self):
         return self.nome
@@ -188,7 +206,8 @@ class Capacidade(models.Model):
                 condition=models.Q(ativo=True),
                 name='unique_capacidade_ativa'
             )
-            ]
+        ]
+
 
 class ExperienciaProfissional(models.Model):
     atribuicao = models.ForeignKey(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='experiencias_profissionais')
@@ -199,5 +218,3 @@ class ExperienciaProfissional(models.Model):
 
     def __str__(self):
         return f"{self.cargo} em {self.organizacao}"
-
-        
