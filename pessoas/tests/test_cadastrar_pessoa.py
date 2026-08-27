@@ -25,9 +25,9 @@ def _dados_pessoa(cpf):
 class TestCadastrarPessoaComFuncaoService:
 
     def test_cadastra_pessoa_nova_com_funcao(self):
-        funcao = Funcao.objects.create(nome="Docente - Instrutor")
+        funcao = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
 
-        pessoa, atribuicao = CadastrarPessoaComFuncaoService().executar(
+        pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
             dados_pessoa=_dados_pessoa("22233344455"),
             funcao=funcao,
             dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
@@ -36,18 +36,20 @@ class TestCadastrarPessoaComFuncaoService:
         assert Pessoa.objects.filter(cpf="22233344455").exists()
         assert atribuicao.pessoa == pessoa
         assert atribuicao.funcao == funcao
+        assert dados_docente is not None
+        assert dados_docente.atribuicao == atribuicao
 
     def test_reaproveita_pessoa_existente_pelo_cpf(self):
         """Coração da Etapa 6: segunda Função para o mesmo CPF não duplica Pessoa."""
-        funcao_1 = Funcao.objects.create(nome="Docente - Instrutor")
-        funcao_2 = Funcao.objects.create(nome="Coordenador de Curso Aviônicos")
+        funcao_1 = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
+        funcao_2 = Funcao.objects.create(nome="Coordenador de Curso Aviônicos", categoria="GESTAO")
 
-        pessoa_1, _ = CadastrarPessoaComFuncaoService().executar(
+        pessoa_1, _, _ = CadastrarPessoaComFuncaoService().executar(
             dados_pessoa=_dados_pessoa("33344455566"),
             funcao=funcao_1,
             dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
         )
-        pessoa_2, atribuicao_2 = CadastrarPessoaComFuncaoService().executar(
+        pessoa_2, atribuicao_2, _ = CadastrarPessoaComFuncaoService().executar(
             dados_pessoa=_dados_pessoa("33344455566"),
             funcao=funcao_2,
             dados_atribuicao={"data_inicio": "2024-03-01", "situacao": "ATIVO"},
@@ -59,8 +61,8 @@ class TestCadastrarPessoaComFuncaoService:
 
     def test_rejeita_acumulo_de_funcao_para_discente(self):
         """Regra verificada pela estrutura (DadosDiscente), nunca pelo nome da Funcao."""
-        funcao_discente = Funcao.objects.create(nome="Discente - Aluno")
-        funcao_docente = Funcao.objects.create(nome="Docente - Instrutor")
+        funcao_discente = Funcao.objects.create(nome="Discente - Aluno", categoria="DISCENTE")
+        funcao_docente = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
 
         pessoa = Pessoa.objects.create(**_dados_pessoa("44455566677"))
         atribuicao_discente = AtribuicaoFuncao.objects.create(
@@ -78,8 +80,8 @@ class TestCadastrarPessoaComFuncaoService:
 
     def test_nao_cria_segunda_atribuicao_quando_discente_tenta_acumular(self):
         """Confirma que a transação reverte por completo em caso de erro."""
-        funcao_discente = Funcao.objects.create(nome="Discente - Aluno")
-        funcao_docente = Funcao.objects.create(nome="Docente - Instrutor")
+        funcao_discente = Funcao.objects.create(nome="Discente - Aluno", categoria="DISCENTE")
+        funcao_docente = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
 
         pessoa = Pessoa.objects.create(**_dados_pessoa("55566677788"))
         atribuicao_discente = AtribuicaoFuncao.objects.create(
@@ -98,4 +100,3 @@ class TestCadastrarPessoaComFuncaoService:
             pass
 
         assert pessoa.atribuicoes.count() == 1
-

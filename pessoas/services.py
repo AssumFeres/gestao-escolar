@@ -12,21 +12,36 @@ from infraestrutura.cep.adapters import ViaCepClient
 
 class CadastrarPessoaComFuncaoService:
     """
-    SRP: orquestra o cadastro de Pessoa + AtribuicaoFuncao numa transação única,
-    buscando Pessoa existente pelo CPF antes de criar uma nova (evita duplicidade
-    quando a mesma pessoa acumula uma nova Função ou repete curso).
+    SRP: orquestra o cadastro de Pessoa + AtribuicaoFuncao + extensões específicas por
+    categoria, numa transação única, buscando Pessoa existente pelo CPF antes de criar
+    uma nova (evita duplicidade quando a mesma pessoa acumula uma nova Função ou repete
+    curso).
 
-    Não cria extensões (DadosDiscente/DadosDocente) — isso é responsabilidade
-    da Etapa 7, quando os formulários especializados por categoria existirem.
+    Para Docente, cadastra até a etapa preenchível por Secretaria/Aux. Administrativo
+    (dados básicos + Formações). Requisitos de Contratação e Capacidades/Disciplinas
+    (seções 6-7 da FE 008) ficam para PreencherRequisitosEDisciplinasDocenteService,
+    chamado numa segunda tela — depende de as Formações já estarem salvas com id.
 
-    Regra de negócio: uma Pessoa com Função de Discente (identificada pela
-    existência de DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca
-    pelo texto de Funcao.nome — nome é editável, estrutura não) não pode acumular
-    outra Função.
+    Regra de negócio: uma Pessoa com Função de Discente (identificada pela existência de
+    DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca pelo texto de Funcao.nome
+    — nome é editável, estrutura não) não pode acumular outra Função.
     """
 
-    def executar(self, dados_pessoa: dict, funcao, dados_atribuicao: dict):
-        from .models import Pessoa, AtribuicaoFuncao
+    def executar(
+        self,
+        dados_pessoa: dict,
+        funcao,
+        dados_atribuicao: dict,
+        dados_extensao: dict = None,
+        formacoes: list = None,
+        experiencias: list = None,
+        historico_vinculo_formal: list = None,
+    ):
+        from .models import (
+            Pessoa, AtribuicaoFuncao, CategoriaFuncao,
+            DadosDiscente, DadosDocente, FormacaoDocente,
+            ExperienciaProfissional, HistoricoVinculoFormal,
+        )
 
         with transaction.atomic():
             pessoa, criada = Pessoa.objects.get_or_create(
@@ -45,7 +60,47 @@ class CadastrarPessoaComFuncaoService:
                 pessoa=pessoa, funcao=funcao, **dados_atribuicao
             )
 
-        return pessoa, atribuicao
+            dados_docente = None
+
+            if funcao.categoria == CategoriaFuncao.DISCENTE:
+                DadosDiscente.objects.create(atribuicao=atribuicao, **(dados_extensao or {}))
+
+            elif funcao.categoria == CategoriaFuncao.DOCENTE:
+                dados_docente = DadosDocente.objects.create(atribuicao=atribuicao, **(dados_extensao or {}))
+                for formacao in (formacoes or []):
+                    FormacaoDocente.objects.create(dados_docente=dados_docente, **formacao)
+
+            elif funcao.categoria == CategoriaFuncao.GESTAO:
+                for experiencia in (experiencias or []):
+                    ExperienciaProfissional.objects.create(atribuicao=atribuicao, **experiencia)
+
+            if funcao.categoria in (CategoriaFuncao.DOCENTE, CategoriaFuncao.GESTAO):
+                for historico in (historico_vinculo_formal or []):
+                    HistoricoVinculoFormal.objects.create(atribuicao=atribuicao, **historico)
+
+        return pessoa, atribuicao, dados_docente
+
+
+class PreencherRequisitosEDisciplinasDocenteService:
+    """
+    SRP: completa o cadastro de um Docente já existente — Requisitos de Contratação
+    (seção 6 da FE 008) e Disciplinas Habilitadas/Capacidade (seção 7) — etapa que só
+    pode acontecer depois que as Formações (tabelas 3-5) já estão salvas, já que os
+    Requisitos e a comprovação de Capacidade referenciam uma Formação existente.
+    """
+
+    def executar(self, dados_docente, dados_requisitos: dict, capacidades: list):
+        from .models import Capacidade
+
+        with transaction.atomic():
+            dados_docente.experiencia_docente_comprovada = dados_requisitos.get('experiencia_docente_comprovada', '')
+            dados_docente.formacao_especifica_comprobatoria = dados_requisitos.get('formacao_especifica_comprobatoria')
+            dados_docente.save()
+
+            for capacidade in (capacidades or []):
+                Capacidade.objects.create(dados_docente=dados_docente, **capacidade)
+
+        return dados_docente
 
 
 class BuscarEnderecoPorCepService:
