@@ -148,3 +148,11 @@ class HistoricoVinculoFormalForm(forms.Form):
     data_fim = forms.DateField(
         required=False, label="Data de fim", widget=forms.DateInput(attrs={'type': 'date'})
     )
+
+
+# Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
+# extra=1: a tela já nasce com 1 linha em branco visível (decisão da Etapa 7.3).
+# Definidos aqui, uma vez só, para serem reaproveitados igual em views.py (GET e POST).
+FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
+ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
+HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)

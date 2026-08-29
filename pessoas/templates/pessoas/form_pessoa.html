@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Nova Pessoa - Sistema de Gestao Escolar{% endblock %}
@@ -17,6 +17,25 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+
+    <h3>Formação (Graduação/Formação Profissional/Aperfeiçoamento) — Docente</h3>
+    {{ formacao_formset.management_form }}
+    {% for formacao_form in formacao_formset %}
+        {{ formacao_form.as_p }}
+    {% endfor %}
+
+    <h3>Experiência Profissional — Gestão</h3>
+    {{ experiencia_formset.management_form }}
+    {% for experiencia_form in experiencia_formset %}
+        {{ experiencia_form.as_p }}
+    {% endfor %}
+
+    <h3>Histórico de Vínculo Formal — Docente ou Gestão</h3>
+    {{ historico_formset.management_form }}
+    {% for historico_form in historico_formset %}
+        {{ historico_form.as_p }}
+    {% endfor %}
+
     <button type="submit">Salvar</button>
 </form>
 
