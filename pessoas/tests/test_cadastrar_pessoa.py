@@ -1,6 +1,10 @@
 import pytest
 from django.core.exceptions import ValidationError
-from pessoas.models import Pessoa, Funcao, AtribuicaoFuncao, DadosDiscente
+from pessoas.models import (
+    Pessoa, Funcao, AtribuicaoFuncao, DadosDiscente, DadosDocente,
+    FormacaoDocente, ExperienciaProfissional, HistoricoVinculoFormal,
+    PendenciaCadastro, VinculoFormal,
+)
 from pessoas.services import CadastrarPessoaComFuncaoService
 
 
@@ -100,3 +104,119 @@ class TestCadastrarPessoaComFuncaoService:
             pass
 
         assert pessoa.atribuicoes.count() == 1
+
+    # --- Etapa 7.5: cobertura dos campos repetíveis por categoria ---
+
+    def test_discente_cria_dados_discente_com_campos_corretos(self):
+        funcao = Funcao.objects.create(nome="Discente - Aluno", categoria="DISCENTE")
+
+        pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("66677788899"),
+            funcao=funcao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            dados_extensao={
+                "codigo_matricula_anac": "239.MCELT.25.00115",
+                "contato_emergencia_nome": "Joao Teste",
+            },
+        )
+
+        assert dados_docente is None
+        dados_discente = DadosDiscente.objects.get(atribuicao=atribuicao)
+        assert dados_discente.codigo_matricula_anac == "239.MCELT.25.00115"
+        assert dados_discente.contato_emergencia_nome == "Joao Teste"
+
+    def test_docente_cria_dados_docente_com_multiplas_formacoes(self):
+        funcao = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
+
+        pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("77788899900"),
+            funcao=funcao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            dados_extensao={},
+            formacoes=[
+                {
+                    "tipo_formacao": "GRADUACAO", "curso": "Engenharia Mecanica",
+                    "entidade": "USP", "cidade": "Sao Paulo", "uf": "SP", "ano_conclusao": 2010,
+                },
+                {
+                    "tipo_formacao": "APERFEICOAMENTO_PROFISSIONAL", "curso": "Curso GMP",
+                    "entidade": "EMCA", "cidade": "Taubate", "uf": "SP", "ano_conclusao": 2020,
+                },
+            ],
+        )
+
+        assert dados_docente is not None
+        assert FormacaoDocente.objects.filter(dados_docente=dados_docente).count() == 2
+        assert FormacaoDocente.objects.filter(
+            dados_docente=dados_docente, tipo_formacao="GRADUACAO"
+        ).exists()
+
+    def test_gestao_cria_multiplas_experiencias_profissionais(self):
+        funcao = Funcao.objects.create(nome="Diretor", categoria="GESTAO")
+
+        pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("88899900011"),
+            funcao=funcao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            experiencias=[
+                {"organizacao": "EMCA", "cargo": "Instrutor", "data_inicio": "2015-01-01", "data_fim": "2020-01-01"},
+                {"organizacao": "Outra Empresa", "cargo": "Tecnico", "data_inicio": "2010-01-01", "data_fim": "2014-12-31"},
+            ],
+        )
+
+        assert dados_docente is None
+        assert ExperienciaProfissional.objects.filter(atribuicao=atribuicao).count() == 2
+
+    def test_historico_vinculo_formal_criado_para_docente_e_gestao_nunca_discente(self):
+        vinculo_formal = VinculoFormal.objects.create(nome="FAPETI")
+
+        funcao_docente = Funcao.objects.create(nome="Docente - Instrutor 2", categoria="DOCENTE")
+        funcao_gestao = Funcao.objects.create(nome="Secretaria 2", categoria="GESTAO")
+        funcao_discente = Funcao.objects.create(nome="Discente - Aluno 2", categoria="DISCENTE")
+
+        historico_dados = [{
+            "vinculo_formal": vinculo_formal,
+            "data_inicio": "2025-01-01",
+            "data_fim": None,
+        }]
+
+        _, atribuicao_docente, _ = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("99900011122"),
+            funcao=funcao_docente,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            dados_extensao={},
+            historico_vinculo_formal=historico_dados,
+        )
+        assert HistoricoVinculoFormal.objects.filter(atribuicao=atribuicao_docente).count() == 1
+
+        _, atribuicao_gestao, _ = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("00011122233"),
+            funcao=funcao_gestao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            historico_vinculo_formal=historico_dados,
+        )
+        assert HistoricoVinculoFormal.objects.filter(atribuicao=atribuicao_gestao).count() == 1
+
+        _, atribuicao_discente, _ = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("11122233344"),
+            funcao=funcao_discente,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            # historico_vinculo_formal passado mesmo assim, mas categoria Discente deve ignorar
+            historico_vinculo_formal=historico_dados,
+        )
+        assert HistoricoVinculoFormal.objects.filter(atribuicao=atribuicao_discente).count() == 0
+
+    def test_pendencia_cadastro_universal_qualquer_categoria(self):
+        """PendenciaCadastro roda para qualquer categoria, sem condicional (diferente das demais)."""
+        funcao_discente = Funcao.objects.create(nome="Discente - Aluno 3", categoria="DISCENTE")
+
+        pendencias_dados = [{"tipo": "CANAC", "descricao": ""}]
+
+        _, atribuicao, _ = CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("22233344400"),
+            funcao=funcao_discente,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            pendencias=pendencias_dados,
+        )
+
+        assert PendenciaCadastro.objects.filter(atribuicao=atribuicao, tipo="CANAC").exists()

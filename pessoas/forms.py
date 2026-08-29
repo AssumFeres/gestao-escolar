@@ -1,9 +1,9 @@
 """
 pessoas/forms.py
 
-Form de entrada para a Template View de cadastro (Etapa 7.3 - formulário completo,
-único, com dropdown de Funcao; JavaScript, na Etapa 7.4, mostra/esconde os blocos
-de campos conforme a categoria da Funcao escolhida).
+Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
+completo, único, com dropdown de Funcao; JavaScript, na Etapa 7.4d, mostra/esconde
+os blocos de campos conforme a categoria da Funcao escolhida).
 
 Estrutura:
     CadastrarPessoaForm            — campos fixos: Pessoa (completo), Funcao,
@@ -12,17 +12,19 @@ Estrutura:
     FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente).
     ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão).
     HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão).
+    PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
+                                     qualquer categoria — Discente, Docente ou Gestão).
 
-Os 3 últimos viram Formsets (forms.formset_factory) na View — permitem 0 a N linhas,
-cada uma repetindo os mesmos campos, com JavaScript controlando quantas aparecem
-na tela (Etapa 7.4). Usar Form comum (não ModelForm) para eles: no momento do
-cadastro, o objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service
-é quem cria os Models de verdade a partir dos dicts já validados pelo Form.
+Os 4 últimos viram Formsets (forms.formset_factory) — permitem 0 a N linhas, cada
+uma repetindo os mesmos campos, com JavaScript controlando quantas aparecem na
+tela (Etapa 7.4d). Usar Form comum (não ModelForm): no momento do cadastro, o
+objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
+cria os Models de verdade a partir dos dicts já validados pelo Form.
 """
 
 from django import forms
 
-from .models import Funcao, VinculoFormal, TipoFormacaoDocente
+from .models import Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia
 
 
 class CadastrarPessoaForm(forms.Form):
@@ -116,7 +118,8 @@ class CadastrarPessoaForm(forms.Form):
 class FormacaoDocenteForm(forms.Form):
     """1 linha de Graduação/Formação Profissional/Aperfeiçoamento (FE 008, seções 3-5)."""
     tipo_formacao = forms.ChoiceField(
-        choices=TipoFormacaoDocente.choices, required=False, label="Tipo"
+        choices=[('', '---------')] + list(TipoFormacaoDocente.choices),
+        required=False, label="Tipo"
     )
     curso = forms.CharField(max_length=200, required=False, label="Curso")
     entidade = forms.CharField(max_length=200, required=False, label="Entidade")
@@ -150,9 +153,21 @@ class HistoricoVinculoFormalForm(forms.Form):
     )
 
 
+class PendenciaCadastroForm(forms.Form):
+    """1 linha de Pendência de documentação — universal, qualquer categoria."""
+    tipo = forms.ChoiceField(
+        choices=[('', '---------')] + list(TipoPendencia.choices),
+        required=False, label="Tipo"
+    )
+    descricao = forms.CharField(
+        max_length=200, required=False, label="Descrição (detalhe, usar sobretudo em 'Outro')"
+    )
+
+
 # Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
 # extra=1: a tela já nasce com 1 linha em branco visível (decisão da Etapa 7.3).
 # Definidos aqui, uma vez só, para serem reaproveitados igual em views.py (GET e POST).
 FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
 ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
 HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)
+PendenciaCadastroFormSet = forms.formset_factory(PendenciaCadastroForm, extra=1)

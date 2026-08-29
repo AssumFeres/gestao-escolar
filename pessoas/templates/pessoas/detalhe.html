@@ -36,7 +36,7 @@ de Gestao Escolar{% endblock %} {% block content %}
       <th>Situacao</th>
       <th>Data inicio</th>
       <th>Data fim</th>
-      <th>Ativo</th>
+      <th>Turma</th>
     </tr>
   </thead>
   <tbody>
@@ -46,7 +46,7 @@ de Gestao Escolar{% endblock %} {% block content %}
       <td>{{ atribuicao.situacao }}</td>
       <td>{{ atribuicao.data_inicio }}</td>
       <td>{{ atribuicao.data_fim|default:"-----" }}</td>
-      <td>{{ atribuicao.ativo|yesno:"Sim,Nao" }}</td>
+      <td>-----</td>
     </tr>
     {% endfor %}
   </tbody>

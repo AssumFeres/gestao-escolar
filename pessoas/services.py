@@ -25,6 +25,9 @@ class CadastrarPessoaComFuncaoService:
     Regra de negócio: uma Pessoa com Função de Discente (identificada pela existência de
     DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca pelo texto de Funcao.nome
     — nome é editável, estrutura não) não pode acumular outra Função.
+
+    PendenciaCadastro (documentação física pendente) é universal — não depende da
+    categoria da Função, diferente de Formação/Experiência/Histórico de Vínculo Formal.
     """
 
     def executar(
@@ -36,11 +39,12 @@ class CadastrarPessoaComFuncaoService:
         formacoes: list = None,
         experiencias: list = None,
         historico_vinculo_formal: list = None,
+        pendencias: list = None,
     ):
         from .models import (
             Pessoa, AtribuicaoFuncao, CategoriaFuncao,
             DadosDiscente, DadosDocente, FormacaoDocente,
-            ExperienciaProfissional, HistoricoVinculoFormal,
+            ExperienciaProfissional, HistoricoVinculoFormal, PendenciaCadastro,
         )
 
         with transaction.atomic():
@@ -74,9 +78,14 @@ class CadastrarPessoaComFuncaoService:
                 for experiencia in (experiencias or []):
                     ExperienciaProfissional.objects.create(atribuicao=atribuicao, **experiencia)
 
+            # Comum a Docente e Gestão, nunca Discente
             if funcao.categoria in (CategoriaFuncao.DOCENTE, CategoriaFuncao.GESTAO):
                 for historico in (historico_vinculo_formal or []):
                     HistoricoVinculoFormal.objects.create(atribuicao=atribuicao, **historico)
+
+            # Universal — qualquer categoria, sem condicional
+            for pendencia in (pendencias or []):
+                PendenciaCadastro.objects.create(atribuicao=atribuicao, **pendencia)
 
         return pessoa, atribuicao, dados_docente
 

@@ -14,7 +14,8 @@ from rest_framework import status
 from .models import Pessoa, Funcao, CategoriaFuncao, DadosDocente
 from .forms import (
     CadastrarPessoaForm,
-    FormacaoDocenteFormSet, ExperienciaProfissionalFormSet, HistoricoVinculoFormalFormSet,
+    FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
+    HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
 )
 from .services import (
     BuscarEnderecoPorCepService,
@@ -49,8 +50,8 @@ class CadastrarPessoaView(APIView):
     SRP: única responsabilidade é traduzir HTTP <-> CadastrarPessoaComFuncaoService.
 
     Versão mínima via API: cadastra Pessoa + AtribuicaoFuncao, sem os campos
-    repetíveis (Formação/Experiência/Histórico) — esses só estão disponíveis
-    pelo formulário HTML (NovoCadastroPessoaView) por enquanto.
+    repetíveis (Formação/Experiência/Histórico/Pendências) — esses só estão
+    disponíveis pelo formulário HTML (NovoCadastroPessoaView) por enquanto.
     """
 
     def post(self, request):
@@ -122,6 +123,7 @@ _CAMPO_PREENCHIDO = {
     'formacao': 'curso',
     'experiencia': 'organizacao',
     'historico': 'vinculo_formal',
+    'pendencia': 'tipo',
 }
 
 
@@ -136,11 +138,12 @@ class NovoCadastroPessoaView(View):
     da API (CadastrarPessoaComFuncaoService) — mesma regra de negocio,
     caminho de entrada diferente.
 
-    Formulário único com dropdown de Funcao (Etapa 7.3/7.4); os Formsets de
-    Formação/Experiência/Histórico de Vínculo Formal são sempre enviados,
+    Formulário único com dropdown de Funcao; os Formsets de Formação/
+    Experiência/Histórico de Vínculo Formal/Pendências são sempre enviados,
     mas só os relevantes para a categoria escolhida são de fato usados pelo
-    Service — o Template/JavaScript (Etapa 7.4c/d) é quem decide quais blocos
-    mostrar visualmente, mas o back-end aceita o POST completo de qualquer forma.
+    Service (Pendências é universal, sempre usada) — o Template/JavaScript
+    (Etapa 7.4c/d) é quem decide quais blocos mostrar visualmente, mas o
+    back-end aceita o POST completo de qualquer forma.
     """
     template_name = 'pessoas/form_pessoa.html'
 
@@ -149,25 +152,33 @@ class NovoCadastroPessoaView(View):
             FormacaoDocenteFormSet(dados_post, prefix='formacao'),
             ExperienciaProfissionalFormSet(dados_post, prefix='experiencia'),
             HistoricoVinculoFormalFormSet(dados_post, prefix='historico'),
+            PendenciaCadastroFormSet(dados_post, prefix='pendencia'),
         )
+
+    def _funcao_categorias(self):
+        """Mapa {id_da_funcao: categoria}, usado pelo JS para saber qual bloco mostrar."""
+        return {f.id: f.categoria for f in Funcao.objects.all()}
 
     def get(self, request):
         form = CadastrarPessoaForm()
-        formacao_fs, experiencia_fs, historico_fs = self._formsets()
+        formacao_fs, experiencia_fs, historico_fs, pendencia_fs = self._formsets()
         return render(request, self.template_name, {
             'form': form,
             'formacao_formset': formacao_fs,
             'experiencia_formset': experiencia_fs,
             'historico_formset': historico_fs,
+            'pendencia_formset': pendencia_fs,
+            'funcao_categorias': self._funcao_categorias(),
         })
 
     def post(self, request):
         form = CadastrarPessoaForm(request.POST)
-        formacao_fs, experiencia_fs, historico_fs = self._formsets(request.POST)
+        formacao_fs, experiencia_fs, historico_fs, pendencia_fs = self._formsets(request.POST)
 
         formularios_validos = (
             form.is_valid() and formacao_fs.is_valid()
             and experiencia_fs.is_valid() and historico_fs.is_valid()
+            and pendencia_fs.is_valid()
         )
         if not formularios_validos:
             return render(request, self.template_name, {
@@ -175,9 +186,9 @@ class NovoCadastroPessoaView(View):
                 'formacao_formset': formacao_fs,
                 'experiencia_formset': experiencia_fs,
                 'historico_formset': historico_fs,
+                'pendencia_formset': pendencia_fs,
+                'funcao_categorias': self._funcao_categorias(),
             })
-
-        
 
         dados = form.cleaned_data
         funcao = dados['funcao']
@@ -254,6 +265,9 @@ class NovoCadastroPessoaView(View):
                 historico_fs.cleaned_data, _CAMPO_PREENCHIDO['historico']
             )
 
+        # Universal — qualquer categoria
+        pendencias = _linhas_preenchidas(pendencia_fs.cleaned_data, _CAMPO_PREENCHIDO['pendencia'])
+
         try:
             pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=dados_pessoa,
@@ -263,6 +277,7 @@ class NovoCadastroPessoaView(View):
                 formacoes=formacoes,
                 experiencias=experiencias,
                 historico_vinculo_formal=historico_vinculo_formal,
+                pendencias=pendencias,
             )
         except ValidationError as e:
             form.add_error(None, str(e))
@@ -271,6 +286,7 @@ class NovoCadastroPessoaView(View):
                 'formacao_formset': formacao_fs,
                 'experiencia_formset': experiencia_fs,
                 'historico_formset': historico_fs,
+                'pendencia_formset': pendencia_fs,
             })
 
         if dados_docente is not None:
@@ -281,8 +297,8 @@ class NovoCadastroPessoaView(View):
 
 class PreencherRequisitosDocenteView(View):
     """
-    Template View — PLACEHOLDER (Etapa 7.4, a completar quando os Requisitos de
-    Contratação e Disciplinas/Capacidade forem implementados na tela).
+    Template View — PLACEHOLDER (a completar quando os Requisitos de Contratação
+    e Disciplinas/Capacidade forem implementados na tela).
 
     Recebe o id de um DadosDocente já existente via URL (não busca por CPF/nome
     de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
