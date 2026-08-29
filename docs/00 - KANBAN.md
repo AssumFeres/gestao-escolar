@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 concluídas**; base do modelo antigo totalmente removida, sistema roda sobre `Funcao`/`AtribuicaoFuncao`. **Etapa 7 completa (os 3 formulários especializados) em andamento**: 7.1 concluída, inventário de dados completo (`VinculoFormal`, `HistoricoVinculoFormal`, `FormacaoDocente`, Requisitos de Contratação), 7.2 concluída (`CadastrarPessoaComFuncaoService` expandido + `PreencherRequisitosEDisciplinasDocenteService` novo, fluxo em 2 etapas para Docente). ⚠️ `views.py`/`serializers.py` estão quebrados neste momento (desempacotam 2 valores do Service, que agora retorna 3) — correção consciente, adiada para a 7.4. Detalhe das sessões em `docs/08` a `13 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 e 7.1-7.3 concluídas**; base do modelo antigo totalmente removida, sistema roda sobre `Funcao`/`AtribuicaoFuncao`. Formulário de cadastro completo (Etapa 7.4a/b) testado manualmente em 2 máquinas — Discente/Gestão completam até o detalhe da Pessoa, Docente até a tela placeholder de Requisitos. Dois bugs encontrados e corrigidos no teste manual: Formsets sem `management_form` no template, e `IntegrityError` de RM/RA/CANAC (Model + View). Nova tabela `PendenciaCadastro` implementada. Fixture do catálogo `Funcao`/`VinculoFormal` criada. Falta: 7.4c/d (organização visual + JavaScript + bloco de Pendências), 7.5 (testes). Detalhe das sessões em `docs/08` a `14 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -34,10 +34,13 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Melhorar Django Admin com Inlines (editar `AtribuicaoFuncao`/extensões na mesma tela de Pessoa) — paliativo até as Template Views customizadas cobrirem cadastro completo
 - [ ] Ajustar `verbose_name_plural` de `Funcao` no Admin (hoje exibido como "Funcaos")
 - [ ] **Teste manual a validar quando a Etapa 4/5 estiver pronta:** confirmar que o Admin realmente bloqueia a exclusão de uma `Funcao` que já tem `AtribuicaoFuncao` vinculada (`on_delete=PROTECT`), validando na prática a proteção contra perda de rastreabilidade
-- [ ] Fixture versionada do catálogo `Funcao` — decisão tomada de popular manualmente por enquanto (9 Funções cadastradas via Admin na sessão de 25/08/2026); cada uma das 5 máquinas validadas precisa popular seu próprio catálogo até que isso seja versionado
 - [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
 - [ ] Avaliar dividir `pessoas/models.py` em uma pasta `models/` com um arquivo por classe/grupo de classes relacionadas, à medida que o arquivo cresce com a migração — refatoração puramente organizacional, sem mudança de comportamento
 - [ ] Manter o docstring de índice no topo de `pessoas/models.py` sincronizado conforme classes são adicionadas/removidas durante a migração — hoje já está desatualizado
+- [ ] **Relatório de Pendências por Turma** (Turma → Aluno → Pendências) usando `PendenciaCadastro`, para entrega ao Coordenador de Curso — depende do módulo de Turmas existir (fora de escopo deste PI); Model já implementado (25/08/2026), pronto para quando Turma existir
+- [ ] Tela/fluxo para marcar uma `PendenciaCadastro` como resolvida (`resolvida=True`, `resolvida_em`) — hoje só existe o Model, sem interface
+- [ ] **Padrão a lembrar em qualquer novo campo `unique=True, blank=True` futuro:** usar `null=True` também, e garantir que a View converta campo vazio para `None` (não `""`) antes de montar o dict para o Service — o Model sozinho não basta; já causou um `IntegrityError` real em RM/RA/CANAC (25/08/2026), corrigido nos dois lados
+- [ ] Padronizar versão do Python entre as máquinas do grupo (hoje: 3.14.5 em uma, 3.13.0 em outra) — atualizar Python + recriar `venv` quando for conveniente, não durante sessão de teste ativo
 
 **`[Projeto]`**
 

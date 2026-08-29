@@ -2,9 +2,9 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08`, `09`, `10`, `11`, `12` e `13 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
+**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08` a `14 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
 
-**Etapa 7 completa (os 3 formulários especializados) em andamento desde 25/08/2026:** decisão de escopo — **formulário mais completo possível desde já**, para evitar retrabalho futuro. Sub-etapas 7.1 a 7.5 detalhadas na seção da Etapa 7 abaixo. **7.1 concluída** (categoria em `Funcao`, commit `36bf1fd`); **inventário de dados completo** (`VinculoFormal`, `HistoricoVinculoFormal`, `FormacaoDocente`, ajustes em `DadosDocente`/`Capacidade`, commit `f086f57`); **7.2 concluída** (`CadastrarPessoaComFuncaoService` expandido + `PreencherRequisitosEDisciplinasDocenteService` novo, fluxo em 2 etapas para Docente, commit `04b461d`). Falta: 7.3 (Form), 7.4 (Template + JS + ajuste de Views quebradas pelo retorno de 3 valores), 7.5 (testes). ⚠️ **`views.py`/`serializers.py` estão quebrados neste momento** — ainda desempacotam 2 valores do Service, que agora retorna 3; corrigir só na 7.4, quando o formulário completo existir (decisão consciente, não esquecimento).
+**Etapa 7 completa (os 3 formulários especializados) em andamento:** 7.1, inventário de dados, e 7.2 concluídas. **7.3 (Form) concluída.** Teste manual do formulário completo revelou e corrigiu: Formsets sem `management_form` no template (bloqueava todo POST), `IntegrityError` de RM/RA/CANAC (Model + View corrigidos, `null=True` + `or None`). Nova tabela `PendenciaCadastro` implementada (universal entre categorias, para relatório futuro de pendências por Turma/Aluno). Fixture do catálogo `Funcao`/`VinculoFormal` criada, resolvendo item de Backlog pendente desde a Etapa 2. Falta: 7.4c/d (organização visual + JavaScript + incluir bloco de Pendências no Form/Service), 7.5 (testes).
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -203,21 +203,39 @@ Feita na mesma sessão que a Etapa 6, como planejado — ambas interdependentes.
 
 **⚠️ Estado consciente de "quebrado" até a 7.4:** `pessoas/views.py` e `pessoas/serializers.py` ainda desempacotam `pessoa, atribuicao = Service().executar(...)` (2 valores) — vão falhar com `ValueError` se alguém tentar cadastrar pelo formulário HTML ou API agora. Decisão consciente de não corrigir isso ainda, porque o ajuste de verdade (Form completo, dropdown de Função, campos dinâmicos) é da 7.4 — corrigir a View isoladamente agora seria retrabalho.
 
-### 7.3 — Expandir o Form ⏳ Não iniciada
+### 7.3 — Expandir o Form ✅ Concluída
 
-Form ganha todos os campos possíveis das 3 categorias (a maioria opcional/condicional, já que só uma categoria de campos é preenchida por vez, dependendo da Função escolhida no dropdown único). Inclui os campos repetíveis (Formação, Capacidade, Experiência Profissional, Histórico de Vínculo Formal) como blocos de "adicionar linha" no HTML.
+Form ganhou todos os campos possíveis das 3 categorias, incluindo identificação ampliada de `Pessoa` (decisão de escopo confirmada: "mais completo possível"). 3 Forms simples (`forms.Form`, não `ModelForm` — o objeto pai ainda não existe no momento do preenchimento) viraram Formsets via `forms.formset_factory`, `extra=1` (nasce com 1 linha visível): `FormacaoDocenteFormSet`, `ExperienciaProfissionalFormSet`, `HistoricoVinculoFormalFormSet`.
 
-### 7.4 — Template + JavaScript + correção de Views ⏳ Não iniciada
+Validado isoladamente via `python manage.py shell` antes de integrar à View — confirmado que o Form principal renderiza (incluindo o dropdown de `Funcao` com as 9 opções reais do catálogo) e que o Formset gera corretamente os campos de controle (`TOTAL_FORMS`, `INITIAL_FORMS`) e os campos prefixados (`form-0-curso`, etc.).
 
-- Agrupar os campos em blocos por categoria no HTML (ex: `<div>` com `data-categoria="DISCENTE"` etc.), e o JS mostra/esconde o bloco certo conforme o dropdown de Função muda
-- JS também para os blocos "adicionar linha" das tabelas repetíveis (Formação, Capacidade, etc.) — mesmo espírito do JS de busca de CEP, com propósito de negócio real (objetivo do PI)
-- Corrigir `views.py`/`serializers.py` para o retorno de 3 valores do Service (item pendente desde a 7.2)
-- Nova View + URL para a segunda etapa do cadastro de Docente (`PreencherRequisitosEDisciplinasDocenteService`), com o `id` do `DadosDocente` na URL
-- Dropdown de `FormacaoDocente` na seção de Disciplinas (Capacidade), mostrando o rótulo "4.1 - Curso..." mas salvando a referência real, não o texto do código
+**Nova tabela `PendenciaCadastro` decidida durante esta etapa** (não fazia parte do inventário original de FE 007/008) — universal entre categorias, para rastrear documentação física pendente (Certidão de Nascimento, RG, Comprovante de Endereço, Cartão de Vacina, CANAC/RM/RA/Código de Matrícula ANAC quando vazios, + `OUTRO` com descrição livre). Pensada para viabilizar um relatório futuro (Turma → Aluno → Pendências) para o Coordenador de Curso cobrar documentação. Ver `docs/14 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo. Ainda não incluída no Form/Service — fica para 7.4.
+
+Commit: `feat: expande CadastrarPessoaForm com identificacao ampliada e campos de Discente, cria Forms para Formsets (Formacao, Experiencia, Vinculo Formal)` (`883bb47`); `PendenciaCadastro` em commit posterior (`4e6b547`), junto de correções.
+
+### 7.4a/b — Corrigir Views + montar a View de cadastro completa ✅ Concluída, com correções pós-teste manual
+
+- [x] `CadastrarPessoaView`/`NovoCadastroPessoaView` corrigidas para o retorno de 3 valores do Service
+- [x] `NovoCadastroPessoaView` monta os 3 Formsets (GET e POST), traduz o formulário bruto para os parâmetros do Service conforme `funcao.categoria`, redireciona para `preencher-requisitos-docente` quando `dados_docente is not None`, senão para `detalhe-pessoa`
+- [x] `PreencherRequisitosDocenteView` — placeholder criado, recebe o `id` de `DadosDocente` via URL (`docente/<int:pk>/requisitos/`), sem formulário funcional ainda
+- [x] **Bug encontrado e corrigido:** `form_pessoa.html` não incluía os Formsets — Django recusava todo POST com "ManagementForm data is missing". Corrigido com uma versão mínima do template, incluindo `{{ formset.management_form }}` e iterando cada Formset (`{{ subform.as_p }}`) — sem organização visual ainda, isso é 7.4c/d.
+- [x] **Bug encontrado e corrigido:** `IntegrityError` em RM/RA/CANAC ao deixar os campos vazios — string vazia (não `NULL`) colide na constraint `unique`. Corrigido em duas partes: `null=True` no Model (migration `0017`) + `dados.get(campo) or None` na View (o Model sozinho não bastava).
+- [x] `pytest` — `5 passed` a cada correção
+- [x] Testado manualmente pelo navegador, em 2 máquinas diferentes: Discente e Gestão completam até o detalhe da Pessoa; Docente completa até o placeholder de Requisitos
+
+Commits: `3f73c3b` (Formsets no template, primeira tentativa de correção), `4e6b547` (correção definitiva do `IntegrityError` + `PendenciaCadastro` + fixture).
+
+### 7.4c/d — Organização visual + JavaScript ⏳ Não iniciada
+
+- Blocos de campos por categoria no HTML (`<div data-categoria="DISCENTE">` etc.), CSS mínimo — hoje o formulário é só `{{ form.as_p }}` cru, sem nenhuma organização visual
+- JavaScript: mostra/esconde os blocos por categoria conforme o dropdown de `Funcao` muda; e "Adicionar linha" nos Formsets (hoje só existe a linha `extra=1`, sem botão para adicionar mais)
+- Incluir o bloco de `PendenciaCadastro` no Form/Template — **sempre visível**, sem condicional de categoria (diferente dos outros 3 Formsets)
+- Adicionar sexto parâmetro `pendencias: list = None` ao `CadastrarPessoaComFuncaoService`, sem `if funcao.categoria == ...` (roda igual para qualquer categoria)
+- Dropdown de `FormacaoDocente` na seção de Disciplinas (Capacidade) da segunda etapa (`PreencherRequisitosDocenteView`, ainda placeholder) — mostrando rótulo "4.1 - Curso..." mas salvando a referência real
 
 ### 7.5 — Testes do Service expandido ⏳ Não iniciada
 
-Cobrir a criação de `DadosDiscente`/`DadosDocente`/`FormacaoDocente`/`ExperienciaProfissional`/`HistoricoVinculoFormal` junto do cadastro, conforme a categoria escolhida, e o fluxo em 2 etapas do Docente (`PreencherRequisitosEDisciplinasDocenteService`).
+Cobrir a criação de `DadosDiscente`/`DadosDocente`/`FormacaoDocente`/`ExperienciaProfissional`/`HistoricoVinculoFormal`/`PendenciaCadastro` junto do cadastro, conforme a categoria escolhida, e o fluxo em 2 etapas do Docente (`PreencherRequisitosEDisciplinasDocenteService`).
 
 ---
 
