@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Pessoa, Disciplina, Capacidade, Funcao, AtribuicaoFuncao, DadosDiscente,
     DadosDocente, ExperienciaProfissional, VinculoFormal, HistoricoVinculoFormal,
-    FormacaoDocente,
+    FormacaoDocente, PendenciaCadastro,
 )
 
 
@@ -17,3 +17,4 @@ admin.site.register(ExperienciaProfissional)
 admin.site.register(VinculoFormal)
 admin.site.register(HistoricoVinculoFormal)
 admin.site.register(FormacaoDocente)
+admin.site.register(PendenciaCadastro)

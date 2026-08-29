@@ -6,7 +6,8 @@ Módulo de domínio: Gestão de Pessoas.
 Classes:
     Pessoa                  — dados cadastrais da pessoa física, com Endereco como VO embutido;
                               inclui identificação ampliada (FE 007/FE 008) e identificadores
-                              específicos (RM, RA, CANAC).
+                              específicos (RM, RA, CANAC — opcionais, null=True para não
+                              conflitar entre si na constraint unique quando vazios).
     Disciplina               — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
     CategoriaFuncao          — enum que classifica uma Funcao como Discente/Docente/Gestão,
                               usado pela interface para decidir qual formulário exibir
@@ -20,9 +21,17 @@ Classes:
     HistoricoVinculoFormal   — histórico de VinculoFormal ao longo de uma AtribuicaoFuncao;
                               repetível (a entidade contratante pode mudar com o tempo).
                               Aplica-se só a categorias Docente e Gestão, nunca Discente.
+    TipoPendencia            — enum dos tipos comuns de pendência documental no cadastro.
+    PendenciaCadastro        — pendências de documentação física (certidão, RG, comprovante
+                              de endereço, etc.), ligada a uma AtribuicaoFuncao. Universal:
+                              aparece em Discente, Docente ou Gestão, sem restrição de
+                              categoria — diferente de Formação/Experiência/Histórico, que
+                              são condicionais. Usada para gerar o relatório operacional
+                              de pendências por Turma/Aluno entregue ao Coordenador de Curso.
     DadosDiscente            — extensão de AtribuicaoFuncao (OneToOne) para Discente:
-                              matrícula ANAC, documentação de estrangeiro, contato de
-                              emergência, responsável legal.
+                              código de matrícula ANAC (específico do curso, diferente do
+                              CANAC de Pessoa — ver nota no campo), documentação de
+                              estrangeiro, contato de emergência, responsável legal.
     DadosDocente             — extensão de AtribuicaoFuncao (OneToOne) para Docente;
                               inclui os Requisitos de Contratação da FE 008 (RBAC 141).
     FormacaoDocente          — Graduação/Formação Profissional/Aperfeiçoamento (FE 008,
@@ -60,15 +69,27 @@ class Endereco:
 
 
 class Pessoa(models.Model):
-    # Identificadores específicos (comuns a qualquer categoria)
+    # Identificadores específicos (comuns a qualquer categoria).
+    # null=True além de blank=True: quando vazio, salva NULL (não string vazia) —
+    # múltiplos NULL não conflitam na constraint unique=True, diferente de múltiplas
+    # strings vazias, que o SQLite trata como duplicatas entre si (causava IntegrityError
+    # ao cadastrar duas Pessoas sem preencher RM, por exemplo).
     nome_completo = models.CharField(max_length=200)
     cpf = models.CharField(max_length=11, unique=True)
     data_nascimento = models.DateField()
     email = models.EmailField()
     telefone = models.CharField(max_length=20)
-    registro_aluno = models.CharField(max_length=20, unique=True, blank=True, verbose_name="RA")
-    registro_matricula = models.CharField(max_length=20, unique=True, blank=True, verbose_name="RM")
-    codigo_anac = models.CharField(max_length=20, unique=True, blank=True, verbose_name="CANAC")
+    registro_matricula = models.CharField(
+        max_length=20, unique=True, blank=True, null=True, verbose_name="RM"
+    )
+    registro_aluno = models.CharField(
+        max_length=20, unique=True, blank=True, null=True, verbose_name="RA"
+    )
+    codigo_anac = models.CharField(
+        max_length=20, unique=True, blank=True, null=True, verbose_name="CANAC",
+        help_text="Identificador da pessoa perante a ANAC. Idealmente obrigatório, mas "
+                   "pode ficar pendente no cadastro inicial (ver PendenciaCadastro)."
+    )
 
     # Identificação ampliada (FE 007 / FE 008)
     sexo = models.CharField(max_length=1, blank=True)
@@ -193,9 +214,49 @@ class HistoricoVinculoFormal(models.Model):
         return f"{self.vinculo_formal.nome} ({self.data_inicio} - {self.data_fim or 'atual'})"
 
 
+class TipoPendencia(models.TextChoices):
+    """Tipos comuns de pendência documental — 'OUTRO' + descricao cobre casos incomuns."""
+    CANAC = 'CANAC', 'CANAC'
+    RM = 'RM', 'Registro de Matrícula'
+    RA = 'RA', 'Registro de Aluno'
+    CODIGO_MATRICULA_ANAC = 'CODIGO_MATRICULA_ANAC', 'Código de Matrícula ANAC'
+    CERTIDAO_NASCIMENTO = 'CERTIDAO_NASCIMENTO', 'Certidão de Nascimento'
+    CPF_FISICO = 'CPF_FISICO', 'CPF (documento físico)'
+    RG = 'RG', 'RG/Carteira de Identidade'
+    PASSAPORTE = 'PASSAPORTE', 'Passaporte + Autorização de Permanência (estrangeiro)'
+    COMPROVANTE_ENDERECO = 'COMPROVANTE_ENDERECO', 'Comprovante de Endereço'
+    CARTAO_VACINA = 'CARTAO_VACINA', 'Cartão de Vacina (menor de 18)'
+    OUTRO = 'OUTRO', 'Outro'
+
+
+class PendenciaCadastro(models.Model):
+    """
+    Pendências de documentação física do cadastro — universal, aparece em Discente,
+    Docente ou Gestão (diferente de Formação/Experiência/Histórico, que são condicionais
+    por categoria). Ligada a AtribuicaoFuncao, não a Pessoa, pensando no relatório
+    operacional futuro (Turma -> Aluno -> Pendências) entregue ao Coordenador de Curso.
+    """
+    atribuicao = models.ForeignKey(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='pendencias')
+    tipo = models.CharField(max_length=30, choices=TipoPendencia.choices)
+    descricao = models.CharField(
+        max_length=200, blank=True,
+        help_text="Detalhe livre, usado sobretudo quando tipo=OUTRO."
+    )
+    resolvida = models.BooleanField(default=False)
+    criada_em = models.DateTimeField(auto_now_add=True)
+    resolvida_em = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.atribuicao.pessoa.nome_completo}"
+
+
 class DadosDiscente(models.Model):
     atribuicao = models.OneToOneField(AtribuicaoFuncao, on_delete=models.CASCADE, related_name='dados_discente')
 
+    # Diferente de Pessoa.codigo_anac (identifica a PESSOA perante a ANAC, permanente):
+    # este é o código da MATRÍCULA específica (ex: 239.MCELT.25.00115 — Ciac.Habilitação.
+    # Ano.Sequencial), muda a cada novo curso. Pode ficar pendente no cadastro inicial
+    # (ver PendenciaCadastro, tipo CODIGO_MATRICULA_ANAC) até a ANAC processar.
     codigo_matricula_anac = models.CharField(max_length=20, blank=True, verbose_name="Código de Matrícula ANAC")
 
     # Documentação de estrangeiro (FE 007)
