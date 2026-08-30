@@ -7,147 +7,147 @@
    1. PALETA DE CORES
    ---------------------------------------------------------- */
 :root {
-  /* Cores institucionais */
-  --cor-primaria: #002060;
-  --cor-primaria-hover: #001640;
-  --cor-secundaria: #1f4e79;
-  --cor-destaque: #2f75b5;
+    /* Cores institucionais */
+    --cor-primaria: #002060;
+    --cor-primaria-hover: #001640;
+    --cor-secundaria: #1F4E79;
+    --cor-destaque: #2F75B5;
 
-  /* Fundos */
-  --fundo-pagina: #f4f7fa;
-  --fundo-card: #ffffff;
-  --fundo-secao: #eaf0f8;
+    /* Fundos */
+    --fundo-pagina: #F4F7FA;
+    --fundo-card: #FFFFFF;
+    --fundo-secao: #EAF0F8;
 
-  /* Bordas */
-  --cor-borda: #cbd5e1;
+    /* Bordas */
+    --cor-borda: #CBD5E1;
 
-  /* Textos */
-  --cor-texto: #1e293b;
-  --cor-texto-secundario: #64748b;
+    /* Textos */
+    --cor-texto: #1E293B;
+    --cor-texto-secundario: #64748B;
 
-  /* Estados */
-  --cor-sucesso: #198754;
-  --cor-aviso: #b7791f;
-  --cor-erro: #c62828;
+    /* Estados */
+    --cor-sucesso: #198754;
+    --cor-aviso: #B7791F;
+    --cor-erro: #C62828;
 }
 
 /* ----------------------------------------------------------
    2. CONFIGURAÇÃO GERAL
    ---------------------------------------------------------- */
 body {
-  font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--cor-texto);
-  background-color: var(--fundo-pagina);
-  margin: 0;
-  padding: 0;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--cor-texto);
+    background-color: var(--fundo-pagina);
+    margin: 0;
+    padding: 0;
 }
 
 /* ----------------------------------------------------------
    3. TÍTULOS
    ---------------------------------------------------------- */
 h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--cor-primaria);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--cor-primaria);
 }
 h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--cor-primaria);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--cor-primaria);
 }
 h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--cor-secundaria);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--cor-secundaria);
 }
 h4,
 h5,
 h6 {
-  font-weight: 600;
-  color: var(--cor-secundaria);
+    font-weight: 600;
+    color: var(--cor-secundaria);
 }
 
 /* ----------------------------------------------------------
    4. ESTRUTURA DA PÁGINA (header, nav, main)
    ---------------------------------------------------------- */
 header {
-  background-color: var(--cor-primaria);
-  color: white;
-  padding: 1rem 2rem;
+    background-color: var(--cor-primaria);
+    color: white;
+    padding: 1rem 2rem;
 }
 
 header h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: white; /* sobrescreve a regra genérica de h1, que é escura por padrão */
+    margin: 0;
+    font-size: 1.4rem;
+    color: white; /* sobrescreve a regra genérica de h1, que é escura por padrão */
 }
 
 nav a {
-  color: white;
-  text-decoration: none;
-  margin-right: 1rem;
+    color: white;
+    text-decoration: none;
+    margin-right: 1rem;
 }
 
 nav a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 main {
-  padding: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 /* ----------------------------------------------------------
    5. TABELAS
    ---------------------------------------------------------- */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  background-color: var(--fundo-card);
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background-color: var(--fundo-card);
 }
 
 th,
 td {
-  text-align: left;
-  padding: 0.6rem;
-  border-bottom: 1px solid var(--cor-borda);
+    text-align: left;
+    padding: 0.3rem 0.6rem;
+    border-bottom: 1px solid var(--cor-borda);
 }
 
 th {
-  background-color: var(--fundo-secao);
-  color: var(--cor-secundaria);
+    background-color: var(--fundo-secao);
+    color: var(--cor-secundaria);
 }
 
 /* ----------------------------------------------------------
    6. LINKS
    ---------------------------------------------------------- */
 a {
-  color: var(--cor-destaque);
+    color: var(--cor-destaque);
 }
 
 a:hover {
-  color: var(--cor-primaria-hover);
+    color: var(--cor-primaria-hover);
 }
 
 /* ----------------------------------------------------------
    7. FORMULÁRIOS (regras genéricas — válidas em qualquer tela)
    ---------------------------------------------------------- */
 label {
-  font-weight: 500;
-  color: var(--cor-texto);
+    font-weight: 500;
+    color: var(--cor-texto);
 }
 
 input,
 select,
 textarea,
 button {
-  font-family: inherit;
-  font-size: 1rem;
+    font-family: inherit;
+    font-size: 1rem;
 }
 
 input[type="text"],
@@ -156,52 +156,52 @@ input[type="date"],
 input[type="number"],
 select,
 textarea {
-  border: 1px solid var(--cor-borda);
-  border-radius: 4px;
-  padding: 0.4rem 0.6rem;
-  background-color: var(--fundo-card);
-  color: var(--cor-texto);
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    background-color: var(--fundo-card);
+    color: var(--cor-texto);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  outline: none;
-  border-color: var(--cor-destaque);
-  box-shadow: 0 0 0 2px rgba(47, 117, 181, 0.2);
+    outline: none;
+    border-color: var(--cor-destaque);
+    box-shadow: 0 0 0 2px rgba(47, 117, 181, 0.2);
 }
 
 button,
 input[type="submit"] {
-  background-color: var(--cor-primaria);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1.2rem;
-  cursor: pointer;
-  font-weight: 600;
+    background-color: var(--cor-primaria);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 button:hover,
 input[type="submit"]:hover {
-  background-color: var(--cor-primaria-hover);
+    background-color: var(--cor-primaria-hover);
 }
 
 /* ----------------------------------------------------------
    8. TEXTOS AUXILIARES E ESTADOS
    ---------------------------------------------------------- */
 .texto-secundario {
-  color: var(--cor-texto-secundario);
+    color: var(--cor-texto-secundario);
 }
 
 .sucesso {
-  color: var(--cor-sucesso);
+    color: var(--cor-sucesso);
 }
 .aviso {
-  color: var(--cor-aviso);
+    color: var(--cor-aviso);
 }
 .erro {
-  color: var(--cor-erro);
+    color: var(--cor-erro);
 }
 
 /* ----------------------------------------------------------
@@ -210,109 +210,110 @@ input[type="submit"]:hover {
 
 /* Fieldset de nível 1 (bloco por categoria: Dados da Pessoa, Discente, etc.) */
 fieldset {
-  background-color: var(--fundo-card);
-  border: 1px solid var(--cor-borda);
-  border-radius: 6px;
-  padding: 0.8rem 1.2rem;
-  margin-bottom: 1rem;
+    background-color: var(--fundo-card);
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    padding: 0.8rem 1.2rem;
+    margin-bottom: 1rem;
 }
 
 /* Fieldset dentro de fieldset (sub-grupo, ex: "Endereço" dentro de "Dados da Pessoa") */
 fieldset fieldset {
-  background-color: var(--fundo-secao);
-  border: 1px solid var(--cor-borda);
-  margin-bottom: 0.7rem;
+    background-color: var(--fundo-secao);
+    border: 1px solid var(--cor-borda);
+    margin-bottom: 0.7rem;
 }
 
 legend {
-  font-weight: 600;
-  color: var(--cor-primaria);
-  padding: 0 0.5rem;
+    font-weight: 600;
+    color: var(--cor-primaria);
+    padding: 0 0.5rem;
 }
 
 fieldset fieldset legend {
-  color: var(--cor-secundaria);
-  font-size: 0.95rem;
+    color: var(--cor-secundaria);
+    font-size: 0.95rem;
 }
 
 /* Substitui os `style="display:grid..."` inline por uma classe reutilizável */
 .grid-2-colunas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 24px;
-  width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+    width: 100%;
 }
 
 /* Para grupos com exatamente 3 campos (ex: Identificadores, Função) */
 .grid-3-colunas {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  column-gap: 24px;
-  width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 24px;
+    width: 100%;
 }
 
 @media (max-width: 700px) {
-  .grid-2-colunas,
-  .grid-3-colunas {
-    grid-template-columns: 1fr; /* empilha em telas estreitas, ex: celular */
-  }
+    .grid-2-colunas,
+    .grid-3-colunas {
+        grid-template-columns: 1fr; /* empilha em telas estreitas, ex: celular */
+    }
 }
 
 /* Substitui os `style="margin-bottom:8px"` inline em cada campo */
 .campo {
-  margin-bottom: 0.4rem;
-  display: flex;
-  flex-direction: column;
+    margin-bottom: 0.4rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .campo label {
-  margin-bottom: 0.15rem;
+    margin-bottom: 0.15rem;
 }
 
 /* Área de uma linha de Formset (Formação, Experiência, Vínculo Formal, Pendência) */
 .formset-bloco table {
-  margin-top: 0.8rem;
+    margin-top: 0.8rem;
 }
 
 .formset-bloco .btn-adicionar {
-  background-color: var(--cor-secundaria);
-  margin: 0.5rem 0 1rem 0;
+    background-color: var(--cor-secundaria);
+    margin: 0.5rem 0 1rem 0;
 }
 
 .formset-bloco .btn-adicionar:hover {
-  background-color: var(--cor-primaria);
+    background-color: var(--cor-primaria);
 }
 
 /* Botão principal de salvar, no fim do formulário */
 button[type="submit"] {
-  font-size: 1.05rem;
-  padding: 0.7rem 2rem;
-  margin-top: 1rem;
+    font-size: 1.05rem;
+    padding: 0.7rem 2rem;
+    margin-top: 1rem;
 }
 
 /* Link com aparência de botão (ex: "+ Cadastrar nova pessoa" na lista) */
 .botao-link {
-  display: inline-block;
-  background-color: var(--cor-primaria);
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  padding: 0.5rem 1.2rem;
-  font-weight: 600;
+    display: inline-block;
+    background-color: var(--cor-primaria);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
 }
 
 .botao-link:hover {
-  background-color: var(--cor-primaria-hover);
-  color: white;
+    background-color: var(--cor-primaria-hover);
+    color: white;
 }
 
+/* Logo no cabeçalho, ao lado do título */
 .header-titulo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .logo {
-  height: 50px;
-  width: auto;
+    height: 50px;
+    width: auto;
 }

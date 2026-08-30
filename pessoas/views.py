@@ -287,6 +287,7 @@ class NovoCadastroPessoaView(View):
                 'experiencia_formset': experiencia_fs,
                 'historico_formset': historico_fs,
                 'pendencia_formset': pendencia_fs,
+                'funcao_categorias': self._funcao_categorias(),
             })
 
         if dados_docente is not None:

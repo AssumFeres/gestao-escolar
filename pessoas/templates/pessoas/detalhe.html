@@ -8,24 +8,125 @@ de Gestao Escolar{% endblock %} {% block content %}
   <tr>
     <th>CPF</th>
     <td>{{ pessoa.cpf }}</td>
+    <th>RM</th>
+    <td>{{ pessoa.registro_matricula|default:"-----" }}</td>
   </tr>
   <tr>
     <th>Data de nascimento</th>
-    <td>{{ pessoa.data_nascimento }}</td>
+    <td>{{ pessoa.data_nascimento|date:"d/m/Y" }}</td>
+    <th>RA</th>
+    <td>{{ pessoa.registro_aluno|default:"-----" }}</td>
   </tr>
   <tr>
     <th>E-mail</th>
     <td>{{ pessoa.email }}</td>
+    <th>CANAC</th>
+    <td>{{ pessoa.codigo_anac|default:"-----" }}</td>
   </tr>
   <tr>
     <th>Telefone</th>
     <td>{{ pessoa.telefone }}</td>
+    <th>Sexo</th>
+    <td>{{ pessoa.sexo|default:"-----" }}</td>
+    <td> </td>
   </tr>
   <tr>
     <th>Endereco</th>
-    <td>{{ pessoa.endereco }}</td>
+    <td colspan="3">{{ pessoa.endereco }}</td>
+  </tr>
+  <tr>
+    <th>CEP</th>
+    <td colspan="3">{{ pessoa.endereco_cep }}</td>
+  </tr>
+  <tr>
+    <th>Identidade</th>
+    <td>{{ pessoa.identidade|default:"-----" }}</td>
+    <th>Órgão expedidor</th>
+    <td>{{ pessoa.orgao_expedidor_identidade|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Data de emissão</th>
+    <td>{{ pessoa.data_emissao_identidade|date:"d/m/Y"|default:"-----" }}</td>
+    <th>Naturalidade</th>
+    <td>{{ pessoa.naturalidade|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>UF de naturalidade</th>
+    <td>{{ pessoa.uf_naturalidade|default:"-----" }}</td>
+    <th>Nacionalidade</th>
+    <td>{{ pessoa.nacionalidade|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Filiação 1</th>
+    <td>{{ pessoa.filiacao_1|default:"-----" }}</td>
+    <th>Filiação 2</th>
+    <td>{{ pessoa.filiacao_2|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Nível de instrução</th>
+    <td>{{ pessoa.nivel_instrucao|default:"-----" }}</td>
+    <th>Estado civil</th>
+    <td>{{ pessoa.estado_civil|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Raça/Cor</th>
+    <td>{{ pessoa.raca_cor|default:"-----" }}</td>
+    <td></td>
+    <td></td>
   </tr>
 </table>
+
+{% for atribuicao in pessoa.atribuicoes.all %}
+{% with dd=atribuicao.dados_discente %}
+{% if dd %}
+<h3>Dados do Discente — {{ atribuicao.funcao.nome }}</h3>
+<table>
+  <tr>
+    <th>Código de Matrícula ANAC</th>
+    <td>{{ dd.codigo_matricula_anac|default:"-----" }}</td>
+    <th>Passaporte</th>
+    <td>{{ dd.passaporte|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Autorização de Permanência</th>
+    <td colspan="3">{{ dd.autorizacao_permanencia|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Contato Emergência - Nome</th>
+    <td>{{ dd.contato_emergencia_nome|default:"-----" }}</td>
+    <th>Parentesco</th>
+    <td>{{ dd.contato_emergencia_parentesco|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Contato Emergência - Telefone</th>
+    <td>{{ dd.contato_emergencia_telefone|default:"-----" }}</td>
+    <th>Endereço</th>
+    <td>{{ dd.contato_emergencia_endereco|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Responsável - Nome</th>
+    <td>{{ dd.responsavel_nome|default:"-----" }}</td>
+    <th>Qualificação</th>
+    <td>{{ dd.responsavel_qualificacao|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Responsável - Endereço</th>
+    <td colspan="3">{{ dd.responsavel_endereco|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Responsável - Identidade</th>
+    <td>{{ dd.responsavel_identidade|default:"-----" }}</td>
+    <th>Órgão Expedidor</th>
+    <td>{{ dd.responsavel_orgao_expedidor|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Responsável - Data de Emissão</th>
+    <td colspan="3">{{ dd.responsavel_data_emissao|date:"d/m/Y"|default:"-----" }}</td>
+  </tr>
+</table>
+{% endif %}
+{% endwith %}
+{% endfor %}
 
 <h3>Funcoes</h3>
 {% if pessoa.atribuicoes.all %}
@@ -44,8 +145,8 @@ de Gestao Escolar{% endblock %} {% block content %}
     <tr>
       <td>{{ atribuicao.funcao.nome }}</td>
       <td>{{ atribuicao.situacao }}</td>
-      <td>{{ atribuicao.data_inicio }}</td>
-      <td>{{ atribuicao.data_fim|default:"-----" }}</td>
+      <td>{{ atribuicao.data_inicio|date:"d/m/Y" }}</td>
+      <td>{{ atribuicao.data_fim|date:"d/m/Y"|default:"-----" }}</td>
       <td>-----</td>
     </tr>
     {% endfor %}
@@ -53,4 +154,127 @@ de Gestao Escolar{% endblock %} {% block content %}
 </table>
 {% else %}
 <p>Nenhuma funcao cadastrada.</p>
-{% endif %} {% endblock %}
+{% endif %}
+
+<h3>Pendências de Documentação</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Função</th>
+      <th>Tipo</th>
+      <th>Descrição</th>
+      <th>Resolvida</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for atribuicao in pessoa.atribuicoes.all %}
+      {% for pendencia in atribuicao.pendencias.all %}
+      <tr>
+        <td>{{ atribuicao.funcao.nome }}</td>
+        <td>{{ pendencia.get_tipo_display }}</td>
+        <td>{{ pendencia.descricao|default:"-----" }}</td>
+        <td>{{ pendencia.resolvida|yesno:"Sim,Não" }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Curso</th>
+      <th>Entidade</th>
+      <th>Cidade/UF</th>
+      <th>Ano</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for atribuicao in pessoa.atribuicoes.all %}
+      {% for formacao in atribuicao.dados_docente.formacoes.all %}
+      <tr>
+        <td>{{ formacao.get_tipo_formacao_display }}</td>
+        <td>{{ formacao.curso }}</td>
+        <td>{{ formacao.entidade }}</td>
+        <td>{{ formacao.cidade }}/{{ formacao.uf }}</td>
+        <td>{{ formacao.ano_conclusao }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Disciplinas Habilitadas (Capacidade)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Disciplina</th>
+      <th>Data início</th>
+      <th>Data fim</th>
+      <th>Ativo</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for atribuicao in pessoa.atribuicoes.all %}
+      {% for capacidade in atribuicao.dados_docente.capacidades.all %}
+      <tr>
+        <td>{{ capacidade.disciplina }}</td>
+        <td>{{ capacidade.data_inicio|date:"d/m/Y" }}</td>
+        <td>{{ capacidade.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+        <td>{{ capacidade.ativo|yesno:"Sim,Não" }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Experiência Profissional</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Organização</th>
+      <th>Cargo</th>
+      <th>Data início</th>
+      <th>Data fim</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for atribuicao in pessoa.atribuicoes.all %}
+      {% for experiencia in atribuicao.experiencias_profissionais.all %}
+      <tr>
+        <td>{{ experiencia.organizacao }}</td>
+        <td>{{ experiencia.cargo }}</td>
+        <td>{{ experiencia.data_inicio|date:"d/m/Y" }}</td>
+        <td>{{ experiencia.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Histórico de Vínculo Formal</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Vínculo Formal</th>
+      <th>Data início</th>
+      <th>Data fim</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for atribuicao in pessoa.atribuicoes.all %}
+      {% for historico in atribuicao.historico_vinculo_formal.all %}
+      <tr>
+        <td>{{ historico.vinculo_formal.nome }}</td>
+        <td>{{ historico.data_inicio|date:"d/m/Y" }}</td>
+        <td>{{ historico.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% endblock %}

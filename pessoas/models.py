@@ -257,7 +257,10 @@ class DadosDiscente(models.Model):
     # este é o código da MATRÍCULA específica (ex: 239.MCELT.25.00115 — Ciac.Habilitação.
     # Ano.Sequencial), muda a cada novo curso. Pode ficar pendente no cadastro inicial
     # (ver PendenciaCadastro, tipo CODIGO_MATRICULA_ANAC) até a ANAC processar.
-    codigo_matricula_anac = models.CharField(max_length=20, blank=True, verbose_name="Código de Matrícula ANAC")
+    codigo_matricula_anac = models.CharField(
+        max_length=20, unique=True, blank=True, null=True,
+        verbose_name="Código de Matrícula ANAC"
+    )
 
     # Documentação de estrangeiro (FE 007)
     passaporte = models.CharField(max_length=20, blank=True)

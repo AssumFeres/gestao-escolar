@@ -220,3 +220,50 @@ class TestCadastrarPessoaComFuncaoService:
         )
 
         assert PendenciaCadastro.objects.filter(atribuicao=atribuicao, tipo="CANAC").exists()
+
+    # --- Revisão da Etapa 9: validação amigável de duplicidade (encontrado em teste manual) ---
+
+    def test_rejeita_registro_matricula_duplicado_com_mensagem_amigavel(self):
+        """RM/RA/CANAC duplicados devem gerar ValidationError amigável, não IntegrityError cru."""
+        funcao = Funcao.objects.create(nome="Diretor Teste RM", categoria="GESTAO")
+
+        dados_1 = _dados_pessoa("33344400011")
+        dados_1["registro_matricula"] = "RM-DUPLICADO"
+        CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=dados_1,
+            funcao=funcao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+        )
+
+        dados_2 = _dados_pessoa("44400011122")
+        dados_2["registro_matricula"] = "RM-DUPLICADO"
+
+        with pytest.raises(ValidationError, match="RM.*já está em uso"):
+            CadastrarPessoaComFuncaoService().executar(
+                dados_pessoa=dados_2,
+                funcao=funcao,
+                dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            )
+
+        assert not Pessoa.objects.filter(cpf="44400011122").exists()
+
+    def test_rejeita_codigo_matricula_anac_duplicado_com_mensagem_amigavel(self):
+        """Código de Matrícula ANAC (DadosDiscente) segue a mesma regra de RM/RA/CANAC."""
+        funcao = Funcao.objects.create(nome="Discente Teste CMA", categoria="DISCENTE")
+
+        CadastrarPessoaComFuncaoService().executar(
+            dados_pessoa=_dados_pessoa("55500011223"),
+            funcao=funcao,
+            dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+            dados_extensao={"codigo_matricula_anac": "239.MCELT.25.00115"},
+        )
+
+        with pytest.raises(ValidationError, match="Código de Matrícula ANAC.*já está em uso"):
+            CadastrarPessoaComFuncaoService().executar(
+                dados_pessoa=_dados_pessoa("66600011224"),
+                funcao=funcao,
+                dados_atribuicao={"data_inicio": "2024-02-01", "situacao": "ATIVO"},
+                dados_extensao={"codigo_matricula_anac": "239.MCELT.25.00115"},
+            )
+
+        assert not Pessoa.objects.filter(cpf="66600011224").exists()

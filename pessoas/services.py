@@ -48,6 +48,31 @@ class CadastrarPessoaComFuncaoService:
         )
 
         with transaction.atomic():
+            pessoa_ja_existe = Pessoa.objects.filter(cpf=dados_pessoa['cpf']).exists()
+
+            if not pessoa_ja_existe:
+                # Só vale checar duplicidade de RM/RA/CANAC quando uma Pessoa NOVA
+                # será criada — se o CPF já existe, os valores de dados_pessoa são
+                # só `defaults` (ignorados pelo get_or_create), não há inserção nova.
+                campos_unicos = [
+                    ('registro_matricula', 'RM'),
+                    ('registro_aluno', 'RA'),
+                    ('codigo_anac', 'CANAC'),
+                ]
+                for campo, rotulo in campos_unicos:
+                    valor = dados_pessoa.get(campo)
+                    if valor and Pessoa.objects.filter(**{campo: valor}).exists():
+                        raise ValidationError(
+                            f"{rotulo} '{valor}' já está em uso por outra pessoa."
+                        )
+
+            if funcao.categoria == CategoriaFuncao.DISCENTE:
+                codigo_cma = (dados_extensao or {}).get('codigo_matricula_anac')
+                if codigo_cma and DadosDiscente.objects.filter(codigo_matricula_anac=codigo_cma).exists():
+                    raise ValidationError(
+                        f"Código de Matrícula ANAC '{codigo_cma}' já está em uso."
+                    )
+
             pessoa, criada = Pessoa.objects.get_or_create(
                 cpf=dados_pessoa['cpf'],
                 defaults=dados_pessoa,
