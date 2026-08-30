@@ -11,7 +11,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ## 🔨 Em Andamento
 *Sendo trabalhado agora*
 
-- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — plano detalhado em `docs/07 - PLANO_DE_MIGRACAO.md`, 9 etapas. **Etapas 1 a 6 e 7.1-7.3 concluídas**; base do modelo antigo totalmente removida, sistema roda sobre `Funcao`/`AtribuicaoFuncao`. Formulário de cadastro completo (Etapa 7.4a/b) testado manualmente em 2 máquinas — Discente/Gestão completam até o detalhe da Pessoa, Docente até a tela placeholder de Requisitos. Dois bugs encontrados e corrigidos no teste manual: Formsets sem `management_form` no template, e `IntegrityError` de RM/RA/CANAC (Model + View). Nova tabela `PendenciaCadastro` implementada. Fixture do catálogo `Funcao`/`VinculoFormal` criada. Falta: 7.4c/d (organização visual + JavaScript + bloco de Pendências), 7.5 (testes). Detalhe das sessões em `docs/08` a `14 - ANDAMENTO_DO_PROJETO.md`.
+- [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — **COMPLETA (30/08/2026).** Todas as 9 etapas do plano concluídas, testadas (18 testes automatizados + revisão manual completa dos 3 fluxos), commitadas. 3 bugs reais encontrados e corrigidos na revisão final (duplicidade de RM/RA/CANAC/CMA, categoria perdida no re-render de erro). Tela de detalhe ampliada com todos os dados de `Pessoa` + 6 tabelas de leitura. Falta só abrir o Pull Request de `feature/refatoracao-funcao` para `dev`. Detalhe completo das 15 sessões em `docs/06` a `15 - ANDAMENTO_DO_PROJETO.md`.
 
 ---
 
@@ -35,6 +35,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Ajustar `verbose_name_plural` de `Funcao` no Admin (hoje exibido como "Funcaos")
 - [ ] **Teste manual a validar quando a Etapa 4/5 estiver pronta:** confirmar que o Admin realmente bloqueia a exclusão de uma `Funcao` que já tem `AtribuicaoFuncao` vinculada (`on_delete=PROTECT`), validando na prática a proteção contra perda de rastreabilidade
 - [ ] Testes automatizados para as Template Views (`ListaPessoasView`, `DetalhePessoaView`, `NovoCadastroPessoaView`)
+- [ ] **Transformar as tabelas de Formação, Capacidades, Experiência Profissional e Histórico de Vínculo Formal, na tela de detalhe, em um botão que abre pop-up** — hoje ocupam espaço fixo na tela, mesmo quando vazias (30/08/2026)
+- [ ] **Extrair a montagem do contexto de template repetido** nos 3 pontos de `return render(...)` de `NovoCadastroPessoaView.post()` para um método auxiliar único — reduz o risco de esquecer um contexto (como aconteceu com `funcao_categorias`, corrigido em 30/08/2026) em futuras alterações
 - [ ] Avaliar dividir `pessoas/models.py` em uma pasta `models/` com um arquivo por classe/grupo de classes relacionadas, à medida que o arquivo cresce com a migração — refatoração puramente organizacional, sem mudança de comportamento
 - [ ] Manter o docstring de índice no topo de `pessoas/models.py` sincronizado conforme classes são adicionadas/removidas durante a migração — hoje já está desatualizado
 - [ ] **Relatório de Pendências por Turma** (Turma → Aluno → Pendências) usando `PendenciaCadastro`, para entrega ao Coordenador de Curso — depende do módulo de Turmas existir (fora de escopo deste PI); Model já implementado (25/08/2026), pronto para quando Turma existir

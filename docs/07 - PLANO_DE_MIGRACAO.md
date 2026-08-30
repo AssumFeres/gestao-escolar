@@ -2,9 +2,7 @@
 
 **Origem da decisão:** ver `docs/06 - ANDAMENTO_DO_PROJETO.md` para o raciocínio completo por trás de cada escolha registrada aqui. Este documento é só o **como executar**, não o porquê.
 
-**Status:** em execução, branch `feature/refatoracao-funcao`. Etapas 1, 2, 3, 4, 5a, 5b e 6 concluídas e commitadas (25/08/2026) — ver `docs/08` a `14 - ANDAMENTO_DO_PROJETO.md` para o relato das sessões. Testado manualmente pelo navegador de ponta a ponta (cadastro → detalhe), além do `pytest`.
-
-**Etapa 7 completa (os 3 formulários especializados) em andamento:** 7.1, inventário de dados, e 7.2 concluídas. **7.3 (Form) concluída.** Teste manual do formulário completo revelou e corrigiu: Formsets sem `management_form` no template (bloqueava todo POST), `IntegrityError` de RM/RA/CANAC (Model + View corrigidos, `null=True` + `or None`). Nova tabela `PendenciaCadastro` implementada (universal entre categorias, para relatório futuro de pendências por Turma/Aluno). Fixture do catálogo `Funcao`/`VinculoFormal` criada, resolvendo item de Backlog pendente desde a Etapa 2. Falta: 7.4c/d (organização visual + JavaScript + incluir bloco de Pendências no Form/Service), 7.5 (testes).
+**Status: MIGRAÇÃO COMPLETA (30/08/2026).** Todas as 9 etapas concluídas, testadas e commitadas — ver `docs/08` a `15 - ANDAMENTO_DO_PROJETO.md` para o relato de todas as sessões. Testado manualmente pelo navegador de ponta a ponta (Discente, Docente, Gestão), além de 18 testes automatizados (`pytest`). Falta apenas abrir o Pull Request de `feature/refatoracao-funcao` para `dev`.
 
 **Como usar este documento:** cada etapa é pequena e termina em um estado que roda e testa (mesmo que incompleto). Marque `[x]` ao concluir cada passo, e não pule etapas — a ordem importa, porque cada uma depende da anterior não quebrar o projeto.
 
@@ -249,14 +247,15 @@ Cobrir a criação de `DadosDiscente`/`DadosDocente`/`FormacaoDocente`/`Experien
 
 ---
 
-## Etapa 9 — Fechar a etapa
+## Etapa 9 — Fechar a etapa ✅ Concluída (30/08/2026)
 
-- [ ] Rodar `pytest` completo, confirmar tudo passando
-- [ ] Testar manualmente pelo navegador: Admin com os novos Models, fluxo de cadastro (se já reescrito), endpoints de API restantes
-- [ ] Atualizar `docs/00 - KANBAN.md`: mover itens concluídos, ajustar a especificação de `FormacaoDocente` (referência a `VinculoDocente` → `DadosDocente`), remover o item de Backlog sobre o bug do Admin/Habilitação (deixou de existir), adicionar os novos itens de "A Fazer" que ficaram claros nesta migração (telas por formulário, regra de "Discente não acumula", constraint de CPF único, etc.)
-- [ ] Escrever diário `docs/08 - ANDAMENTO_DO_PROJETO.md` com o que foi de fato executado (distinto deste plano, que é o *previsto* — o diário registra o que *aconteceu*, incluindo qualquer desvio deste plano)
-- [ ] Abrir Pull Request de `feature/refatoracao-funcao` → `dev`
-- [ ] Sincronizar as demais máquinas (múltiplos ambientes já validados) após o merge
+- [x] `pytest` completo, tudo passando — 18 testes
+- [x] Testado manualmente pelo navegador: Discente, Docente, Gestão, cada um de ponta a ponta, incluindo os Formsets repetíveis e o bloco universal de Pendências
+- [x] **3 bugs reais encontrados e corrigidos na revisão manual** (não capturados por nenhum teste automatizado até então): `IntegrityError` de RM/RA/CANAC/CMA duplicado (substituído por `ValidationError` amigável), `funcao_categorias` ausente no re-render de erro do Service (corrigido). Ver `docs/15 - ANDAMENTO_DO_PROJETO.md` para o relato completo.
+- [x] 2 testes automatizados novos, cobrindo os bugs de duplicidade encontrados
+- [x] Tela de detalhe ampliada — de 5 campos básicos para o conjunto completo de `Pessoa`, mais 5 tabelas de leitura (Funções, Pendências, Formação, Capacidades, Experiência Profissional, Histórico de Vínculo Formal, Dados do Discente)
+- [x] `docs/00 - KANBAN.md` e `docs/07 - PLANO_DE_MIGRACAO.md` atualizados (esta atualização)
+- [ ] Pull Request de `feature/refatoracao-funcao` para `dev` — próximo passo
 
 ---
 
