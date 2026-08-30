@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Requisitos de Contratação - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="/pessoas/" class="botao-link">&larr; Voltar para lista</a></p>
+
+<h2>Requisitos de Contratação e Disciplinas</h2>
+<p><strong>Docente:</strong> {{ dados_docente.atribuicao.pessoa.nome_completo }}</p>
+
+<p><em>Tela ainda em construção (Etapa 7, a completar) — Requisitos de Contratação
+(seção 6 da FE 008) e Disciplinas Habilitadas/Capacidade (seção 7) serão preenchidos
+aqui, usando o PreencherRequisitosEDisciplinasDocenteService já implementado.</em></p>
+
+<p><a href="/pessoas/{{ dados_docente.atribuicao.pessoa.id }}/">Ver dados já cadastrados do Docente &rarr;</a></p>
+{% endblock %}

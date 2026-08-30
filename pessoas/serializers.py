@@ -22,26 +22,11 @@ class EnderecoOutputSerializer(serializers.Serializer):
     uf = serializers.CharField()
 
 
-class FuncaoGestaoHabilitacaoInputSerializer(serializers.Serializer):
-    """
-    Serializer de ENTRADA — só valida formato/tipo dos dados.
-    NÃO valida regra de negócio (isso é papel do Service).
-    """
-    funcao_gestao_id = serializers.IntegerField()
-    habilitacao_id = serializers.IntegerField()
-
-
-class FuncaoGestaoHabilitacaoOutputSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    funcao_gestao_id = serializers.IntegerField()
-    habilitacao_id = serializers.IntegerField()
-
-
 class CadastrarPessoaInputSerializer(serializers.Serializer):
     """
-    Serializer de ENTRADA — dados da Pessoa + tipo de vínculo + dados específicos do vínculo.
-    Campos de vínculo são opcionais na entrada porque variam por tipo; a validação
-    de qual é obrigatório para cada tipo continua no Service, não aqui.
+    Serializer de ENTRADA — dados da Pessoa + Função a atribuir + dados da atribuição.
+    Não cria extensões (DadosDiscente/DadosDocente) — isso é responsabilidade
+    da Etapa 7, quando os formulários especializados por categoria existirem.
     """
     # Dados da Pessoa
     nome_completo = serializers.CharField(max_length=200)
@@ -57,16 +42,16 @@ class CadastrarPessoaInputSerializer(serializers.Serializer):
     endereco_cidade = serializers.CharField(max_length=100)
     endereco_uf = serializers.CharField(max_length=2)
 
-    # Tipo e dados do Vínculo
-    tipo_vinculo = serializers.ChoiceField(choices=["DISCENTE", "DOCENTE", "GESTAO"])
+    # Função a atribuir
+    funcao_id = serializers.IntegerField()
     data_inicio = serializers.DateField()
     situacao = serializers.CharField(max_length=30, default="ATIVO")
-    numero_matricula = serializers.CharField(max_length=20, required=False, allow_blank=True)
 
 
 class CadastrarPessoaOutputSerializer(serializers.Serializer):
     pessoa_id = serializers.IntegerField()
     nome_completo = serializers.CharField()
-    tipo_vinculo = serializers.CharField()
-    vinculo_id = serializers.IntegerField()
+    funcao = serializers.CharField()
+    atribuicao_id = serializers.IntegerField()
 
+    

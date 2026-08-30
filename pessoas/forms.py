@@ -1,20 +1,34 @@
 """
 pessoas/forms.py
 
-Form de entrada para a Template View de cadastro. Espelha os campos
-do CadastrarPessoaInputSerializer (API), mas é usado pela interface HTML.
+Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
+completo, único, com dropdown de Funcao; JavaScript, na Etapa 7.4d, mostra/esconde
+os blocos de campos conforme a categoria da Funcao escolhida).
+
+Estrutura:
+    CadastrarPessoaForm            — campos fixos: Pessoa (completo), Funcao,
+                                     AtribuicaoFuncao, e os campos de DadosDiscente
+                                     (aplicáveis só quando a Funcao é de categoria Discente).
+    FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente).
+    ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão).
+    HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão).
+    PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
+                                     qualquer categoria — Discente, Docente ou Gestão).
+
+Os 4 últimos viram Formsets (forms.formset_factory) — permitem 0 a N linhas, cada
+uma repetindo os mesmos campos, com JavaScript controlando quantas aparecem na
+tela (Etapa 7.4d). Usar Form comum (não ModelForm): no momento do cadastro, o
+objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
+cria os Models de verdade a partir dos dicts já validados pelo Form.
 """
 
 from django import forms
 
+from .models import Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia
+
 
 class CadastrarPessoaForm(forms.Form):
-    TIPO_VINCULO_CHOICES = [
-        ('DISCENTE', 'Discente'),
-        ('DOCENTE', 'Docente'),
-        ('GESTAO', 'Gestao'),
-    ]
-
+    # --- Pessoa: dados básicos ---
     nome_completo = forms.CharField(max_length=200, label="Nome completo")
     cpf = forms.CharField(max_length=11, label="CPF")
     data_nascimento = forms.DateField(
@@ -23,6 +37,28 @@ class CadastrarPessoaForm(forms.Form):
     email = forms.EmailField(label="E-mail")
     telefone = forms.CharField(max_length=20, label="Telefone")
 
+    # --- Pessoa: identificadores específicos ---
+    registro_matricula = forms.CharField(max_length=20, required=False, label="RM")
+    registro_aluno = forms.CharField(max_length=20, required=False, label="RA")
+    codigo_anac = forms.CharField(max_length=20, required=False, label="CANAC")
+
+    # --- Pessoa: identificação ampliada (FE 007 / FE 008) ---
+    sexo = forms.CharField(max_length=1, required=False, label="Sexo")
+    identidade = forms.CharField(max_length=20, required=False, label="Identidade (RG)")
+    data_emissao_identidade = forms.DateField(
+        required=False, label="Data de emissão", widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    orgao_expedidor_identidade = forms.CharField(max_length=20, required=False, label="Órgão expedidor")
+    naturalidade = forms.CharField(max_length=100, required=False, label="Naturalidade")
+    uf_naturalidade = forms.CharField(max_length=2, required=False, label="UF de naturalidade")
+    nacionalidade = forms.CharField(max_length=100, required=False, label="Nacionalidade")
+    filiacao_1 = forms.CharField(max_length=200, required=False, label="Filiação 1")
+    filiacao_2 = forms.CharField(max_length=200, required=False, label="Filiação 2")
+    nivel_instrucao = forms.CharField(max_length=100, required=False, label="Nível de instrução")
+    estado_civil = forms.CharField(max_length=30, required=False, label="Estado civil")
+    raca_cor = forms.CharField(max_length=30, required=False, label="Raça/Cor")
+
+    # --- Pessoa: endereço ---
     endereco_cep = forms.CharField(max_length=8, label="CEP")
     endereco_logradouro = forms.CharField(max_length=200, label="Logradouro")
     endereco_numero = forms.CharField(max_length=10, label="Numero")
@@ -31,12 +67,107 @@ class CadastrarPessoaForm(forms.Form):
     endereco_cidade = forms.CharField(max_length=100, label="Cidade")
     endereco_uf = forms.CharField(max_length=2, label="UF")
 
-    tipo_vinculo = forms.ChoiceField(choices=TIPO_VINCULO_CHOICES, label="Tipo de vinculo")
+    # --- Funcao / AtribuicaoFuncao ---
+    funcao = forms.ModelChoiceField(queryset=Funcao.objects.all(), label="Funcao")
     data_inicio = forms.DateField(
-        label="Data de inicio do vinculo", widget=forms.DateInput(attrs={'type': 'date'})
+        label="Data de inicio", widget=forms.DateInput(attrs={'type': 'date'})
     )
     situacao = forms.CharField(max_length=30, initial="ATIVO", label="Situacao")
-    numero_matricula = forms.CharField(
-        max_length=20, required=False, label="Numero de matricula (somente Discente)"
+
+    # --- DadosDiscente (só relevante quando Funcao.categoria == DISCENTE) ---
+    codigo_matricula_anac = forms.CharField(
+        max_length=20, required=False, label="Código de Matrícula ANAC"
+    )
+    passaporte = forms.CharField(max_length=20, required=False, label="Nº do Passaporte")
+    autorizacao_permanencia = forms.CharField(
+        max_length=50, required=False, label="Autorização de Permanência"
+    )
+    contato_emergencia_nome = forms.CharField(
+        max_length=200, required=False, label="Contato de emergência - Nome"
+    )
+    contato_emergencia_parentesco = forms.CharField(
+        max_length=50, required=False, label="Contato de emergência - Parentesco"
+    )
+    contato_emergencia_telefone = forms.CharField(
+        max_length=20, required=False, label="Contato de emergência - Telefone"
+    )
+    contato_emergencia_endereco = forms.CharField(
+        max_length=300, required=False, label="Contato de emergência - Endereço"
+    )
+    responsavel_nome = forms.CharField(
+        max_length=200, required=False, label="Responsável legal - Nome"
+    )
+    responsavel_endereco = forms.CharField(
+        max_length=300, required=False, label="Responsável legal - Endereço"
+    )
+    responsavel_identidade = forms.CharField(
+        max_length=20, required=False, label="Responsável legal - Identidade"
+    )
+    responsavel_orgao_expedidor = forms.CharField(
+        max_length=20, required=False, label="Responsável legal - Órgão expedidor"
+    )
+    responsavel_data_emissao = forms.DateField(
+        required=False, label="Responsável legal - Data de emissão",
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    responsavel_qualificacao = forms.CharField(
+        max_length=50, required=False, label="Responsável legal - Qualificação (pai/mãe/tutor)"
     )
 
+
+class FormacaoDocenteForm(forms.Form):
+    """1 linha de Graduação/Formação Profissional/Aperfeiçoamento (FE 008, seções 3-5)."""
+    tipo_formacao = forms.ChoiceField(
+        choices=[('', '---------')] + list(TipoFormacaoDocente.choices),
+        required=False, label="Tipo"
+    )
+    curso = forms.CharField(max_length=200, required=False, label="Curso")
+    entidade = forms.CharField(max_length=200, required=False, label="Entidade")
+    cidade = forms.CharField(max_length=100, required=False, label="Cidade")
+    uf = forms.CharField(max_length=2, required=False, label="UF")
+    ano_conclusao = forms.IntegerField(required=False, label="Ano de conclusão")
+
+
+class ExperienciaProfissionalForm(forms.Form):
+    """1 linha de Experiência Profissional (FOP 402, só categoria Gestão)."""
+    organizacao = forms.CharField(max_length=200, required=False, label="Organização")
+    cargo = forms.CharField(max_length=100, required=False, label="Cargo")
+    data_inicio = forms.DateField(
+        required=False, label="Data de início", widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    data_fim = forms.DateField(
+        required=False, label="Data de fim", widget=forms.DateInput(attrs={'type': 'date'})
+    )
+
+
+class HistoricoVinculoFormalForm(forms.Form):
+    """1 linha de Vínculo Formal (Docente ou Gestão — nunca Discente)."""
+    vinculo_formal = forms.ModelChoiceField(
+        queryset=VinculoFormal.objects.all(), required=False, label="Vínculo Formal"
+    )
+    data_inicio = forms.DateField(
+        required=False, label="Data de início", widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    data_fim = forms.DateField(
+        required=False, label="Data de fim", widget=forms.DateInput(attrs={'type': 'date'})
+    )
+
+
+class PendenciaCadastroForm(forms.Form):
+    """1 linha de Pendência de documentação — universal, qualquer categoria."""
+    tipo = forms.ChoiceField(
+        choices=[('', '---------')] + list(TipoPendencia.choices),
+        required=False, label="Tipo"
+    )
+    descricao = forms.CharField(
+        max_length=200, required=False, label="Descrição (detalhe, usar sobretudo em 'Outro')"
+    )
+
+
+# Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
+# extra=1: a tela já nasce com 1 linha em branco visível (decisão da Etapa 7.3).
+# Definidos aqui, uma vez só, para serem reaproveitados igual em views.py (GET e POST).
+FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
+ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
+HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)
+PendenciaCadastroFormSet = forms.formset_factory(PendenciaCadastroForm, extra=1)
