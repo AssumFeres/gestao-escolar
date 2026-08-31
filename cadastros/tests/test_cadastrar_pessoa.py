@@ -1,11 +1,11 @@
-import pytest
+﻿import pytest
 from django.core.exceptions import ValidationError
-from pessoas.models import (
+from cadastros.models import (
     Pessoa, Funcao, AtribuicaoFuncao, DadosDiscente, DadosDocente,
     FormacaoDocente, ExperienciaProfissional, HistoricoVinculoFormal,
     PendenciaCadastro, VinculoFormal,
 )
-from pessoas.services import CadastrarPessoaComFuncaoService
+from cadastros.services import CadastrarPessoaComFuncaoService
 
 
 def _dados_pessoa(cpf):
@@ -20,7 +20,7 @@ def _dados_pessoa(cpf):
         "endereco_numero": "200",
         "endereco_complemento": "",
         "endereco_bairro": "Vila X",
-        "endereco_cidade": "São Paulo",
+        "endereco_cidade": "SÃ£o Paulo",
         "endereco_uf": "SP",
     }
 
@@ -44,9 +44,9 @@ class TestCadastrarPessoaComFuncaoService:
         assert dados_docente.atribuicao == atribuicao
 
     def test_reaproveita_pessoa_existente_pelo_cpf(self):
-        """Coração da Etapa 6: segunda Função para o mesmo CPF não duplica Pessoa."""
+        """CoraÃ§Ã£o da Etapa 6: segunda FunÃ§Ã£o para o mesmo CPF nÃ£o duplica Pessoa."""
         funcao_1 = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
-        funcao_2 = Funcao.objects.create(nome="Coordenador de Curso Aviônicos", categoria="GESTAO")
+        funcao_2 = Funcao.objects.create(nome="Coordenador de Curso AviÃ´nicos", categoria="GESTAO")
 
         pessoa_1, _, _ = CadastrarPessoaComFuncaoService().executar(
             dados_pessoa=_dados_pessoa("33344455566"),
@@ -75,7 +75,7 @@ class TestCadastrarPessoaComFuncaoService:
         )
         DadosDiscente.objects.create(atribuicao=atribuicao_discente)
 
-        with pytest.raises(ValidationError, match="não pode acumular"):
+        with pytest.raises(ValidationError, match="nÃ£o pode acumular"):
             CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=_dados_pessoa("44455566677"),
                 funcao=funcao_docente,
@@ -83,7 +83,7 @@ class TestCadastrarPessoaComFuncaoService:
             )
 
     def test_nao_cria_segunda_atribuicao_quando_discente_tenta_acumular(self):
-        """Confirma que a transação reverte por completo em caso de erro."""
+        """Confirma que a transaÃ§Ã£o reverte por completo em caso de erro."""
         funcao_discente = Funcao.objects.create(nome="Discente - Aluno", categoria="DISCENTE")
         funcao_docente = Funcao.objects.create(nome="Docente - Instrutor", categoria="DOCENTE")
 
@@ -105,7 +105,7 @@ class TestCadastrarPessoaComFuncaoService:
 
         assert pessoa.atribuicoes.count() == 1
 
-    # --- Etapa 7.5: cobertura dos campos repetíveis por categoria ---
+    # --- Etapa 7.5: cobertura dos campos repetÃ­veis por categoria ---
 
     def test_discente_cria_dados_discente_com_campos_corretos(self):
         funcao = Funcao.objects.create(nome="Discente - Aluno", categoria="DISCENTE")
@@ -221,10 +221,10 @@ class TestCadastrarPessoaComFuncaoService:
 
         assert PendenciaCadastro.objects.filter(atribuicao=atribuicao, tipo="CANAC").exists()
 
-    # --- Revisão da Etapa 9: validação amigável de duplicidade (encontrado em teste manual) ---
+    # --- RevisÃ£o da Etapa 9: validaÃ§Ã£o amigÃ¡vel de duplicidade (encontrado em teste manual) ---
 
     def test_rejeita_registro_matricula_duplicado_com_mensagem_amigavel(self):
-        """RM/RA/CANAC duplicados devem gerar ValidationError amigável, não IntegrityError cru."""
+        """RM/RA/CANAC duplicados devem gerar ValidationError amigÃ¡vel, nÃ£o IntegrityError cru."""
         funcao = Funcao.objects.create(nome="Diretor Teste RM", categoria="GESTAO")
 
         dados_1 = _dados_pessoa("33344400011")
@@ -238,7 +238,7 @@ class TestCadastrarPessoaComFuncaoService:
         dados_2 = _dados_pessoa("44400011122")
         dados_2["registro_matricula"] = "RM-DUPLICADO"
 
-        with pytest.raises(ValidationError, match="RM.*já está em uso"):
+        with pytest.raises(ValidationError, match="RM.*jÃ¡ estÃ¡ em uso"):
             CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=dados_2,
                 funcao=funcao,
@@ -248,7 +248,7 @@ class TestCadastrarPessoaComFuncaoService:
         assert not Pessoa.objects.filter(cpf="44400011122").exists()
 
     def test_rejeita_codigo_matricula_anac_duplicado_com_mensagem_amigavel(self):
-        """Código de Matrícula ANAC (DadosDiscente) segue a mesma regra de RM/RA/CANAC."""
+        """CÃ³digo de MatrÃ­cula ANAC (DadosDiscente) segue a mesma regra de RM/RA/CANAC."""
         funcao = Funcao.objects.create(nome="Discente Teste CMA", categoria="DISCENTE")
 
         CadastrarPessoaComFuncaoService().executar(
@@ -258,7 +258,7 @@ class TestCadastrarPessoaComFuncaoService:
             dados_extensao={"codigo_matricula_anac": "239.MCELT.25.00115"},
         )
 
-        with pytest.raises(ValidationError, match="Código de Matrícula ANAC.*já está em uso"):
+        with pytest.raises(ValidationError, match="CÃ³digo de MatrÃ­cula ANAC.*jÃ¡ estÃ¡ em uso"):
             CadastrarPessoaComFuncaoService().executar(
                 dados_pessoa=_dados_pessoa("66600011224"),
                 funcao=funcao,
@@ -267,3 +267,4 @@ class TestCadastrarPessoaComFuncaoService:
             )
 
         assert not Pessoa.objects.filter(cpf="66600011224").exists()
+

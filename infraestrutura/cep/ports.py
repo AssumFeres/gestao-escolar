@@ -1,13 +1,13 @@
-"""
+﻿"""
 infraestrutura/cep/ports.py
 
-Porta (interface abstrata) para busca de endereço por CEP.
-Qualquer provedor concreto (ViaCEP, outro serviço) deve implementar esse contrato.
+Porta (interface abstrata) para busca de endereÃ§o por CEP.
+Qualquer provedor concreto (ViaCEP, outro serviÃ§o) deve implementar esse contrato.
 """
 
 from abc import ABC, abstractmethod
 
-from pessoas.models import Endereco
+from cadastros.models import Endereco
 
 
 class AbstractCepClient(ABC):
