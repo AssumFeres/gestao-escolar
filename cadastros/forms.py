@@ -1,5 +1,5 @@
 """
-pessoas/forms.py
+cadastros/forms.py
 
 Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
 completo, único, com dropdown de Funcao; JavaScript, na Etapa 7.4d, mostra/esconde
@@ -20,6 +20,19 @@ uma repetindo os mesmos campos, com JavaScript controlando quantas aparecem na
 tela (Etapa 7.4d). Usar Form comum (não ModelForm): no momento do cadastro, o
 objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
 cria os Models de verdade a partir dos dicts já validados pelo Form.
+
+Todos os campos de linha (Formação/Experiência/Histórico) são `required=False`
+de propósito, para que a linha `extra=1` do Formset possa ser enviada em branco
+sem gerar erro quando o usuário não quer adicionar nenhuma. Isso abre uma brecha
+de preenchimento parcial (ex: Curso preenchido, Ano de conclusão vazio) que só
+seria barrada no banco (IntegrityError, pouco amigável) sem um `clean()`
+customizado — daí o `clean()` em cada Form abaixo que tem campos realmente
+obrigatórios no Model. Cada `clean()` usa o mesmo campo "sinal" que
+`views.py::_CAMPO_PREENCHIDO` já usa para decidir se uma linha foi preenchida
+de verdade: se o campo sinal estiver preenchido, os demais campos obrigatórios
+do Model passam a ser exigidos também. `PendenciaCadastroForm` não precisa de
+`clean()`: seu único outro campo (`descricao`) já é opcional de verdade no Model.
+Bug descoberto em teste manual em 31/08/2026 (ver docs/17), corrigido aqui.
 """
 
 from django import forms
@@ -127,6 +140,17 @@ class FormacaoDocenteForm(forms.Form):
     uf = forms.CharField(max_length=2, required=False, label="UF")
     ano_conclusao = forms.IntegerField(required=False, label="Ano de conclusão")
 
+    def clean(self):
+        cleaned_data = super().clean()
+        # 'curso' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO
+        # para decidir se esta linha do Formset foi preenchida de verdade.
+        if cleaned_data.get('curso'):
+            campos_obrigatorios = ['tipo_formacao', 'entidade', 'cidade', 'uf', 'ano_conclusao']
+            for campo in campos_obrigatorios:
+                if not cleaned_data.get(campo):
+                    self.add_error(campo, "Obrigatório quando o Curso é preenchido.")
+        return cleaned_data
+
 
 class ExperienciaProfissionalForm(forms.Form):
     """1 linha de Experiência Profissional (FOP 402, só categoria Gestão)."""
@@ -138,6 +162,16 @@ class ExperienciaProfissionalForm(forms.Form):
     data_fim = forms.DateField(
         required=False, label="Data de fim", widget=forms.DateInput(attrs={'type': 'date'})
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # 'organizacao' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO.
+        if cleaned_data.get('organizacao'):
+            campos_obrigatorios = ['cargo', 'data_inicio']
+            for campo in campos_obrigatorios:
+                if not cleaned_data.get(campo):
+                    self.add_error(campo, "Obrigatório quando a Organização é preenchida.")
+        return cleaned_data
 
 
 class HistoricoVinculoFormalForm(forms.Form):
@@ -152,9 +186,21 @@ class HistoricoVinculoFormalForm(forms.Form):
         required=False, label="Data de fim", widget=forms.DateInput(attrs={'type': 'date'})
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        # 'vinculo_formal' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO.
+        if cleaned_data.get('vinculo_formal') and not cleaned_data.get('data_inicio'):
+            self.add_error('data_inicio', "Obrigatório quando o Vínculo Formal é preenchido.")
+        return cleaned_data
+
 
 class PendenciaCadastroForm(forms.Form):
-    """1 linha de Pendência de documentação — universal, qualquer categoria."""
+    """
+    1 linha de Pendência de documentação — universal, qualquer categoria.
+    Sem `clean()` customizado: diferente dos 3 Forms acima, o único outro
+    campo além do sinal ('tipo') é 'descricao', que já é opcional de verdade
+    no Model (`blank=True`) — não existe combinação parcial inválida aqui.
+    """
     tipo = forms.ChoiceField(
         choices=[('', '---------')] + list(TipoPendencia.choices),
         required=False, label="Tipo"
