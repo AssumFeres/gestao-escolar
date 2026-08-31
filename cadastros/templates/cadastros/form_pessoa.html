@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Nova Pessoa - Sistema de Gestao Escolar{% endblock %}
 
 {% block content %}
-<p><a href="/pessoas/" class="botao-link">&larr; Voltar para lista</a></p>
+<p><a href="/cadastros/" class="botao-link">&larr; Voltar para lista</a></p>
 
 <h2>Cadastrar nova pessoa</h2>
 
@@ -23,7 +23,7 @@
         <legend>Dados da Pessoa</legend>
 
         <fieldset>
-            <legend>Dados Básicos</legend>
+            <legend>Dados BÃ¡sicos</legend>
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo">{{ form.nome_completo.label_tag }} {{ form.nome_completo }} {{ form.nome_completo.errors }}</div>
@@ -47,7 +47,7 @@
         </fieldset>
 
         <fieldset data-categoria="DISCENTE,DOCENTE,GESTAO">
-            <legend>Identificação Ampliada</legend>
+            <legend>IdentificaÃ§Ã£o Ampliada</legend>
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo">{{ form.sexo.label_tag }} {{ form.sexo }}</div>
@@ -69,7 +69,7 @@
         </fieldset>
 
         <fieldset>
-            <legend>Endereço</legend>
+            <legend>EndereÃ§o</legend>
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo">{{ form.endereco_cep.label_tag }} {{ form.endereco_cep }} {{ form.endereco_cep.errors }}</div>
@@ -86,7 +86,7 @@
         </fieldset>
 
         <fieldset>
-            <legend>Função</legend>
+            <legend>FunÃ§Ã£o</legend>
             <div class="grid-3-colunas">
                 <div class="campo">{{ form.funcao.label_tag }} {{ form.funcao }} {{ form.funcao.errors }}</div>
                 <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
@@ -99,7 +99,7 @@
         <legend>Dados do Discente (FE 007)</legend>
 
         <fieldset>
-            <legend>Matrícula e Documentação de Estrangeiro</legend>
+            <legend>MatrÃ­cula e DocumentaÃ§Ã£o de Estrangeiro</legend>
             <div class="grid-3-colunas">
                 <div class="campo">{{ form.codigo_matricula_anac.label_tag }} {{ form.codigo_matricula_anac }}</div>
                 <div class="campo">{{ form.passaporte.label_tag }} {{ form.passaporte }}</div>
@@ -108,7 +108,7 @@
         </fieldset>
 
         <fieldset>
-            <legend>Contato de Emergência</legend>
+            <legend>Contato de EmergÃªncia</legend>
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo"><label for="id_contato_emergencia_nome">Nome</label> {{ form.contato_emergencia_nome }}</div>
@@ -116,30 +116,30 @@
                 </div>
                 <div>
                     <div class="campo"><label for="id_contato_emergencia_telefone">Telefone</label> {{ form.contato_emergencia_telefone }}</div>
-                    <div class="campo"><label for="id_contato_emergencia_endereco">Endereço</label> {{ form.contato_emergencia_endereco }}</div>
+                    <div class="campo"><label for="id_contato_emergencia_endereco">EndereÃ§o</label> {{ form.contato_emergencia_endereco }}</div>
                 </div>
             </div>
         </fieldset>
 
         <fieldset>
-            <legend>Responsável Legal (menor de idade)</legend>
+            <legend>ResponsÃ¡vel Legal (menor de idade)</legend>
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo"><label for="id_responsavel_nome">Nome</label> {{ form.responsavel_nome }}</div>
-                    <div class="campo"><label for="id_responsavel_endereco">Endereço</label> {{ form.responsavel_endereco }}</div>
+                    <div class="campo"><label for="id_responsavel_endereco">EndereÃ§o</label> {{ form.responsavel_endereco }}</div>
                     <div class="campo"><label for="id_responsavel_identidade">Identidade</label> {{ form.responsavel_identidade }}</div>
                 </div>
                 <div>
-                    <div class="campo"><label for="id_responsavel_orgao_expedidor">Órgão expedidor</label> {{ form.responsavel_orgao_expedidor }}</div>
-                    <div class="campo"><label for="id_responsavel_data_emissao">Data de emissão</label> {{ form.responsavel_data_emissao }}</div>
-                    <div class="campo"><label for="id_responsavel_qualificacao">Qualificação (pai/mãe/tutor)</label> {{ form.responsavel_qualificacao }}</div>
+                    <div class="campo"><label for="id_responsavel_orgao_expedidor">Ã“rgÃ£o expedidor</label> {{ form.responsavel_orgao_expedidor }}</div>
+                    <div class="campo"><label for="id_responsavel_data_emissao">Data de emissÃ£o</label> {{ form.responsavel_data_emissao }}</div>
+                    <div class="campo"><label for="id_responsavel_qualificacao">QualificaÃ§Ã£o (pai/mÃ£e/tutor)</label> {{ form.responsavel_qualificacao }}</div>
                 </div>
             </div>
         </fieldset>
     </fieldset>
 
     <fieldset id="bloco-docente" data-categoria="DOCENTE">
-        <legend>Formação (Graduação / Formação Profissional / Aperfeiçoamento) — FE 008</legend>
+        <legend>FormaÃ§Ã£o (GraduaÃ§Ã£o / FormaÃ§Ã£o Profissional / AperfeiÃ§oamento) â€” FE 008</legend>
 
         <div class="formset-bloco" data-prefix="formacao"
              data-fields="tipo_formacao,curso,entidade,cidade,uf,ano_conclusao"
@@ -175,11 +175,11 @@
     </fieldset>
 
     <fieldset id="bloco-gestao" data-categoria="GESTAO">
-        <legend>Experiência Profissional (FOP 402)</legend>
+        <legend>ExperiÃªncia Profissional (FOP 402)</legend>
 
         <div class="formset-bloco" data-prefix="experiencia"
              data-fields="organizacao,cargo,data_inicio,data_fim"
-             data-labels="Organização,Cargo,Data início,Data fim"
+             data-labels="OrganizaÃ§Ã£o,Cargo,Data inÃ­cio,Data fim"
              data-required="organizacao">
             {{ experiencia_formset.management_form }}
 
@@ -201,7 +201,7 @@
 
             <table>
                 <thead>
-                    <tr><th>Organização</th><th>Cargo</th><th>Data início</th><th>Data fim</th></tr>
+                    <tr><th>OrganizaÃ§Ã£o</th><th>Cargo</th><th>Data inÃ­cio</th><th>Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -209,11 +209,11 @@
     </fieldset>
 
     <fieldset id="bloco-vinculo-formal" data-categoria="DOCENTE,GESTAO">
-        <legend>Histórico de Vínculo Formal (Docente ou Gestão)</legend>
+        <legend>HistÃ³rico de VÃ­nculo Formal (Docente ou GestÃ£o)</legend>
 
         <div class="formset-bloco" data-prefix="historico"
              data-fields="vinculo_formal,data_inicio,data_fim"
-             data-labels="Vínculo Formal,Data início,Data fim"
+             data-labels="VÃ­nculo Formal,Data inÃ­cio,Data fim"
              data-required="vinculo_formal">
             {{ historico_formset.management_form }}
 
@@ -230,7 +230,7 @@
 
             <table>
                 <thead>
-                    <tr><th>Vínculo Formal</th><th>Data início</th><th>Data fim</th></tr>
+                    <tr><th>VÃ­nculo Formal</th><th>Data inÃ­cio</th><th>Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -238,11 +238,11 @@
     </fieldset>
 
     <fieldset id="bloco-pendencias">
-        <legend>Pendências de Documentação (qualquer categoria)</legend>
+        <legend>PendÃªncias de DocumentaÃ§Ã£o (qualquer categoria)</legend>
 
         <div class="formset-bloco" data-prefix="pendencia"
              data-fields="tipo,descricao"
-             data-labels="Tipo,Descrição"
+             data-labels="Tipo,DescriÃ§Ã£o"
              data-required="tipo">
             {{ pendencia_formset.management_form }}
 
@@ -256,7 +256,7 @@
 
             <table>
                 <thead>
-                    <tr><th>Tipo</th><th>Descrição</th></tr>
+                    <tr><th>Tipo</th><th>DescriÃ§Ã£o</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -266,6 +266,8 @@
     <button type="submit">Salvar</button>
 </form>
 
-<script src="{% static 'pessoas/js/buscar-cep.js' %}"></script>
-<script src="{% static 'pessoas/js/form-dinamico.js' %}"></script>
+<script src="{% static 'cadastros/js/buscar-cep.js' %}"></script>
+<script src="{% static 'cadastros/js/form-dinamico.js' %}"></script>
 {% endblock %}
+
+

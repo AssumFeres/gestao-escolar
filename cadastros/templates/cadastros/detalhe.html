@@ -1,6 +1,6 @@
-{% extends 'base.html' %} {% block title %}{{ pessoa.nome_completo }} - Sistema
+﻿{% extends 'base.html' %} {% block title %}{{ pessoa.nome_completo }} - Sistema
 de Gestao Escolar{% endblock %} {% block content %}
-<p><a href="/pessoas/" class="botao-link">&larr; Voltar para lista</a></p>
+<p><a href="/cadastros/" class="botao-link">&larr; Voltar para lista</a></p>
 
 <h2>{{ pessoa.nome_completo }}</h2>
 
@@ -41,11 +41,11 @@ de Gestao Escolar{% endblock %} {% block content %}
   <tr>
     <th>Identidade</th>
     <td>{{ pessoa.identidade|default:"-----" }}</td>
-    <th>Órgão expedidor</th>
+    <th>Ã“rgÃ£o expedidor</th>
     <td>{{ pessoa.orgao_expedidor_identidade|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Data de emissão</th>
+    <th>Data de emissÃ£o</th>
     <td>{{ pessoa.data_emissao_identidade|date:"d/m/Y"|default:"-----" }}</td>
     <th>Naturalidade</th>
     <td>{{ pessoa.naturalidade|default:"-----" }}</td>
@@ -57,19 +57,19 @@ de Gestao Escolar{% endblock %} {% block content %}
     <td>{{ pessoa.nacionalidade|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Filiação 1</th>
+    <th>FiliaÃ§Ã£o 1</th>
     <td>{{ pessoa.filiacao_1|default:"-----" }}</td>
-    <th>Filiação 2</th>
+    <th>FiliaÃ§Ã£o 2</th>
     <td>{{ pessoa.filiacao_2|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Nível de instrução</th>
+    <th>NÃ­vel de instruÃ§Ã£o</th>
     <td>{{ pessoa.nivel_instrucao|default:"-----" }}</td>
     <th>Estado civil</th>
     <td>{{ pessoa.estado_civil|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Raça/Cor</th>
+    <th>RaÃ§a/Cor</th>
     <td>{{ pessoa.raca_cor|default:"-----" }}</td>
     <td></td>
     <td></td>
@@ -79,48 +79,48 @@ de Gestao Escolar{% endblock %} {% block content %}
 {% for atribuicao in pessoa.atribuicoes.all %}
 {% with dd=atribuicao.dados_discente %}
 {% if dd %}
-<h3>Dados do Discente — {{ atribuicao.funcao.nome }}</h3>
+<h3>Dados do Discente â€” {{ atribuicao.funcao.nome }}</h3>
 <table>
   <tr>
-    <th>Código de Matrícula ANAC</th>
+    <th>CÃ³digo de MatrÃ­cula ANAC</th>
     <td>{{ dd.codigo_matricula_anac|default:"-----" }}</td>
     <th>Passaporte</th>
     <td>{{ dd.passaporte|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Autorização de Permanência</th>
+    <th>AutorizaÃ§Ã£o de PermanÃªncia</th>
     <td colspan="3">{{ dd.autorizacao_permanencia|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Contato Emergência - Nome</th>
+    <th>Contato EmergÃªncia - Nome</th>
     <td>{{ dd.contato_emergencia_nome|default:"-----" }}</td>
     <th>Parentesco</th>
     <td>{{ dd.contato_emergencia_parentesco|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Contato Emergência - Telefone</th>
+    <th>Contato EmergÃªncia - Telefone</th>
     <td>{{ dd.contato_emergencia_telefone|default:"-----" }}</td>
-    <th>Endereço</th>
+    <th>EndereÃ§o</th>
     <td>{{ dd.contato_emergencia_endereco|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Responsável - Nome</th>
+    <th>ResponsÃ¡vel - Nome</th>
     <td>{{ dd.responsavel_nome|default:"-----" }}</td>
-    <th>Qualificação</th>
+    <th>QualificaÃ§Ã£o</th>
     <td>{{ dd.responsavel_qualificacao|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Responsável - Endereço</th>
+    <th>ResponsÃ¡vel - EndereÃ§o</th>
     <td colspan="3">{{ dd.responsavel_endereco|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Responsável - Identidade</th>
+    <th>ResponsÃ¡vel - Identidade</th>
     <td>{{ dd.responsavel_identidade|default:"-----" }}</td>
-    <th>Órgão Expedidor</th>
+    <th>Ã“rgÃ£o Expedidor</th>
     <td>{{ dd.responsavel_orgao_expedidor|default:"-----" }}</td>
   </tr>
   <tr>
-    <th>Responsável - Data de Emissão</th>
+    <th>ResponsÃ¡vel - Data de EmissÃ£o</th>
     <td colspan="3">{{ dd.responsavel_data_emissao|date:"d/m/Y"|default:"-----" }}</td>
   </tr>
 </table>
@@ -156,13 +156,13 @@ de Gestao Escolar{% endblock %} {% block content %}
 <p>Nenhuma funcao cadastrada.</p>
 {% endif %}
 
-<h3>Pendências de Documentação</h3>
+<h3>PendÃªncias de DocumentaÃ§Ã£o</h3>
 <table>
   <thead>
     <tr>
-      <th>Função</th>
+      <th>FunÃ§Ã£o</th>
       <th>Tipo</th>
-      <th>Descrição</th>
+      <th>DescriÃ§Ã£o</th>
       <th>Resolvida</th>
     </tr>
   </thead>
@@ -173,14 +173,14 @@ de Gestao Escolar{% endblock %} {% block content %}
         <td>{{ atribuicao.funcao.nome }}</td>
         <td>{{ pendencia.get_tipo_display }}</td>
         <td>{{ pendencia.descricao|default:"-----" }}</td>
-        <td>{{ pendencia.resolvida|yesno:"Sim,Não" }}</td>
+        <td>{{ pendencia.resolvida|yesno:"Sim,NÃ£o" }}</td>
       </tr>
       {% endfor %}
     {% endfor %}
   </tbody>
 </table>
 
-<h3>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</h3>
+<h3>FormaÃ§Ã£o (GraduaÃ§Ã£o / FormaÃ§Ã£o Profissional / AperfeiÃ§oamento)</h3>
 <table>
   <thead>
     <tr>
@@ -211,7 +211,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   <thead>
     <tr>
       <th>Disciplina</th>
-      <th>Data início</th>
+      <th>Data inÃ­cio</th>
       <th>Data fim</th>
       <th>Ativo</th>
     </tr>
@@ -223,20 +223,20 @@ de Gestao Escolar{% endblock %} {% block content %}
         <td>{{ capacidade.disciplina }}</td>
         <td>{{ capacidade.data_inicio|date:"d/m/Y" }}</td>
         <td>{{ capacidade.data_fim|date:"d/m/Y"|default:"-----" }}</td>
-        <td>{{ capacidade.ativo|yesno:"Sim,Não" }}</td>
+        <td>{{ capacidade.ativo|yesno:"Sim,NÃ£o" }}</td>
       </tr>
       {% endfor %}
     {% endfor %}
   </tbody>
 </table>
 
-<h3>Experiência Profissional</h3>
+<h3>ExperiÃªncia Profissional</h3>
 <table>
   <thead>
     <tr>
-      <th>Organização</th>
+      <th>OrganizaÃ§Ã£o</th>
       <th>Cargo</th>
-      <th>Data início</th>
+      <th>Data inÃ­cio</th>
       <th>Data fim</th>
     </tr>
   </thead>
@@ -254,12 +254,12 @@ de Gestao Escolar{% endblock %} {% block content %}
   </tbody>
 </table>
 
-<h3>Histórico de Vínculo Formal</h3>
+<h3>HistÃ³rico de VÃ­nculo Formal</h3>
 <table>
   <thead>
     <tr>
-      <th>Vínculo Formal</th>
-      <th>Data início</th>
+      <th>VÃ­nculo Formal</th>
+      <th>Data inÃ­cio</th>
       <th>Data fim</th>
     </tr>
   </thead>
@@ -278,3 +278,4 @@ de Gestao Escolar{% endblock %} {% block content %}
 
 
 {% endblock %}
+

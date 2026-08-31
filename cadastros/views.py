@@ -1,7 +1,7 @@
-"""
-pessoas/views.py
+﻿"""
+cadastros/views.py
 
-Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
+Views (API e Template): traduzem HTTP <-> Service. NÃ£o contÃªm regra de negÃ³cio.
 """
 from django.shortcuts import get_object_or_404, render, redirect
 from django.core.exceptions import ValidationError
@@ -29,7 +29,7 @@ from .serializers import (
 
 class BuscarCepView(APIView):
     """
-    SRP: única responsabilidade é traduzir HTTP <-> BuscarEnderecoPorCepService.
+    SRP: Ãºnica responsabilidade Ã© traduzir HTTP <-> BuscarEnderecoPorCepService.
     """
 
     def get(self, request, cep):
@@ -47,11 +47,11 @@ class BuscarCepView(APIView):
 
 class CadastrarPessoaView(APIView):
     """
-    SRP: única responsabilidade é traduzir HTTP <-> CadastrarPessoaComFuncaoService.
+    SRP: Ãºnica responsabilidade Ã© traduzir HTTP <-> CadastrarPessoaComFuncaoService.
 
-    Versão mínima via API: cadastra Pessoa + AtribuicaoFuncao, sem os campos
-    repetíveis (Formação/Experiência/Histórico/Pendências) — esses só estão
-    disponíveis pelo formulário HTML (NovoCadastroPessoaView) por enquanto.
+    VersÃ£o mÃ­nima via API: cadastra Pessoa + AtribuicaoFuncao, sem os campos
+    repetÃ­veis (FormaÃ§Ã£o/ExperiÃªncia/HistÃ³rico/PendÃªncias) â€” esses sÃ³ estÃ£o
+    disponÃ­veis pelo formulÃ¡rio HTML (NovoCadastroPessoaView) por enquanto.
     """
 
     def post(self, request):
@@ -104,21 +104,21 @@ class ListaPessoasView(ListView):
     Template View: renderiza HTML no servidor, sem passar por Serializer/JSON.
     """
     model = Pessoa
-    template_name = 'pessoas/lista.html'
+    template_name = 'cadastros/lista.html'
     context_object_name = 'pessoas'
 
 
 class DetalhePessoaView(DetailView):
     """
-    Template View: mostra os dados completos de uma Pessoa e suas Funções.
+    Template View: mostra os dados completos de uma Pessoa e suas FunÃ§Ãµes.
     """
     model = Pessoa
-    template_name = 'pessoas/detalhe.html'
+    template_name = 'cadastros/detalhe.html'
     context_object_name = 'pessoa'
 
 
 # Campo usado para decidir se uma linha de Formset foi de fato preenchida
-# (Formsets sempre entregam a linha `extra`, mesmo vazia — precisa filtrar).
+# (Formsets sempre entregam a linha `extra`, mesmo vazia â€” precisa filtrar).
 _CAMPO_PREENCHIDO = {
     'formacao': 'curso',
     'experiencia': 'organizacao',
@@ -135,17 +135,17 @@ def _linhas_preenchidas(cleaned_data_list, campo_chave):
 class NovoCadastroPessoaView(View):
     """
     Template View: formulario HTML de cadastro. Reusa o mesmo Service
-    da API (CadastrarPessoaComFuncaoService) — mesma regra de negocio,
+    da API (CadastrarPessoaComFuncaoService) â€” mesma regra de negocio,
     caminho de entrada diferente.
 
-    Formulário único com dropdown de Funcao; os Formsets de Formação/
-    Experiência/Histórico de Vínculo Formal/Pendências são sempre enviados,
-    mas só os relevantes para a categoria escolhida são de fato usados pelo
-    Service (Pendências é universal, sempre usada) — o Template/JavaScript
-    (Etapa 7.4c/d) é quem decide quais blocos mostrar visualmente, mas o
+    FormulÃ¡rio Ãºnico com dropdown de Funcao; os Formsets de FormaÃ§Ã£o/
+    ExperiÃªncia/HistÃ³rico de VÃ­nculo Formal/PendÃªncias sÃ£o sempre enviados,
+    mas sÃ³ os relevantes para a categoria escolhida sÃ£o de fato usados pelo
+    Service (PendÃªncias Ã© universal, sempre usada) â€” o Template/JavaScript
+    (Etapa 7.4c/d) Ã© quem decide quais blocos mostrar visualmente, mas o
     back-end aceita o POST completo de qualquer forma.
     """
-    template_name = 'pessoas/form_pessoa.html'
+    template_name = 'cadastros/form_pessoa.html'
 
     def _formsets(self, dados_post=None):
         return (
@@ -265,7 +265,7 @@ class NovoCadastroPessoaView(View):
                 historico_fs.cleaned_data, _CAMPO_PREENCHIDO['historico']
             )
 
-        # Universal — qualquer categoria
+        # Universal â€” qualquer categoria
         pendencias = _linhas_preenchidas(pendencia_fs.cleaned_data, _CAMPO_PREENCHIDO['pendencia'])
 
         try:
@@ -298,15 +298,17 @@ class NovoCadastroPessoaView(View):
 
 class PreencherRequisitosDocenteView(View):
     """
-    Template View — PLACEHOLDER (a completar quando os Requisitos de Contratação
+    Template View â€” PLACEHOLDER (a completar quando os Requisitos de ContrataÃ§Ã£o
     e Disciplinas/Capacidade forem implementados na tela).
 
-    Recebe o id de um DadosDocente já existente via URL (não busca por CPF/nome
-    de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
-    acabou de ser cadastrado). Hoje só confirma que o Docente foi encontrado.
+    Recebe o id de um DadosDocente jÃ¡ existente via URL (nÃ£o busca por CPF/nome
+    de novo â€” o botÃ£o "Preencher Requisitos de ContrataÃ§Ã£o" jÃ¡ sabe qual Docente
+    acabou de ser cadastrado). Hoje sÃ³ confirma que o Docente foi encontrado.
     """
-    template_name = 'pessoas/preencher_requisitos_docente.html'
+    template_name = 'cadastros/preencher_requisitos_docente.html'
 
     def get(self, request, pk):
         dados_docente = get_object_or_404(DadosDocente, pk=pk)
         return render(request, self.template_name, {'dados_docente': dados_docente})
+
+
