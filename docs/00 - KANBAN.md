@@ -9,7 +9,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🔨 Em Andamento
-*Sendo trabalhado agora*
+
+_Sendo trabalhado agora_
 
 - [ ] **Migração `Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`** — **COMPLETA (30/08/2026).** Todas as 9 etapas do plano concluídas, testadas (18 testes automatizados + revisão manual completa dos 3 fluxos), commitadas. 3 bugs reais encontrados e corrigidos na revisão final (duplicidade de RM/RA/CANAC/CMA, categoria perdida no re-render de erro). Tela de detalhe ampliada com todos os dados de `Pessoa` + 6 tabelas de leitura. Falta só abrir o Pull Request de `feature/refatoracao-funcao` para `dev`. Detalhe completo das 15 sessões em `docs/06` a `15 - ANDAMENTO_DO_PROJETO.md`.
 
@@ -17,7 +18,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## 🧊 Backlog
 
-*Product Backlog único, ordenado por prioridade — etiquetado por `[Cadastro]` (módulo em desenvolvimento ativo, prioridade maior) ou `[Projeto]` (infraestrutura/arquitetura geral, sem módulo específico). Reorganizado em 25/08/2026 para reduzir a mistura que dificultava a leitura; nenhum item foi removido ou repriorizado além da ordenação por etiqueta.*
+_Product Backlog único, ordenado por prioridade — etiquetado por `[Cadastro]` (módulo em desenvolvimento ativo, prioridade maior) ou `[Projeto]` (infraestrutura/arquitetura geral, sem módulo específico). Reorganizado em 25/08/2026 para reduzir a mistura que dificultava a leitura; nenhum item foi removido ou repriorizado além da ordenação por etiqueta._
 
 **`[Cadastro]`**
 
@@ -43,6 +44,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Tela/fluxo para marcar uma `PendenciaCadastro` como resolvida (`resolvida=True`, `resolvida_em`) — hoje só existe o Model, sem interface
 - [ ] **Padrão a lembrar em qualquer novo campo `unique=True, blank=True` futuro:** usar `null=True` também, e garantir que a View converta campo vazio para `None` (não `""`) antes de montar o dict para o Service — o Model sozinho não basta; já causou um `IntegrityError` real em RM/RA/CANAC (25/08/2026), corrigido nos dois lados
 - [ ] Padronizar versão do Python entre as máquinas do grupo (hoje: 3.14.5 em uma, 3.13.0 em outra) — atualizar Python + recriar `venv` quando for conveniente, não durante sessão de teste ativo
+- [ ] **Bug pré-existente, não corrigido na Etapa 9 da migração anterior:** `NovoCadastroPessoaView` monta `dados_extensao["codigo_matricula_anac"]` com `dados.get("codigo_matricula_anac", "")` (string vazia), não `or None` — mesmo padrão de `IntegrityError` já documentado e corrigido para `registro_matricula`/`registro_aluno`/`codigo_anac`, mas nunca replicado para este campo dentro do bloco Discente de `dados_extensao`. Descoberto durante teste manual da Etapa 5 do plano de renomeação `pessoas`→`cadastros` (31/08/2026), não relacionado à renomeação em si. Correção: trocar por `dados.get("codigo_matricula_anac") or None` em `cadastros/views.py`.
+- [ ] **Formset de Formação não valida campos obrigatórios da linha antes de enviar ao Service** — o filtro `_linhas_preenchidas` considera uma linha de `FormacaoDocente` "preenchida" só checando o campo `curso`; se `curso` for preenchido mas `ano_conclusao` (também obrigatório no Model) ficar em branco, a linha passa pelo filtro e só falha no `Service`/banco, gerando tela de erro genérica e pouco amigável — mesmo padrão já registrado no item "Validação de erros de negócio mais amigável" acima, mas com uma causa específica aqui (obrigatoriedade não verificada no nível do Formset/Form). Descoberto em teste manual da Etapa 5 do plano de renomeação (31/08/2026).
 
 **`[Projeto]`**
 
@@ -65,7 +68,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## 📋 A Fazer — CRUD completo do módulo Pessoas
 
-*Desbloqueado (25/08/2026): a base do modelo novo (`Funcao`/`AtribuicaoFuncao` + extensões) está implementada, testada e commitada em `feature/refatoracao-funcao`. Um formulário de cadastro **simplificado de transição** já existe e funciona (Pessoa + `Funcao` genérica do catálogo, sem os campos específicos por categoria) — os itens 2-4 abaixo evoluem esse formulário para a experiência completa por categoria.*
+_Desbloqueado (25/08/2026): a base do modelo novo (`Funcao`/`AtribuicaoFuncao` + extensões) está implementada, testada e commitada em `feature/refatoracao-funcao`. Um formulário de cadastro **simplificado de transição** já existe e funciona (Pessoa + `Funcao` genérica do catálogo, sem os campos específicos por categoria) — os itens 2-4 abaixo evoluem esse formulário para a experiência completa por categoria._
 
 **Ordem sugerida, revisada em 25/08/2026:**
 
@@ -80,6 +83,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 9. [ ] **Tela de cadastro de Disciplina** (Create/Read/Update/Delete) — hoje só existe via Admin, não depende da migração
 
 **Outras pendências antes do deploy:**
+
 - [ ] Configurar PostgreSQL (atualmente em SQLite) via variável de ambiente
 - [ ] Ajustes de `settings.py` para produção (`DEBUG=False`, `ALLOWED_HOSTS`, `SECRET_KEY` via `.env`)
 - [ ] Configurar arquivos estáticos para produção (`whitenoise` ou equivalente)
@@ -89,12 +93,11 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [ ] Convidar colegas de grupo como collaborators no GitHub
 - [ ] Fechar Etapa 9 do plano de migração (PR de `feature/refatoracao-funcao` para `dev`) antes ou junto dos itens acima
 
-
-
 ---
 
 ## ✅ Concluído
-*Feito, testado e versionado*
+
+_Feito, testado e versionado_
 
 - [x] Repositório Git criado e configurado (branches `main`/`dev`) — 19/08/2026
 - [x] `.gitignore` configurado — 19/08/2026 (`f27cb9f`)
@@ -110,7 +113,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 - [x] **Redesenho arquitetural do módulo Pessoas** (`Vinculo`/`FuncaoGestao`/`Habilitacao` → `Funcao`/`AtribuicaoFuncao`), baseado em 3 formulários institucionais reais (FOP 402, FE 007, FE 008) — decisão de design fechada em 24/08/2026, ver `docs/06 - ANDAMENTO_DO_PROJETO.md`. **Execução completa em 25/08/2026** (Etapas 1 a 6 do plano de migração, ver `docs/07`, `08`, `09`, `10`, `11`) — modelo antigo totalmente removido do código, sistema rodando sobre o modelo novo, testado automatizado e manualmente.
 
 ### Itens historicamente concluídos, agora em revisão pela migração
-*Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) — mantidos aqui como registro histórico do que já existiu. A maioria já foi removida ou reescrita de fato (25/08/2026); os que restam "em revisão" aguardam a Etapa 7 completa (os 3 formulários especializados por categoria):*
+
+_Estes itens foram concluídos sob o modelo antigo (`Vinculo`/`FuncaoGestao`/`Habilitacao`) — mantidos aqui como registro histórico do que já existiu. A maioria já foi removida ou reescrita de fato (25/08/2026); os que restam "em revisão" aguardam a Etapa 7 completa (os 3 formulários especializados por categoria):_
 
 - [x] ~~Models: `Vinculo`, `VinculoDiscente`, `VinculoDocente`, `VinculoGestao`, `FuncaoGestao`, `Habilitacao`, `FuncaoGestaoHabilitacao`~~ — 20/08/2026 (`524e6e0`) — **todos removidos de fato (25/08/2026, `49142fa` e `cf7846f`)**
 - [x] ~~Django Admin registrado para essas 9 entidades~~ — 20/08/2026 (`524e6e0`) — **registro das 7 entidades antigas removido por completo (25/08/2026)**
@@ -127,7 +131,8 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ---
 
 ## 🔭 Fora de Escopo (PI futuro)
-*Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5*
+
+_Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_arquitetura.md` seção 5_
 
 - [ ] Módulo Gestão de Turmas (`Turma`, `Modulo`, relação `Disciplina`↔`Modulo`) — confirmado fora de escopo em 24/08/2026, mesmo após a descoberta de que a FE 007 depende parcialmente disso (curso inicial, PI Inicial/Final)
 - [ ] Módulo Atribuição de Instrutor
@@ -138,25 +143,26 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 ## Status Geral
 
-| Métrica | Valor atual |
-|---|---|
-| Services implementados | 2 (`CadastrarPessoaComFuncaoService` reescrito, `BuscarEnderecoPorCepService` inalterado) — modelo antigo totalmente removido |
-| Endpoints de API implementados | 2 (`CadastrarPessoaView` atualizado para o modelo novo, `BuscarCepView` inalterado) |
-| Template Views implementadas | 3 (lista inalterada, detalhe atualizada para Funções, cadastro em versão de transição — evolução completa é a Etapa 7) |
-| Testes automatizados | 5 (todos passando, todos contra o modelo novo) |
-| Models do modelo antigo restantes | 0 — `Vinculo` e subtipos removidos em 25/08/2026 (`cf7846f`) |
-| Models do modelo novo | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) |
-| Catálogo `Funcao` populado | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`) |
-| Validação end-to-end | Testada manualmente pelo navegador em 25/08/2026 (cadastro → detalhe), além do `pytest` |
-| Última branch ativa | `feature/refatoracao-funcao` |
-| Último commit | `cf7846f` — `refactor: remove Vinculo e subtipos, reescreve CadastrarPessoaComFuncaoService com fluxo buscar-ou-criar por CPF` |
+| Métrica                           | Valor atual                                                                                                                                                    |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Services implementados            | 2 (`CadastrarPessoaComFuncaoService` reescrito, `BuscarEnderecoPorCepService` inalterado) — modelo antigo totalmente removido                                  |
+| Endpoints de API implementados    | 2 (`CadastrarPessoaView` atualizado para o modelo novo, `BuscarCepView` inalterado)                                                                            |
+| Template Views implementadas      | 3 (lista inalterada, detalhe atualizada para Funções, cadastro em versão de transição — evolução completa é a Etapa 7)                                         |
+| Testes automatizados              | 5 (todos passando, todos contra o modelo novo)                                                                                                                 |
+| Models do modelo antigo restantes | 0 — `Vinculo` e subtipos removidos em 25/08/2026 (`cf7846f`)                                                                                                   |
+| Models do modelo novo             | 6 implementados / 6 desenhados (`Pessoa` ampliada ✅, `Funcao` ✅, `AtribuicaoFuncao` ✅, `DadosDiscente` ✅, `DadosDocente` ✅, `ExperienciaProfissional` ✅) |
+| Catálogo `Funcao` populado        | 9 Funções (ver Etapa 2 em `docs/07 - PLANO_DE_MIGRACAO.md`)                                                                                                    |
+| Validação end-to-end              | Testada manualmente pelo navegador em 25/08/2026 (cadastro → detalhe), além do `pytest`                                                                        |
+| Última branch ativa               | `feature/refatoracao-funcao`                                                                                                                                   |
+| Último commit                     | `cf7846f` — `refactor: remove Vinculo e subtipos, reescreve CadastrarPessoaComFuncaoService com fluxo buscar-ou-criar por CPF`                                 |
 
 ---
+
 ---
 
 # 📐 Especificações Detalhadas de Itens do Backlog
 
-*Este capítulo guarda o raciocínio completo e esboços de código para itens do Backlog que já foram discutidos em profundidade, mas ainda não entraram em desenvolvimento. Quando um item daqui for iniciado, mova a entrada correspondente do Backlog para "Em Andamento" e use esta seção como ponto de partida — não como código final, como referência de decisão já tomada.*
+_Este capítulo guarda o raciocínio completo e esboços de código para itens do Backlog que já foram discutidos em profundidade, mas ainda não entraram em desenvolvimento. Quando um item daqui for iniciado, mova a entrada correspondente do Backlog para "Em Andamento" e use esta seção como ponto de partida — não como código final, como referência de decisão já tomada._
 
 ## Cadastro de Formação do Docente (baseado no FE 008)
 
@@ -167,6 +173,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 ### Contexto do formulário
 
 O FE 008 tem, entre outras, estas seções relevantes para `pessoas`:
+
 - **Seção 3 — Graduação:** tabela com colunas Curso, Entidade, Cidade, UF, Ano de Conclusão.
 - **Seção 4 — Formação Profissional:** mesmas colunas da seção 3.
 - **Seção 5 — Aperfeiçoamento Profissional:** mesmas colunas da seção 3.
@@ -246,11 +253,11 @@ class Capacidade(models.Model):
 
 ### Resumo do impacto quando for implementado
 
-| Model | Mudança |
-|---|---|
-| `FormacaoDocente` | **Novo** — Graduação/Formação Profissional/Aperfeiçoamento numa tabela só |
-| `DadosDocente` | +2 campos (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria`) |
-| `Capacidade` | FK trocada de `VinculoDocente` para `DadosDocente`, +1 campo (`formacao_comprobatoria`) |
+| Model             | Mudança                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `FormacaoDocente` | **Novo** — Graduação/Formação Profissional/Aperfeiçoamento numa tabela só               |
+| `DadosDocente`    | +2 campos (`experiencia_docente_comprovada`, `formacao_especifica_comprobatoria`)       |
+| `Capacidade`      | FK trocada de `VinculoDocente` para `DadosDocente`, +1 campo (`formacao_comprobatoria`) |
 
 ### Campos de identificação vistos no FE 008, já resolvidos
 

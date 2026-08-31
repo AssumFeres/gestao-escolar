@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const cepInput = document.getElementById('id_endereco_cep');
     if (!cepInput) return;
 
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        fetch(`/api/pessoas/cep/${cep}/`)
+        fetch(`/api/cadastros/cep/${cep}/`)
             .then(function (response) {
                 if (!response.ok) {
                     throw new Error('CEP nao encontrado');

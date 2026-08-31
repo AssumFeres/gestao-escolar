@@ -19,7 +19,7 @@
     "model": "cadastros.funcao",
     "pk": 3,
     "fields": {
-      "nome": "Coordenador de Curso AviÃ´nicos",
+      "nome": "Coordenador de Curso Aviônicos",
       "categoria": "GESTAO"
     }
   },
@@ -27,7 +27,7 @@
     "model": "cadastros.funcao",
     "pk": 4,
     "fields": {
-      "nome": "Coordenador de Curso CÃ©lula",
+      "nome": "Coordenador de Curso Célula",
       "categoria": "GESTAO"
     }
   },
@@ -43,7 +43,7 @@
     "model": "cadastros.funcao",
     "pk": 6,
     "fields": {
-      "nome": "SecretÃ¡ria",
+      "nome": "Secretária",
       "categoria": "GESTAO"
     }
   },
