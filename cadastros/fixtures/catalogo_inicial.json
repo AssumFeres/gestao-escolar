@@ -1,6 +1,6 @@
 [
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 1,
     "fields": {
       "nome": "Diretor",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 2,
     "fields": {
       "nome": "Gerente de Qualidade",
@@ -16,23 +16,23 @@
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 3,
     "fields": {
-      "nome": "Coordenador de Curso Aviônicos",
+      "nome": "Coordenador de Curso AviÃ´nicos",
       "categoria": "GESTAO"
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 4,
     "fields": {
-      "nome": "Coordenador de Curso Célula",
+      "nome": "Coordenador de Curso CÃ©lula",
       "categoria": "GESTAO"
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 5,
     "fields": {
       "nome": "Coordenador de Curso GMP",
@@ -40,15 +40,15 @@
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 6,
     "fields": {
-      "nome": "Secretária",
+      "nome": "SecretÃ¡ria",
       "categoria": "GESTAO"
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 7,
     "fields": {
       "nome": "Auxiliar Administrativo",
@@ -56,7 +56,7 @@
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 8,
     "fields": {
       "nome": "Docente - Instrutor",
@@ -64,7 +64,7 @@
     }
   },
   {
-    "model": "pessoas.funcao",
+    "model": "cadastros.funcao",
     "pk": 9,
     "fields": {
       "nome": "Discente - Aluno",
@@ -72,17 +72,18 @@
     }
   },
   {
-    "model": "pessoas.vinculoformal",
+    "model": "cadastros.vinculoformal",
     "pk": 1,
     "fields": {
       "nome": "FAPETI"
     }
   },
   {
-    "model": "pessoas.vinculoformal",
+    "model": "cadastros.vinculoformal",
     "pk": 2,
     "fields": {
       "nome": "PMT"
     }
   }
 ]
+

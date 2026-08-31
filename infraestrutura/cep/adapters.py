@@ -1,7 +1,7 @@
 ﻿"""
 infraestrutura/cep/adapters.py
 
-Adaptador concreto: implementa AbstractCepClient usando a API pÃºblica ViaCEP.
+Adaptador concreto: implementa AbstractCepClient usando a API pública ViaCEP.
 """
 
 import requests
@@ -21,12 +21,12 @@ class ViaCepClient(AbstractCepClient):
         data = response.json()
 
         if data.get("erro"):
-            raise ValueError(f"CEP nÃ£o encontrado: {cep}")
+            raise ValueError(f"CEP não encontrado: {cep}")
 
         return Endereco(
             cep=cep_limpo,
             logradouro=data.get("logradouro", ""),
-            numero="",  # ViaCEP nÃ£o retorna nÃºmero â€” usuÃ¡rio preenche depois
+            numero="",  # ViaCEP não retorna número — usuário preenche depois
             complemento=data.get("complemento", ""),
             bairro=data.get("bairro", ""),
             cidade=data.get("localidade", ""),

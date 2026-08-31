@@ -1,10 +1,10 @@
 ﻿"""
-pessoas/tests/test_views_api.py
+cadastros/tests/test_views_api.py
 
-Etapa 8 do plano de migraÃ§Ã£o: testes de View/API, cobrindo os endpoints que
-jÃ¡ foram reescritos na Etapa 6 (CadastrarPessoaView) mas nunca ganharam teste
-prÃ³prio, e o BuscarCepView (existente desde a Etapa 2, tambÃ©m sem teste de
-View atÃ© agora â€” sÃ³ o Service tinha teste, em test_buscar_cep.py).
+Etapa 8 do plano de migração: testes de View/API, cobrindo os endpoints que
+já foram reescritos na Etapa 6 (CadastrarPessoaView) mas nunca ganharam teste
+próprio, e o BuscarCepView (existente desde a Etapa 2, também sem teste de
+View até agora — só o Service tinha teste, em test_buscar_cep.py).
 """
 from unittest.mock import patch
 
@@ -65,12 +65,12 @@ class TestCadastrarPessoaView:
         assert not Pessoa.objects.filter(cpf="32132132132").exists()
 
     def test_dados_incompletos_retorna_400(self):
-        """Sem passar pelo Service â€” validaÃ§Ã£o do Serializer jÃ¡ barra antes."""
+        """Sem passar pelo Service — validação do Serializer já barra antes."""
         funcao = Funcao.objects.create(nome="Secretaria API", categoria="GESTAO")
         client = APIClient()
 
         payload_incompleto = _payload_pessoa("45645645645", funcao.id)
-        del payload_incompleto["cpf"]  # remove um campo obrigatÃ³rio
+        del payload_incompleto["cpf"]  # remove um campo obrigatório
 
         response = client.post(
             reverse("api-cadastrar-pessoa"),
@@ -81,7 +81,7 @@ class TestCadastrarPessoaView:
         assert response.status_code == 400
 
     def test_segunda_funcao_mesmo_cpf_reaproveita_pessoa_via_api(self):
-        """Confirma pela API o mesmo comportamento jÃ¡ testado no Service (Etapa 6)."""
+        """Confirma pela API o mesmo comportamento já testado no Service (Etapa 6)."""
         funcao_1 = Funcao.objects.create(nome="Docente API", categoria="DOCENTE")
         funcao_2 = Funcao.objects.create(nome="Diretor API 2", categoria="GESTAO")
         client = APIClient()
@@ -104,7 +104,7 @@ class TestCadastrarPessoaView:
 @pytest.mark.django_db
 class TestBuscarCepView:
 
-    @patch("pessoas.views.BuscarEnderecoPorCepService")
+    @patch("cadastros.views.BuscarEnderecoPorCepService")
     def test_busca_cep_retorna_200_com_endereco(self, MockService):
         endereco_mock = Endereco(
             cep="01310100", logradouro="Av. Paulista", numero="",
@@ -119,9 +119,9 @@ class TestBuscarCepView:
         assert response.data["logradouro"] == "Av. Paulista"
         assert response.data["cidade"] == "Sao Paulo"
 
-    @patch("pessoas.views.BuscarEnderecoPorCepService")
+    @patch("cadastros.views.BuscarEnderecoPorCepService")
     def test_busca_cep_invalido_retorna_404(self, MockService):
-        MockService.return_value.executar.side_effect = ValueError("CEP nÃ£o encontrado")
+        MockService.return_value.executar.side_effect = ValueError("CEP não encontrado")
 
         client = APIClient()
         response = client.get(reverse("api-buscar-cep", kwargs={"cep": "00000000"}))
