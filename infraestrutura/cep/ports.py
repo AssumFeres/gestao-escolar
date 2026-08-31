@@ -1,4 +1,4 @@
-"""
+﻿"""
 infraestrutura/cep/ports.py
 
 Porta (interface abstrata) para busca de endereço por CEP.
@@ -7,7 +7,7 @@ Qualquer provedor concreto (ViaCEP, outro serviço) deve implementar esse contra
 
 from abc import ABC, abstractmethod
 
-from pessoas.models import Endereco
+from cadastros.models import Endereco
 
 
 class AbstractCepClient(ABC):

@@ -1,5 +1,5 @@
-"""
-pessoas/tests/test_views_api.py
+﻿"""
+cadastros/tests/test_views_api.py
 
 Etapa 8 do plano de migração: testes de View/API, cobrindo os endpoints que
 já foram reescritos na Etapa 6 (CadastrarPessoaView) mas nunca ganharam teste
@@ -12,7 +12,7 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from pessoas.models import Funcao, Pessoa, Endereco
+from cadastros.models import Funcao, Pessoa, Endereco
 
 
 def _payload_pessoa(cpf, funcao_id):
@@ -104,7 +104,7 @@ class TestCadastrarPessoaView:
 @pytest.mark.django_db
 class TestBuscarCepView:
 
-    @patch("pessoas.views.BuscarEnderecoPorCepService")
+    @patch("cadastros.views.BuscarEnderecoPorCepService")
     def test_busca_cep_retorna_200_com_endereco(self, MockService):
         endereco_mock = Endereco(
             cep="01310100", logradouro="Av. Paulista", numero="",
@@ -119,7 +119,7 @@ class TestBuscarCepView:
         assert response.data["logradouro"] == "Av. Paulista"
         assert response.data["cidade"] == "Sao Paulo"
 
-    @patch("pessoas.views.BuscarEnderecoPorCepService")
+    @patch("cadastros.views.BuscarEnderecoPorCepService")
     def test_busca_cep_invalido_retorna_404(self, MockService):
         MockService.return_value.executar.side_effect = ValueError("CEP não encontrado")
 
@@ -127,3 +127,4 @@ class TestBuscarCepView:
         response = client.get(reverse("api-buscar-cep", kwargs={"cep": "00000000"}))
 
         assert response.status_code == 404
+

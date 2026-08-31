@@ -1,4 +1,4 @@
-"""
+﻿"""
 infraestrutura/cep/adapters.py
 
 Adaptador concreto: implementa AbstractCepClient usando a API pública ViaCEP.
@@ -6,7 +6,7 @@ Adaptador concreto: implementa AbstractCepClient usando a API pública ViaCEP.
 
 import requests
 
-from pessoas.models import Endereco
+from cadastros.models import Endereco
 from .ports import AbstractCepClient
 
 
@@ -32,4 +32,5 @@ class ViaCepClient(AbstractCepClient):
             cidade=data.get("localidade", ""),
             uf=data.get("uf", ""),
         )
+
 

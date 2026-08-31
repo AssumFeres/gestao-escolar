@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Pessoas - Sistema de Gestao Escolar{% endblock %}
 
 {% block content %}
 <h2>Pessoas cadastradas</h2>
-<p><a href="/pessoas/novo/" class="botao-link">+ Cadastrar nova pessoa</a></p>
+<p><a href="/cadastros/novo/" class="botao-link">+ Cadastrar nova pessoa</a></p>
 
 {% if pessoas %}
 <table>
@@ -19,7 +19,7 @@
     <tbody>
         {% for pessoa in pessoas %}
         <tr>
-            <td><a href="/pessoas/{{ pessoa.id }}/">{{ pessoa.nome_completo }}</a></td>
+            <td><a href="/cadastros/{{ pessoa.id }}/">{{ pessoa.nome_completo }}</a></td>
             <td>{{ pessoa.cpf }}</td>
             <td>{{ pessoa.email }}</td>
             <td>{{ pessoa.endereco_cidade }}/{{ pessoa.endereco_uf }}</td>
@@ -31,3 +31,4 @@
 <p>Nenhuma pessoa cadastrada ainda.</p>
 {% endif %}
 {% endblock %}
+

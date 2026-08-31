@@ -1,7 +1,7 @@
-from unittest.mock import Mock
+﻿from unittest.mock import Mock
 
-from pessoas.models import Endereco
-from pessoas.services import BuscarEnderecoPorCepService
+from cadastros.models import Endereco
+from cadastros.services import BuscarEnderecoPorCepService
 
 
 class TestBuscarEnderecoPorCepService:

@@ -1,5 +1,5 @@
-"""
-pessoas/views.py
+﻿"""
+cadastros/views.py
 
 Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
 """
@@ -104,7 +104,7 @@ class ListaPessoasView(ListView):
     Template View: renderiza HTML no servidor, sem passar por Serializer/JSON.
     """
     model = Pessoa
-    template_name = 'pessoas/lista.html'
+    template_name = 'cadastros/lista.html'
     context_object_name = 'pessoas'
 
 
@@ -113,7 +113,7 @@ class DetalhePessoaView(DetailView):
     Template View: mostra os dados completos de uma Pessoa e suas Funções.
     """
     model = Pessoa
-    template_name = 'pessoas/detalhe.html'
+    template_name = 'cadastros/detalhe.html'
     context_object_name = 'pessoa'
 
 
@@ -145,7 +145,7 @@ class NovoCadastroPessoaView(View):
     (Etapa 7.4c/d) é quem decide quais blocos mostrar visualmente, mas o
     back-end aceita o POST completo de qualquer forma.
     """
-    template_name = 'pessoas/form_pessoa.html'
+    template_name = 'cadastros/form_pessoa.html'
 
     def _formsets(self, dados_post=None):
         return (
@@ -305,8 +305,9 @@ class PreencherRequisitosDocenteView(View):
     de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
     acabou de ser cadastrado). Hoje só confirma que o Docente foi encontrado.
     """
-    template_name = 'pessoas/preencher_requisitos_docente.html'
+    template_name = 'cadastros/preencher_requisitos_docente.html'
 
     def get(self, request, pk):
         dados_docente = get_object_or_404(DadosDocente, pk=pk)
         return render(request, self.template_name, {'dados_docente': dados_docente})
+

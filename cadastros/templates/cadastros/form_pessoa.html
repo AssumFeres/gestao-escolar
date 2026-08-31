@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Nova Pessoa - Sistema de Gestao Escolar{% endblock %}
 
 {% block content %}
-<p><a href="/pessoas/" class="botao-link">&larr; Voltar para lista</a></p>
+<p><a href="/cadastros/" class="botao-link">&larr; Voltar para lista</a></p>
 
 <h2>Cadastrar nova pessoa</h2>
 
@@ -266,6 +266,8 @@
     <button type="submit">Salvar</button>
 </form>
 
-<script src="{% static 'pessoas/js/buscar-cep.js' %}"></script>
-<script src="{% static 'pessoas/js/form-dinamico.js' %}"></script>
+<script src="{% static 'cadastros/js/buscar-cep.js' %}"></script>
+<script src="{% static 'cadastros/js/form-dinamico.js' %}"></script>
 {% endblock %}
+
+

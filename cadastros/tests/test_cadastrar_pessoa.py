@@ -1,11 +1,11 @@
-import pytest
+﻿import pytest
 from django.core.exceptions import ValidationError
-from pessoas.models import (
+from cadastros.models import (
     Pessoa, Funcao, AtribuicaoFuncao, DadosDiscente, DadosDocente,
     FormacaoDocente, ExperienciaProfissional, HistoricoVinculoFormal,
     PendenciaCadastro, VinculoFormal,
 )
-from pessoas.services import CadastrarPessoaComFuncaoService
+from cadastros.services import CadastrarPessoaComFuncaoService
 
 
 def _dados_pessoa(cpf):
@@ -267,3 +267,4 @@ class TestCadastrarPessoaComFuncaoService:
             )
 
         assert not Pessoa.objects.filter(cpf="66600011224").exists()
+
