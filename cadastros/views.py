@@ -235,7 +235,7 @@ class NovoCadastroPessoaView(View):
 
         if funcao.categoria == CategoriaFuncao.DISCENTE:
             dados_extensao = {
-                "codigo_matricula_anac": dados.get("codigo_matricula_anac", ""),
+                "codigo_matricula_anac": dados.get("codigo_matricula_anac") or None,
                 "passaporte": dados.get("passaporte", ""),
                 "autorizacao_permanencia": dados.get("autorizacao_permanencia", ""),
                 "contato_emergencia_nome": dados.get("contato_emergencia_nome", ""),
@@ -310,4 +310,5 @@ class PreencherRequisitosDocenteView(View):
     def get(self, request, pk):
         dados_docente = get_object_or_404(DadosDocente, pk=pk)
         return render(request, self.template_name, {'dados_docente': dados_docente})
+
 
