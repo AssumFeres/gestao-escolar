@@ -32,7 +32,7 @@ A pessoa responsável testou, em sequência, Docente preenchendo só Histórico 
 
 ## Proposta de arquitetura recebida e avaliada: eliminar `cloneNode()` de vez
 
-Durante a investigação, a pessoa responsável trouxe uma especificação de arquitetura elaborada em outra conversa (`ESPECIFICAÇÃO_DE_ARQUITETURA — CADASTRO_DE_PESSOA_E_REGISTROS_RELACIONADOS.md`), propondo substituir o mecanismo de Formsets + `cloneNode()` + `TOTAL_FORMS` por CRUDs independentes por entidade relacionada (Formação, Experiência, Histórico, Pendência, Capacidade), cada uma com seu próprio `ModelForm`/View/URL/modal, persistindo via Foreign Key real assim que a Pessoa existir — eliminando por completo o armazenamento temporário no DOM.
+Durante a investigação, a pessoa responsável trouxe uma especificação de arquitetura elaborada em outra conversa e salva no repositório como `docs/21 - POPUP - ESPECIFICACAO_DE_ARQUITETURA_CADASTRO_DE_PESSOA_E_REGISTROS_RELACIONADOS.md`, propondo substituir o mecanismo de Formsets + `cloneNode()` + `TOTAL_FORMS` por CRUDs independentes por entidade relacionada (Formação, Experiência, Histórico, Pendência, Capacidade), cada uma com seu próprio `ModelForm`/View/URL/modal, persistindo via Foreign Key real assim que a Pessoa existir — eliminando por completo o armazenamento temporário no DOM.
 
 ### Avaliação
 
