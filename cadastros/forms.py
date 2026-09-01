@@ -1,4 +1,4 @@
-"""
+﻿"""
 cadastros/forms.py
 
 Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
@@ -37,7 +37,7 @@ Bug descoberto em teste manual em 31/08/2026 (ver docs/17), corrigido aqui.
 
 from django import forms
 
-from .models import Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia
+from .models import Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia, Sexo, EstadoCivil, RacaCor
 
 
 class CadastrarPessoaForm(forms.Form):
@@ -56,7 +56,7 @@ class CadastrarPessoaForm(forms.Form):
     codigo_anac = forms.CharField(max_length=20, required=False, label="CANAC")
 
     # --- Pessoa: identificação ampliada (FE 007 / FE 008) ---
-    sexo = forms.CharField(max_length=1, required=False, label="Sexo")
+    sexo = forms.ChoiceField(choices=[('', '---------')] + list(Sexo.choices), required=False, label="Sexo")
     identidade = forms.CharField(max_length=20, required=False, label="Identidade (RG)")
     data_emissao_identidade = forms.DateField(
         required=False, label="Data de emissão", widget=forms.DateInput(attrs={'type': 'date'})
@@ -68,8 +68,8 @@ class CadastrarPessoaForm(forms.Form):
     filiacao_1 = forms.CharField(max_length=200, required=False, label="Filiação 1")
     filiacao_2 = forms.CharField(max_length=200, required=False, label="Filiação 2")
     nivel_instrucao = forms.CharField(max_length=100, required=False, label="Nível de instrução")
-    estado_civil = forms.CharField(max_length=30, required=False, label="Estado civil")
-    raca_cor = forms.CharField(max_length=30, required=False, label="Raça/Cor")
+    estado_civil = forms.ChoiceField(choices=[('', '---------')] + list(EstadoCivil.choices), required=False, label="Estado civil")
+    raca_cor = forms.ChoiceField(choices=[('', '---------')] + list(RacaCor.choices), required=False, label="Raça/Cor")
 
     # --- Pessoa: endereço ---
     endereco_cep = forms.CharField(max_length=8, label="CEP")
@@ -217,3 +217,4 @@ FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
 ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
 HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)
 PendenciaCadastroFormSet = forms.formset_factory(PendenciaCadastroForm, extra=1)
+

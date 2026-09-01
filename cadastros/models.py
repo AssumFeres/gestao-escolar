@@ -1,4 +1,4 @@
-"""
+﻿"""
 pessoas/models.py
 
 Módulo de domínio: Gestão de Pessoas.
@@ -68,6 +68,28 @@ class Endereco:
         return f"{self.logradouro}, {self.numero} - {self.bairro}, {self.cidade}/{self.uf}"
 
 
+class Sexo(models.TextChoices):
+    MASCULINO = 'M', 'Masculino'
+    FEMININO = 'F', 'Feminino'
+
+
+class RacaCor(models.TextChoices):
+    BRANCA = 'BRANCA', 'Branca'
+    PRETA = 'PRETA', 'Preta'
+    AMARELA = 'AMARELA', 'Amarela'
+    PARDA = 'PARDA', 'Parda'
+    INDIGENA = 'INDIGENA', 'Indígena'
+    NAO_DECLARADA = 'NAO_DECLARADA', 'Não Declarada'
+
+
+class EstadoCivil(models.TextChoices):
+    SOLTEIRO = 'SOLTEIRO', 'Solteiro(a)'
+    CASADO = 'CASADO', 'Casado(a)'
+    SEPARADO_JUDICIALMENTE = 'SEPARADO_JUDICIALMENTE', 'Separado(a) Judicialmente'
+    DIVORCIADO = 'DIVORCIADO', 'Divorciado(a)'
+    VIUVO = 'VIUVO', 'Viúvo(a)'
+
+
 class Pessoa(models.Model):
     # Identificadores específicos (comuns a qualquer categoria).
     # null=True além de blank=True: quando vazio, salva NULL (não string vazia) —
@@ -92,7 +114,7 @@ class Pessoa(models.Model):
     )
 
     # Identificação ampliada (FE 007 / FE 008)
-    sexo = models.CharField(max_length=1, blank=True)
+    sexo = models.CharField(max_length=1, choices=Sexo.choices, blank=True)
     identidade = models.CharField(max_length=20, blank=True)
     data_emissao_identidade = models.DateField(null=True, blank=True)
     orgao_expedidor_identidade = models.CharField(max_length=20, blank=True)
@@ -102,8 +124,8 @@ class Pessoa(models.Model):
     filiacao_1 = models.CharField(max_length=200, blank=True)
     filiacao_2 = models.CharField(max_length=200, blank=True)
     nivel_instrucao = models.CharField(max_length=100, blank=True)
-    estado_civil = models.CharField(max_length=30, blank=True)
-    raca_cor = models.CharField(max_length=30, blank=True)
+    estado_civil = models.CharField(max_length=30, choices=EstadoCivil.choices, blank=True)
+    raca_cor = models.CharField(max_length=30, choices=RacaCor.choices, blank=True)
 
     endereco_cep = models.CharField(max_length=8)
     endereco_logradouro = models.CharField(max_length=200)
@@ -366,3 +388,4 @@ class ExperienciaProfissional(models.Model):
 
     def __str__(self):
         return f"{self.cargo} em {self.organizacao}"
+

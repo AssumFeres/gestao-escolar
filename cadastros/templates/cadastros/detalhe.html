@@ -27,7 +27,7 @@ de Gestao Escolar{% endblock %} {% block content %}
     <th>Telefone</th>
     <td>{{ pessoa.telefone }}</td>
     <th>Sexo</th>
-    <td>{{ pessoa.sexo|default:"-----" }}</td>
+    <td>{{ pessoa.get_sexo_display|default:"-----" }}</td>
     <td> </td>
   </tr>
   <tr>
@@ -66,11 +66,11 @@ de Gestao Escolar{% endblock %} {% block content %}
     <th>Nível de instrução</th>
     <td>{{ pessoa.nivel_instrucao|default:"-----" }}</td>
     <th>Estado civil</th>
-    <td>{{ pessoa.estado_civil|default:"-----" }}</td>
+    <td>{{ pessoa.get_estado_civil_display|default:"-----" }}</td>
   </tr>
   <tr>
     <th>Raça/Cor</th>
-    <td>{{ pessoa.raca_cor|default:"-----" }}</td>
+    <td>{{ pessoa.get_raca_cor_display|default:"-----" }}</td>
     <td></td>
     <td></td>
   </tr>
@@ -278,4 +278,5 @@ de Gestao Escolar{% endblock %} {% block content %}
 
 
 {% endblock %}
+
 

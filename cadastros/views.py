@@ -1,4 +1,4 @@
-﻿"""
+"""
 cadastros/views.py
 
 Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
@@ -310,5 +310,3 @@ class PreencherRequisitosDocenteView(View):
     def get(self, request, pk):
         dados_docente = get_object_or_404(DadosDocente, pk=pk)
         return render(request, self.template_name, {'dados_docente': dados_docente})
-
-

@@ -1,5 +1,5 @@
 /**
- * pessoas/static/pessoas/js/form-dinamico.js
+ * cadastros/static/cadastros/js/form-dinamico.js
  *
  * Duas responsabilidades (Etapa 7.4d):
  *  1. Mostrar/esconder QUALQUER elemento com o atributo `data-categoria`, em
@@ -86,6 +86,23 @@ document.addEventListener('DOMContentLoaded', function () {
             tabelaBody.appendChild(linha);
 
             var clone = templateArea.cloneNode(true);
+
+            // Bug conhecido de navegador: cloneNode() NÃO preserva a opção
+            // selecionada de um <select> — o clone sempre volta para a opção
+            // padrão do HTML, mesmo que o usuário tenha escolhido outra na
+            // tela. Corrigido copiando manualmente o .value de cada <select>
+            // original para o <select> correspondente no clone, na mesma
+            // ordem em que aparecem no DOM (querySelectorAll é determinístico
+            // aqui porque o clone tem exatamente a mesma estrutura).
+            // Descoberto em teste manual em 31/08/2026 — afetava Pendência
+            // (campo 'tipo'), Formação (campo 'tipo_formacao') e, por
+            // extensão, Histórico de Vínculo Formal (campo 'vinculo_formal').
+            var selectsOriginais = templateArea.querySelectorAll('select');
+            var selectsClone = clone.querySelectorAll('select');
+            selectsOriginais.forEach(function (selectOriginal, indice) {
+                selectsClone[indice].value = selectOriginal.value;
+            });
+
             clone.style.display = 'none';
             hiddenArea.appendChild(clone);
 
