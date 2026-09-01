@@ -144,6 +144,7 @@
         <div class="formset-bloco" data-prefix="formacao"
              data-fields="tipo_formacao,curso,entidade,cidade,uf,ano_conclusao"
              data-labels="Tipo,Curso,Entidade,Cidade,UF,Ano"
+             data-obrigatorios-completos="tipo_formacao,curso,entidade,cidade,uf,ano_conclusao"
              data-required="curso">
             {{ formacao_formset.management_form }}
 
@@ -180,6 +181,7 @@
         <div class="formset-bloco" data-prefix="experiencia"
              data-fields="organizacao,cargo,data_inicio,data_fim"
              data-labels="Organização,Cargo,Data início,Data fim"
+             data-obrigatorios-completos="organizacao,cargo,data_inicio"
              data-required="organizacao">
             {{ experiencia_formset.management_form }}
 
@@ -214,6 +216,7 @@
         <div class="formset-bloco" data-prefix="historico"
              data-fields="vinculo_formal,data_inicio,data_fim"
              data-labels="Vínculo Formal,Data início,Data fim"
+             data-obrigatorios-completos="vinculo_formal,data_inicio"
              data-required="vinculo_formal">
             {{ historico_formset.management_form }}
 
@@ -269,5 +272,6 @@
 <script src="{% static 'cadastros/js/buscar-cep.js' %}"></script>
 <script src="{% static 'cadastros/js/form-dinamico.js' %}"></script>
 {% endblock %}
+
 
 

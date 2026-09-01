@@ -1,4 +1,4 @@
-"""
+﻿"""
 cadastros/views.py
 
 Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
@@ -267,6 +267,19 @@ class NovoCadastroPessoaView(View):
 
         # Universal — qualquer categoria
         pendencias = _linhas_preenchidas(pendencia_fs.cleaned_data, _CAMPO_PREENCHIDO['pendencia'])
+
+        if funcao.categoria in (CategoriaFuncao.DOCENTE, CategoriaFuncao.GESTAO) and not historico_vinculo_formal:
+            form.add_error(None, "É obrigatório informar ao menos um Histórico de Vínculo Formal para Docente ou Gestão.")
+            return render(request, self.template_name, {
+                'form': form,
+                'formacao_formset': formacao_fs,
+                'experiencia_formset': experiencia_fs,
+                'historico_formset': historico_fs,
+                'pendencia_formset': pendencia_fs,
+                'funcao_categorias': self._funcao_categorias(),
+            })
+
+
 
         try:
             pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
