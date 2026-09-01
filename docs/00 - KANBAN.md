@@ -8,7 +8,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 > **Nota de contexto (31/08/2026):** o app antigo `pessoas` foi renomeado para `cadastros` e ambos os PRs grandes do projeto (migração `Funcao` e renomeação `cadastros`) estão mesclados em `dev`. O fluxo de trabalho deste projeto passa a ser **commits diretos em `dev`**, sem branch nova para mudanças pequenas (decisão da pessoa responsável, registrada em `docs/18 - ANDAMENTO_DO_PROJETO.md`). Branches de feature já mescladas (`feature/refatoracao-funcao`, `feature/rename-pessoas-cadastros`) são mantidas no remoto de propósito, como evidência de processo para avaliação do PI — não devem ser apagadas.
 
-> **✅ Nota de contexto (01/09/2026):** o bug "Docente não cadastra" (registrado em 31/08/2026) está **resolvido** — a causa real não era uma regressão do fix de `<select>`, e sim uma lacuna de validação no JavaScript do botão "+ Adicionar" (permitia linha incompleta passar, só rejeitada tarde demais no back-end). Ver `docs/20 - ANDAMENTO_DO_PROJETO.md`. **O CRUD completo do módulo Cadastros está liberado para retomar.**
+> **✅ Nota de contexto (01/09/2026):** o bug "Docente não cadastra" (registrado em 31/08/2026) está **resolvido** — a causa real não era uma regressão do fix de `<select>`, e sim uma lacuna de validação no JavaScript do botão "+ Adicionar" (permitia linha incompleta passar, só rejeitada tarde demais no back-end). Ver `docs/20 - ANDAMENTO_DO_PROJETO.md`. **O CRUD completo do módulo Cadastros está liberado para retomar.** Em 01/09/2026, o piloto da migração de arquitetura `docs/21` começou de fato — ver "Em Andamento".
 
 ---
 
@@ -16,7 +16,7 @@ Quadro de acompanhamento vivo. Diferente dos arquivos `NN - ANDAMENTO_DO_PROJETO
 
 _Sendo trabalhado agora_
 
-_Nada em andamento no momento — sessão de 01/09/2026 fechou o bug do Docente e 3 correções pequenas; próximo passo é retomar o CRUD completo (ver "A Fazer" abaixo)._
+- [ ] **Piloto do CRUD independente de `FormacaoDocente` (docs/21)** — só o "C" implementado (`AdicionarFormacaoDocenteView`, `FormacaoDocenteModelForm`, URL `docente/<pk>/formacoes/nova/`), testado manualmente e commitado (`b2e3cbb`, 01/09/2026, ver `docs/22`). **Faltando:** Update e Delete da Formação; link e listagem visível na tela `preencher_requisitos_docente.html` (hoje só acessível digitando a URL); testes automatizados. Continuar antes de replicar o padrão para Experiência/Histórico/Pendência/Capacidade.
 
 ---
 
@@ -172,7 +172,7 @@ _Não entra neste PI — mapeado como Bounded Context futuro, ver `documentacao_
 | PRs no GitHub                     | 2 abertos historicamente, ambos mesclados (#1 migração Funcao, #2 renomeação cadastros) — 0 Open, 2 Closed                                                      |
 | Fluxo de trabalho Git             | Commits diretos em `dev`; branches de feature mescladas preservadas no remoto como evidência de processo; exceção planejada para a migração de arquitetura CRUD (branch dedicada) |
 | Última branch ativa               | `dev`                                                                                                                                                            |
-| Último commit                     | `5735c5b` — `fix: valida campos obrigatorios antes de Adicionar + exige Vinculo Formal para Docente/Gestao`                                                     |
+| Último commit                     | `b2e3cbb` — `feat: CRUD independente de FormacaoDocente (piloto docs/21), so Create por enquanto`                                                              |
 
 ---
 
