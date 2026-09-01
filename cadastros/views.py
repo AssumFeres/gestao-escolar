@@ -1,19 +1,20 @@
-﻿"""
+"""
 cadastros/views.py
 
 Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
 """
 from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
 from django.core.exceptions import ValidationError
-from django.views.generic import ListView, DetailView, View
+from django.views.generic import ListView, DetailView, View, CreateView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Pessoa, Funcao, CategoriaFuncao, DadosDocente
+from .models import Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente
 from .forms import (
-    CadastrarPessoaForm,
+    CadastrarPessoaForm, FormacaoDocenteModelForm,
     FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
     HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
 )
@@ -265,9 +266,6 @@ class NovoCadastroPessoaView(View):
                 historico_fs.cleaned_data, _CAMPO_PREENCHIDO['historico']
             )
 
-        # Universal — qualquer categoria
-        pendencias = _linhas_preenchidas(pendencia_fs.cleaned_data, _CAMPO_PREENCHIDO['pendencia'])
-
         if funcao.categoria in (CategoriaFuncao.DOCENTE, CategoriaFuncao.GESTAO) and not historico_vinculo_formal:
             form.add_error(None, "É obrigatório informar ao menos um Histórico de Vínculo Formal para Docente ou Gestão.")
             return render(request, self.template_name, {
@@ -279,7 +277,8 @@ class NovoCadastroPessoaView(View):
                 'funcao_categorias': self._funcao_categorias(),
             })
 
-
+        # Universal — qualquer categoria
+        pendencias = _linhas_preenchidas(pendencia_fs.cleaned_data, _CAMPO_PREENCHIDO['pendencia'])
 
         try:
             pessoa, atribuicao, dados_docente = CadastrarPessoaComFuncaoService().executar(
@@ -323,3 +322,36 @@ class PreencherRequisitosDocenteView(View):
     def get(self, request, pk):
         dados_docente = get_object_or_404(DadosDocente, pk=pk)
         return render(request, self.template_name, {'dados_docente': dados_docente})
+
+
+class AdicionarFormacaoDocenteView(CreateView):
+    """
+    Primeiro CRUD independente do projeto (piloto da migração de arquitetura
+    descrita em docs/21): adiciona uma FormacaoDocente a um Docente já
+    existente, persistindo direto no banco via ModelForm — sem Formset,
+    sem cloneNode(), sem TOTAL_FORMS. Ainda cobre só o "C" de CRUD; Editar
+    e Excluir ficam para uma próxima sessão (ver Backlog).
+
+    Segurança: o DadosDocente "pai" é resolvido em dispatch() a partir do
+    <int:pk> da URL, nunca de um campo do POST — impede que alguém edite a
+    URL para anexar uma Formação a um Docente que não é o pretendido.
+    """
+    model = FormacaoDocente
+    form_class = FormacaoDocenteModelForm
+    template_name = 'cadastros/form_formacao.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.dados_docente = get_object_or_404(DadosDocente, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.dados_docente = self.dados_docente
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['dados_docente'] = self.dados_docente
+        return context
+
+    def get_success_url(self):
+        return reverse('preencher-requisitos-docente', kwargs={'pk': self.dados_docente.pk})

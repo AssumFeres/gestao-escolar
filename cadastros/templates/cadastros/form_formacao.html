@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Adicionar Formação - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'preencher-requisitos-docente' pk=dados_docente.id %}" class="botao-link">&larr; Voltar</a></p>
+
+<h2>Adicionar Formação — {{ dados_docente.atribuicao.pessoa.nome_completo }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="grid-2-colunas">
+        <div>
+            <div class="campo">{{ form.tipo_formacao.label_tag }} {{ form.tipo_formacao }} {{ form.tipo_formacao.errors }}</div>
+            <div class="campo">{{ form.curso.label_tag }} {{ form.curso }} {{ form.curso.errors }}</div>
+            <div class="campo">{{ form.entidade.label_tag }} {{ form.entidade }} {{ form.entidade.errors }}</div>
+        </div>
+        <div>
+            <div class="campo">{{ form.cidade.label_tag }} {{ form.cidade }} {{ form.cidade.errors }}</div>
+            <div class="campo">{{ form.uf.label_tag }} {{ form.uf }} {{ form.uf.errors }}</div>
+            <div class="campo">{{ form.ano_conclusao.label_tag }} {{ form.ano_conclusao }} {{ form.ano_conclusao.errors }}</div>
+        </div>
+    </div>
+    <button type="submit">Salvar Formação</button>
+</form>
+{% endblock %}

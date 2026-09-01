@@ -1,4 +1,4 @@
-﻿"""
+"""
 cadastros/forms.py
 
 Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
@@ -9,16 +9,21 @@ Estrutura:
     CadastrarPessoaForm            — campos fixos: Pessoa (completo), Funcao,
                                      AtribuicaoFuncao, e os campos de DadosDiscente
                                      (aplicáveis só quando a Funcao é de categoria Discente).
-    FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente).
+    FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente),
+                                     usada só no cadastro INICIAL (Formset).
     ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão).
     HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão).
     PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
                                      qualquer categoria — Discente, Docente ou Gestão).
+    FormacaoDocenteModelForm       — ModelForm para o CRUD independente de FormacaoDocente
+                                     (adicionar/editar depois que o Docente já existe) —
+                                     início da migração de arquitetura descrita em docs/21.
 
-Os 4 últimos viram Formsets (forms.formset_factory) — permitem 0 a N linhas, cada
-uma repetindo os mesmos campos, com JavaScript controlando quantas aparecem na
-tela (Etapa 7.4d). Usar Form comum (não ModelForm): no momento do cadastro, o
-objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
+Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
+(forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
+repetindo os mesmos campos, com JavaScript controlando quantas aparecem na tela
+(Etapa 7.4d). Usar Form comum (não ModelForm) ali: no momento do cadastro inicial,
+o objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
 cria os Models de verdade a partir dos dicts já validados pelo Form.
 
 Todos os campos de linha (Formação/Experiência/Histórico) são `required=False`
@@ -37,7 +42,10 @@ Bug descoberto em teste manual em 31/08/2026 (ver docs/17), corrigido aqui.
 
 from django import forms
 
-from .models import Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia, Sexo, EstadoCivil, RacaCor
+from .models import (
+    Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
+    Sexo, EstadoCivil, RacaCor, FormacaoDocente,
+)
 
 
 class CadastrarPessoaForm(forms.Form):
@@ -210,6 +218,20 @@ class PendenciaCadastroForm(forms.Form):
     )
 
 
+class FormacaoDocenteModelForm(forms.ModelForm):
+    """
+    ModelForm para o CRUD independente de FormacaoDocente (Create/Update),
+    usado fora do fluxo de cadastro inicial — depois que o Docente já existe.
+    Primeiro passo da migração de arquitetura descrita em docs/21: o pai
+    (DadosDocente) é resolvido pela View a partir da URL, nunca por um campo
+    enviado pelo navegador — 'dados_docente' fica de fora de `fields`, de
+    propósito, para não poder ser manipulado pelo POST.
+    """
+    class Meta:
+        model = FormacaoDocente
+        fields = ['tipo_formacao', 'curso', 'entidade', 'cidade', 'uf', 'ano_conclusao']
+
+
 # Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
 # extra=1: a tela já nasce com 1 linha em branco visível (decisão da Etapa 7.3).
 # Definidos aqui, uma vez só, para serem reaproveitados igual em views.py (GET e POST).
@@ -217,4 +239,3 @@ FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
 ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
 HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)
 PendenciaCadastroFormSet = forms.formset_factory(PendenciaCadastroForm, extra=1)
-
