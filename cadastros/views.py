@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
 from django.core.exceptions import ValidationError
-from django.views.generic import ListView, DetailView, View, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, View, CreateView, UpdateView, DeleteView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,11 +15,12 @@ from rest_framework import status
 
 from .models import (
     Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente,
-    AtribuicaoFuncao, HistoricoVinculoFormal,
+    AtribuicaoFuncao, HistoricoVinculoFormal, ExperienciaProfissional,
 )
 from .forms import (
     CadastrarPessoaForm, FormacaoDocenteModelForm,
     HistoricoVinculoFormalModelForm, EncerrarHistoricoVinculoFormalForm,
+    ExperienciaProfissionalModelForm,
     FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
     HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
 )
@@ -338,11 +339,15 @@ class ModalCrudMixin:
     o pedido do modal, retornando só o <form>, sem o layout do site em volta.
     No sucesso de um POST parcial, devolve JSON em vez de redirect, para o
     JavaScript do modal saber que deu certo (ver static/cadastros/js/
-    modal-crud.js).
+    modal-crud.js). Funciona tanto para CreateView/UpdateView (via form_valid)
+    quanto para DeleteView (via delete) — mesmo mecanismo nos dois casos.
 
     `template_fragmento` é obrigatório em cada subclasse — cada entidade tem
-    seu próprio fragmento (Formação, Histórico de Vínculo, e futuramente
-    Experiência/Pendência/Capacidade quando o CRUD for replicado).
+    seu próprio fragmento (Formação, Histórico de Vínculo, Experiência
+    Profissional, e futuramente Pendência/Capacidade quando o CRUD for
+    replicado). A confirmação de exclusão usa um fragmento genérico único
+    (`_confirmar_exclusao_fragment.html`), reaproveitado por todas as
+    entidades que permitem Delete real.
     """
     template_fragmento = None
 
@@ -359,6 +364,12 @@ class ModalCrudMixin:
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        if self.eh_parcial():
+            return JsonResponse({'sucesso': True})
+        return response
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
         if self.eh_parcial():
             return JsonResponse({'sucesso': True})
         return response
@@ -418,6 +429,26 @@ class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
         return reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
 
 
+class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
+    """
+    Terceira e última metade do CRUD de FormacaoDocente: exclusão real
+    (diferente de HistoricoVinculoFormal, que nunca permite Delete). Usa o
+    fragmento genérico de confirmação, compartilhado com qualquer outra
+    entidade que permita Delete real (ver ExcluirExperienciaProfissionalView).
+    """
+    model = FormacaoDocente
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+        return context
+
+    def get_success_url(self):
+        return reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+
+
 class AdicionarHistoricoVinculoFormalView(ModalCrudMixin, CreateView):
     """
     Adiciona um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já
@@ -466,6 +497,71 @@ class EncerrarHistoricoVinculoFormalView(ModalCrudMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['atribuicao'] = self.object.atribuicao
         context['encerrando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+
+
+class AdicionarExperienciaProfissionalView(ModalCrudMixin, CreateView):
+    """
+    CRUD independente de ExperienciaProfissional (Gestão) — mesma estrutura
+    de AdicionarFormacaoDocenteView, mas o pai é uma AtribuicaoFuncao, não
+    um DadosDocente. Diferente de HistoricoVinculoFormal, esta entidade
+    permite Delete real (ver ExcluirExperienciaProfissionalView).
+    """
+    model = ExperienciaProfissional
+    form_class = ExperienciaProfissionalModelForm
+    template_name = 'cadastros/form_experiencia.html'
+    template_fragmento = 'cadastros/_form_experiencia_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.atribuicao = get_object_or_404(AtribuicaoFuncao, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.atribuicao = self.atribuicao
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.atribuicao
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.atribuicao.pessoa_id})
+
+
+class EditarExperienciaProfissionalView(ModalCrudMixin, UpdateView):
+    """Edita uma ExperienciaProfissional já existente."""
+    model = ExperienciaProfissional
+    form_class = ExperienciaProfissionalModelForm
+    template_name = 'cadastros/form_experiencia.html'
+    template_fragmento = 'cadastros/_form_experiencia_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.object.atribuicao
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+
+
+class ExcluirExperienciaProfissionalView(ModalCrudMixin, DeleteView):
+    """
+    Exclusão real de ExperienciaProfissional — usa o mesmo fragmento
+    genérico de confirmação que ExcluirFormacaoDocenteView.
+    """
+    model = ExperienciaProfissional
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
         return context
 
     def get_success_url(self):

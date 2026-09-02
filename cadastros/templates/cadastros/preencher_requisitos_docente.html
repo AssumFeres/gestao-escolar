@@ -45,6 +45,10 @@ aqui, usando o PreencherRequisitosEDisciplinasDocenteService já implementado.</
                         data-url="{% url 'editar-formacao-docente' pk=formacao.id %}">
                     Editar
                 </button>
+                <button type="button" class="btn-abrir-modal-crud"
+                        data-url="{% url 'excluir-formacao-docente' pk=formacao.id %}">
+                    Excluir
+                </button>
             </td>
         </tr>
         {% endfor %}

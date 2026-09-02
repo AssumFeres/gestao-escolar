@@ -233,28 +233,48 @@ de Gestao Escolar{% endblock %} {% block content %}
 </table>
 
 <h3>Experiência Profissional</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Organização</th>
-      <th>Cargo</th>
-      <th>Data início</th>
-      <th>Data fim</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for atribuicao in pessoa.atribuicoes.all %}
+{% for atribuicao in pessoa.atribuicoes.all %}
+  {% if atribuicao.funcao.categoria == 'GESTAO' %}
+  <p>
+    <strong>{{ atribuicao.funcao.nome }}</strong>
+    <button type="button" class="btn-abrir-modal-crud"
+            data-url="{% url 'adicionar-experiencia' pk=atribuicao.id %}">
+      + Adicionar Experiência
+    </button>
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Organização</th>
+        <th>Cargo</th>
+        <th>Data início</th>
+        <th>Data fim</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
       {% for experiencia in atribuicao.experiencias_profissionais.all %}
       <tr>
         <td>{{ experiencia.organizacao }}</td>
         <td>{{ experiencia.cargo }}</td>
         <td>{{ experiencia.data_inicio|date:"d/m/Y" }}</td>
         <td>{{ experiencia.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+        <td>
+          <button type="button" class="btn-abrir-modal-crud"
+                  data-url="{% url 'editar-experiencia' pk=experiencia.id %}">
+            Editar
+          </button>
+          <button type="button" class="btn-abrir-modal-crud"
+                  data-url="{% url 'excluir-experiencia' pk=experiencia.id %}">
+            Excluir
+          </button>
+        </td>
       </tr>
       {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+  {% endif %}
+{% endfor %}
 
 <h3>Histórico de Vínculo Formal</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}

@@ -1,0 +1,9 @@
+<h3>Confirmar exclusão</h3>
+<p>Tem certeza que deseja excluir <strong>{{ object }}</strong>? Esta ação não pode ser desfeita.</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <button type="submit" style="background-color:#c0392b; color:#ffffff; border:none; padding:8px 20px; border-radius:6px; cursor:pointer;">
+        Excluir
+    </button>
+</form>

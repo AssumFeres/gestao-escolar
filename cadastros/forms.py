@@ -11,7 +11,8 @@ Estrutura:
                                      (aplicáveis só quando a Funcao é de categoria Discente).
     FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente),
                                      usada só no cadastro INICIAL (Formset).
-    ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão).
+    ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão),
+                                     usada só no cadastro INICIAL (Formset).
     HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão),
                                      usada só no cadastro INICIAL (Formset).
     PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
@@ -25,6 +26,9 @@ Estrutura:
                                            data_fim + observacao — nunca reabre
                                            vinculo_formal/data_inicio; não há Delete
                                            para esta entidade, só encerramento).
+    ExperienciaProfissionalModelForm     — Adicionar/Editar uma Experiência
+                                           Profissional (Delete real permitido,
+                                           diferente de Vínculo Formal).
 
 Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
 (forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
@@ -60,6 +64,7 @@ from django import forms
 from .models import (
     Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
     Sexo, EstadoCivil, RacaCor, FormacaoDocente, HistoricoVinculoFormal,
+    ExperienciaProfissional,
 )
 
 
@@ -176,7 +181,7 @@ class FormacaoDocenteForm(forms.Form):
 
 
 class ExperienciaProfissionalForm(forms.Form):
-    """1 linha de Experiência Profissional (FOP 402, só categoria Gestão)."""
+    """1 linha de Experiência Profissional (FOP 402, só categoria Gestão), usada só no cadastro INICIAL (Formset)."""
     organizacao = forms.CharField(max_length=200, required=False, label="Organização")
     cargo = forms.CharField(max_length=100, required=False, label="Cargo")
     data_inicio = forms.DateField(
@@ -284,6 +289,23 @@ class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
         widgets = {
             'data_fim': forms.DateInput(attrs={'type': 'date'}),
             'observacao': _WIDGET_OBSERVACAO,
+        }
+
+
+class ExperienciaProfissionalModelForm(forms.ModelForm):
+    """
+    ModelForm para o CRUD independente de ExperienciaProfissional (Create/
+    Update/Delete) — diferente de HistoricoVinculoFormal, esta entidade
+    permite exclusão real (não há regra de negócio de "nunca apagar" aqui).
+    'atribuicao' fica de fora de `fields`: é resolvida pela View a partir
+    da URL.
+    """
+    class Meta:
+        model = ExperienciaProfissional
+        fields = ['organizacao', 'cargo', 'data_inicio', 'data_fim']
+        widgets = {
+            'data_inicio': forms.DateInput(attrs={'type': 'date'}),
+            'data_fim': forms.DateInput(attrs={'type': 'date'}),
         }
 
 
