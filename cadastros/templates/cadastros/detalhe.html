@@ -4,7 +4,14 @@
 de Gestao Escolar{% endblock %} {% block content %}
 <p><a href="/cadastros/" class="botao-link">&larr; Voltar para lista</a></p>
 
-<h2>{{ pessoa.nome_completo }}</h2>
+<h2>
+  {{ pessoa.nome_completo }}
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'editar-pessoa' pk=pessoa.pk %}"
+          style="font-size: 0.9rem; vertical-align: middle; margin-left: 12px;">
+    Editar
+  </button>
+</h2>
 
 <table>
   <tr>
@@ -225,20 +232,24 @@ de Gestao Escolar{% endblock %} {% block content %}
   </fieldset>
 {% endfor %}
 
-<fieldset>
-  <legend>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</legend>
-  <table>
-    <thead>
-      <tr>
-        <th>Tipo</th>
-        <th>Curso</th>
-        <th>Entidade</th>
-        <th>Cidade/UF</th>
-        <th>Ano</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for atribuicao in pessoa.atribuicoes.all %}
+<h3>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</h3>
+{% for atribuicao in pessoa.atribuicoes.all %}
+  {% if atribuicao.funcao.categoria == 'DOCENTE' %}
+  <fieldset>
+    <legend>{{ atribuicao.funcao.nome }}</legend>
+    {% if atribuicao.dados_docente.formacoes.all %}
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Curso</th>
+          <th>Entidade</th>
+          <th>Cidade/UF</th>
+          <th>Ano</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
         {% for formacao in atribuicao.dados_docente.formacoes.all %}
         <tr>
           <td>{{ formacao.get_tipo_formacao_display }}</td>
@@ -246,12 +257,30 @@ de Gestao Escolar{% endblock %} {% block content %}
           <td>{{ formacao.entidade }}</td>
           <td>{{ formacao.cidade }}/{{ formacao.uf }}</td>
           <td>{{ formacao.ano_conclusao }}</td>
+          <td>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'editar-formacao-docente' pk=formacao.id %}">
+              Editar
+            </button>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'excluir-formacao-docente' pk=formacao.id %}">
+              Excluir
+            </button>
+          </td>
         </tr>
         {% endfor %}
-      {% endfor %}
-    </tbody>
-  </table>
-</fieldset>
+      </tbody>
+    </table>
+    {% else %}
+    <p>Nenhuma Formação cadastrada.</p>
+    {% endif %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'adicionar-formacao-docente' pk=atribuicao.dados_docente.id %}">
+      + Adicionar Formação
+    </button>
+  </fieldset>
+  {% endif %}
+{% endfor %}
 
 <fieldset>
   <legend>Disciplinas Habilitadas (Capacidade)</legend>

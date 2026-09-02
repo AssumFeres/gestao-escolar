@@ -20,7 +20,7 @@ from .models import (
     PendenciaCadastro,
 )
 from .forms import (
-    CadastrarPessoaForm, FormacaoDocenteModelForm,
+    CadastrarPessoaForm, EditarPessoaForm, FormacaoDocenteModelForm,
     HistoricoVinculoFormalModelForm, EncerrarHistoricoVinculoFormalForm,
     ExperienciaProfissionalModelForm, PendenciaCadastroModelForm,
     EditarPendenciaCadastroForm, EditarRequisitoContratacaoForm,
@@ -121,6 +121,11 @@ class ListaPessoasView(ListView):
 class DetalhePessoaView(DetailView):
     """
     Template View: mostra os dados completos de uma Pessoa e suas Funções.
+    Único "centro de comando" da Pessoa desde a Etapa B (02/09/2026) — o
+    CRUD de Formação, que antes vivia numa tela separada
+    (preencher_requisitos_docente.html, removida), foi movido para cá,
+    unificando com Requisitos de Contratação, Pendências, Experiência e
+    Histórico de Vínculo Formal, todos já consolidados nesta mesma tela.
     """
     model = Pessoa
     template_name = 'cadastros/detalhe.html'
@@ -311,32 +316,10 @@ class NovoCadastroPessoaView(View):
                 'funcao_categorias': self._funcao_categorias(),
             })
 
-        if dados_docente is not None:
-            return redirect('preencher-requisitos-docente', pk=dados_docente.id)
-
+        # Etapa B (02/09/2026): detalhe.html virou o unico "centro de comando"
+        # da Pessoa, para qualquer categoria -- nao ha mais uma tela separada
+        # de Requisitos para redirecionar o Docente.
         return redirect('detalhe-pessoa', pk=pessoa.id)
-
-
-class PreencherRequisitosDocenteView(View):
-    """
-    Template View — PLACEHOLDER (a completar quando os Requisitos de Contratação
-    e Disciplinas/Capacidade forem implementados na tela).
-
-    Recebe o id de um DadosDocente já existente via URL (não busca por CPF/nome
-    de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
-    acabou de ser cadastrado). Hoje já mostra e permite gerenciar as Formações
-    (CRUD independente, ver docs/21), além de confirmar que o Docente existe.
-
-    NOTA (02/09/2026): decisão tomada de eliminar esta tela e consolidar tudo
-    em detalhe.html, movendo o CRUD de Formação para lá — mas essa mudança
-    (Etapa B) ainda NÃO foi executada. Esta View e seus botões continuam
-    funcionando normalmente até essa etapa ser feita numa sessão futura.
-    """
-    template_name = 'cadastros/preencher_requisitos_docente.html'
-
-    def get(self, request, pk):
-        dados_docente = get_object_or_404(DadosDocente, pk=pk)
-        return render(request, self.template_name, {'dados_docente': dados_docente})
 
 
 class ModalCrudMixin:
@@ -351,7 +334,7 @@ class ModalCrudMixin:
     quanto para DeleteView (via delete) — mesmo mecanismo nos dois casos.
 
     `template_fragmento` é obrigatório em cada subclasse — cada entidade tem
-    seu próprio fragmento (Formação, Histórico de Vínculo, Experiência
+    seu próprio fragmento (Pessoa, Formação, Histórico de Vínculo, Experiência
     Profissional, Pendência de Cadastro, Requisito de Contratação). A
     confirmação de exclusão usa um fragmento genérico único
     (`_confirmar_exclusao_fragment.html`), reaproveitado por todas as
@@ -383,6 +366,24 @@ class ModalCrudMixin:
         return response
 
 
+class EditarPessoaView(ModalCrudMixin, UpdateView):
+    """
+    Edita os campos comuns da Pessoa (identificação + endereço) — escopo
+    deliberadamente restrito, ver docstring de EditarPessoaForm. Assim como
+    EditarRequisitoContratacaoView, não é uma lista repetível: não há
+    Adicionar nem Excluir (Pessoa nunca é excluída — regra de negócio
+    confirmada em 02/09/2026, só Create/Read/Update), só Editar direto no
+    próprio objeto (não precisa de dispatch() resolvendo um "pai").
+    """
+    model = Pessoa
+    form_class = EditarPessoaForm
+    template_name = 'cadastros/form_pessoa_editar.html'
+    template_fragmento = 'cadastros/_form_pessoa_editar_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.pk})
+
+
 class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
     """
     CRUD independente (piloto da migração de arquitetura descrita em docs/21):
@@ -392,6 +393,9 @@ class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
     Segurança: o DadosDocente "pai" é resolvido em dispatch() a partir do
     <int:pk> da URL, nunca de um campo do POST — impede que alguém anexe uma
     Formação a um Docente que não é o pretendido só editando a URL.
+
+    Desde a Etapa B (02/09/2026): acessível pela tela de detalhe da Pessoa
+    (não mais pela extinta preencher_requisitos_docente.html).
     """
     model = FormacaoDocente
     form_class = FormacaoDocenteModelForm
@@ -413,7 +417,7 @@ class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
         return context
 
     def get_success_url(self):
-        return reverse('preencher-requisitos-docente', kwargs={'pk': self.dados_docente.pk})
+        return reverse('detalhe-pessoa', kwargs={'pk': self.dados_docente.atribuicao.pessoa_id})
 
 
 class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
@@ -434,7 +438,7 @@ class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
         return context
 
     def get_success_url(self):
-        return reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.dados_docente.atribuicao.pessoa_id})
 
 
 class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
@@ -450,11 +454,11 @@ class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['url_voltar'] = reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+        context['url_voltar'] = reverse('detalhe-pessoa', kwargs={'pk': self.object.dados_docente.atribuicao.pessoa_id})
         return context
 
     def get_success_url(self):
-        return reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.dados_docente.atribuicao.pessoa_id})
 
 
 class AdicionarHistoricoVinculoFormalView(ModalCrudMixin, CreateView):

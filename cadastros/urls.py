@@ -1,8 +1,9 @@
 from django.urls import path
 from .views import (
     ListaPessoasView, DetalhePessoaView, NovoCadastroPessoaView,
-    PreencherRequisitosDocenteView, AdicionarFormacaoDocenteView,
-    EditarFormacaoDocenteView, ExcluirFormacaoDocenteView,
+    EditarPessoaView,
+    AdicionarFormacaoDocenteView, EditarFormacaoDocenteView,
+    ExcluirFormacaoDocenteView,
     AdicionarHistoricoVinculoFormalView, EncerrarHistoricoVinculoFormalView,
     AdicionarExperienciaProfissionalView, EditarExperienciaProfissionalView,
     ExcluirExperienciaProfissionalView, AdicionarPendenciaCadastroView,
@@ -13,7 +14,6 @@ from .views import (
 urlpatterns = [
     path('', ListaPessoasView.as_view(), name='lista-pessoas'),
     path('novo/', NovoCadastroPessoaView.as_view(), name='novo-cadastro-pessoa'),
-    path('docente/<int:pk>/requisitos/', PreencherRequisitosDocenteView.as_view(), name='preencher-requisitos-docente'),
     path('docente/<int:pk>/formacoes/nova/', AdicionarFormacaoDocenteView.as_view(), name='adicionar-formacao-docente'),
     path('formacoes/<int:pk>/editar/', EditarFormacaoDocenteView.as_view(), name='editar-formacao-docente'),
     path('formacoes/<int:pk>/excluir/', ExcluirFormacaoDocenteView.as_view(), name='excluir-formacao-docente'),
@@ -26,5 +26,6 @@ urlpatterns = [
     path('pendencias/<int:pk>/editar/', EditarPendenciaCadastroView.as_view(), name='editar-pendencia'),
     path('pendencias/<int:pk>/excluir/', ExcluirPendenciaCadastroView.as_view(), name='excluir-pendencia'),
     path('atribuicao/<int:pk>/requisito-contratacao/editar/', EditarRequisitoContratacaoView.as_view(), name='editar-requisito-contratacao'),
+    path('<int:pk>/editar/', EditarPessoaView.as_view(), name='editar-pessoa'),
     path('<int:pk>/', DetalhePessoaView.as_view(), name='detalhe-pessoa'),
 ]

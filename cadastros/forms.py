@@ -20,30 +20,33 @@ Estrutura:
 
     ModelForms do CRUD independente (piloto docs/21), usados FORA do cadastro
     inicial — depois que a Pessoa/AtribuicaoFuncao já existe:
-    FormacaoDocenteModelForm             — Adicionar/Editar uma Formação.
-    HistoricoVinculoFormalModelForm      — Adicionar um novo período de Vínculo Formal.
-    EncerrarHistoricoVinculoFormalForm   — Encerrar um período já existente (só
-                                           data_fim + observacao — nunca reabre
-                                           vinculo_formal/data_inicio; não há Delete
-                                           para esta entidade, só encerramento).
-    ExperienciaProfissionalModelForm     — Adicionar/Editar uma Experiência
-                                           Profissional (Delete real permitido,
-                                           diferente de Vínculo Formal).
-    PendenciaCadastroModelForm            — Adicionar uma Pendência (tipo + descricao;
-                                           resolvida/resolvida_em não fazem sentido
-                                           numa pendência recém-criada).
-    EditarPendenciaCadastroForm           — Editar uma Pendência já existente,
-                                           incluindo marcar como resolvida — a View
-                                           preenche resolvida_em automaticamente,
-                                           não é campo do formulário.
-    EditarRequisitoContratacaoForm        — Edita requisito_contratacao (escolha
-                                           única entre 3 opções, RBAC 141) +
-                                           documento_comprobatorio (texto livre) de
-                                           uma AtribuicaoFuncao já existente — Docente
-                                           ou Gestão, nunca Discente. Diferente das
-                                           outras entidades do CRUD independente, não
-                                           é uma lista repetível: edita 2 campos
-                                           direto na própria AtribuicaoFuncao.
+    EditarPessoaForm                       — Edita os campos comuns da Pessoa em si
+                                             (identificação, endereço) — nunca o CPF
+                                             (imutável), nunca a Função (item futuro
+                                             "Edição de Funções"), nunca os campos de
+                                             DadosDiscente (a organizar visualmente
+                                             numa etapa futura, com fieldsets aninhados).
+    FormacaoDocenteModelForm               — Adicionar/Editar uma Formação.
+    HistoricoVinculoFormalModelForm        — Adicionar um novo período de Vínculo Formal.
+    EncerrarHistoricoVinculoFormalForm     — Encerrar um período já existente (só
+                                             data_fim + observacao — nunca reabre
+                                             vinculo_formal/data_inicio; não há Delete
+                                             para esta entidade, só encerramento).
+    ExperienciaProfissionalModelForm       — Adicionar/Editar uma Experiência
+                                             Profissional (Delete real permitido,
+                                             diferente de Vínculo Formal).
+    PendenciaCadastroModelForm              — Adicionar uma Pendência (tipo + descricao;
+                                             resolvida/resolvida_em não fazem sentido
+                                             numa pendência recém-criada).
+    EditarPendenciaCadastroForm             — Editar uma Pendência já existente,
+                                             incluindo marcar como resolvida — a View
+                                             preenche resolvida_em automaticamente,
+                                             não é campo do formulário.
+    EditarRequisitoContratacaoForm          — Edita requisito_contratacao (escolha
+                                             única entre 3 opções, RBAC 141) +
+                                             documento_comprobatorio (texto livre) de
+                                             uma AtribuicaoFuncao já existente — Docente
+                                             ou Gestão, nunca Discente.
 
 Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
 (forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
@@ -80,7 +83,7 @@ from .models import (
     Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
     Sexo, EstadoCivil, RacaCor, FormacaoDocente, HistoricoVinculoFormal,
     ExperienciaProfissional, PendenciaCadastro, AtribuicaoFuncao,
-    RequisitoContratacao,
+    RequisitoContratacao, Pessoa,
 )
 
 
@@ -253,6 +256,45 @@ class PendenciaCadastroForm(forms.Form):
     descricao = forms.CharField(
         max_length=200, required=False, label="Descrição (detalhe, usar sobretudo em 'Outro')"
     )
+
+
+class EditarPessoaForm(forms.ModelForm):
+    """
+    Edita os campos COMUNS da Pessoa (identificação + endereço) — qualquer
+    categoria. Escopo deliberadamente restrito (decisão de 02/09/2026):
+
+    - 'cpf' fica de fora de `fields`: imutável por regra de negócio (é a
+      chave usada para buscar-ou-criar no cadastro inicial; se pudesse
+      mudar, quebraria essa busca).
+    - Função/AtribuicaoFuncao (situação, datas) fica de fora: é um item
+      futuro próprio ("Edição de Funções"), não faz parte de editar a
+      Pessoa em si.
+    - Os campos de DadosDiscente (Código de Matrícula ANAC, Passaporte,
+      Contato de Emergência, Responsável legal) ficam de fora: Discente
+      ainda não tem nenhum CRUD próprio para esses campos (diferente de
+      Docente/Gestão, que já ganharam popups para tudo) — organizar isso
+      é uma etapa futura, junto de uma reorganização visual mais ampla
+      (fieldsets aninhados por sub-grupo: Passaporte, Responsável,
+      Contato de Emergência).
+    - Regra de negócio confirmada: Pessoa nunca é excluída, só Create/
+      Read/Update (nunca Delete) — 'ativo' também fica de fora deste Form
+      por ora, tratado por uma ação própria de inativar quando implementada.
+    """
+    class Meta:
+        model = Pessoa
+        fields = [
+            'nome_completo', 'data_nascimento', 'email', 'telefone',
+            'registro_matricula', 'registro_aluno', 'codigo_anac',
+            'sexo', 'identidade', 'data_emissao_identidade', 'orgao_expedidor_identidade',
+            'naturalidade', 'uf_naturalidade', 'nacionalidade',
+            'filiacao_1', 'filiacao_2', 'nivel_instrucao', 'estado_civil', 'raca_cor',
+            'endereco_cep', 'endereco_logradouro', 'endereco_numero', 'endereco_complemento',
+            'endereco_bairro', 'endereco_cidade', 'endereco_uf',
+        ]
+        widgets = {
+            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            'data_emissao_identidade': forms.DateInput(attrs={'type': 'date'}),
+        }
 
 
 class FormacaoDocenteModelForm(forms.ModelForm):
