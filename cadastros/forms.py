@@ -12,12 +12,19 @@ Estrutura:
     FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente),
                                      usada só no cadastro INICIAL (Formset).
     ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão).
-    HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão).
+    HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão),
+                                     usada só no cadastro INICIAL (Formset).
     PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
                                      qualquer categoria — Discente, Docente ou Gestão).
-    FormacaoDocenteModelForm       — ModelForm para o CRUD independente de FormacaoDocente
-                                     (adicionar/editar depois que o Docente já existe) —
-                                     início da migração de arquitetura descrita em docs/21.
+
+    ModelForms do CRUD independente (piloto docs/21), usados FORA do cadastro
+    inicial — depois que a Pessoa/AtribuicaoFuncao já existe:
+    FormacaoDocenteModelForm             — Adicionar/Editar uma Formação.
+    HistoricoVinculoFormalModelForm      — Adicionar um novo período de Vínculo Formal.
+    EncerrarHistoricoVinculoFormalForm   — Encerrar um período já existente (só
+                                           data_fim + observacao — nunca reabre
+                                           vinculo_formal/data_inicio; não há Delete
+                                           para esta entidade, só encerramento).
 
 Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
 (forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
@@ -44,7 +51,7 @@ from django import forms
 
 from .models import (
     Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
-    Sexo, EstadoCivil, RacaCor, FormacaoDocente,
+    Sexo, EstadoCivil, RacaCor, FormacaoDocente, HistoricoVinculoFormal,
 )
 
 
@@ -183,7 +190,7 @@ class ExperienciaProfissionalForm(forms.Form):
 
 
 class HistoricoVinculoFormalForm(forms.Form):
-    """1 linha de Vínculo Formal (Docente ou Gestão — nunca Discente)."""
+    """1 linha de Vínculo Formal (Docente ou Gestão — nunca Discente), usada só no cadastro INICIAL (Formset)."""
     vinculo_formal = forms.ModelChoiceField(
         queryset=VinculoFormal.objects.all(), required=False, label="Vínculo Formal"
     )
@@ -230,6 +237,31 @@ class FormacaoDocenteModelForm(forms.ModelForm):
     class Meta:
         model = FormacaoDocente
         fields = ['tipo_formacao', 'curso', 'entidade', 'cidade', 'uf', 'ano_conclusao']
+
+
+class HistoricoVinculoFormalModelForm(forms.ModelForm):
+    """
+    ModelForm para adicionar um NOVO período de Vínculo Formal a uma
+    AtribuicaoFuncao já existente (Docente ou Gestão) — ex: quando a entidade
+    contratante muda (FAPETI até 2026, FUSSUSS a partir de 2026). 'atribuicao'
+    fica de fora de `fields`: é resolvida pela View a partir da URL.
+    """
+    class Meta:
+        model = HistoricoVinculoFormal
+        fields = ['vinculo_formal', 'data_inicio', 'data_fim', 'observacao']
+
+
+class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
+    """
+    ModelForm restrito para ENCERRAR um período de Vínculo Formal já
+    existente — nunca Delete, só preencher 'data_fim' (mais 'observacao'
+    para registrar erro de cadastro ou contexto do encerramento). 'vinculo_
+    formal' e 'data_inicio' ficam de fora de `fields` de propósito: uma vez
+    criado, esse período não pode ser reaberto/reescrito, só encerrado.
+    """
+    class Meta:
+        model = HistoricoVinculoFormal
+        fields = ['data_fim', 'observacao']
 
 
 # Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.

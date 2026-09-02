@@ -5,16 +5,21 @@ Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negóci
 """
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
+from django.http import JsonResponse
 from django.core.exceptions import ValidationError
-from django.views.generic import ListView, DetailView, View, CreateView
+from django.views.generic import ListView, DetailView, View, CreateView, UpdateView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente
+from .models import (
+    Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente,
+    AtribuicaoFuncao, HistoricoVinculoFormal,
+)
 from .forms import (
     CadastrarPessoaForm, FormacaoDocenteModelForm,
+    HistoricoVinculoFormalModelForm, EncerrarHistoricoVinculoFormalForm,
     FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
     HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
 )
@@ -315,7 +320,8 @@ class PreencherRequisitosDocenteView(View):
 
     Recebe o id de um DadosDocente já existente via URL (não busca por CPF/nome
     de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
-    acabou de ser cadastrado). Hoje só confirma que o Docente foi encontrado.
+    acabou de ser cadastrado). Hoje já mostra e permite gerenciar as Formações
+    (CRUD independente, ver docs/21), além de confirmar que o Docente existe.
     """
     template_name = 'cadastros/preencher_requisitos_docente.html'
 
@@ -324,21 +330,54 @@ class PreencherRequisitosDocenteView(View):
         return render(request, self.template_name, {'dados_docente': dados_docente})
 
 
-class AdicionarFormacaoDocenteView(CreateView):
+class ModalCrudMixin:
     """
-    Primeiro CRUD independente do projeto (piloto da migração de arquitetura
-    descrita em docs/21): adiciona uma FormacaoDocente a um Docente já
-    existente, persistindo direto no banco via ModelForm — sem Formset,
-    sem cloneNode(), sem TOTAL_FORMS. Ainda cobre só o "C" de CRUD; Editar
-    e Excluir ficam para uma próxima sessão (ver Backlog).
+    Permite que a mesma View sirva tanto uma página completa (fallback sem
+    JavaScript, acessando a URL direto) quanto um fragmento carregado via
+    fetch() dentro de um popup/modal — o parâmetro ?parcial=1 na URL sinaliza
+    o pedido do modal, retornando só o <form>, sem o layout do site em volta.
+    No sucesso de um POST parcial, devolve JSON em vez de redirect, para o
+    JavaScript do modal saber que deu certo (ver static/cadastros/js/
+    modal-crud.js).
+
+    `template_fragmento` é obrigatório em cada subclasse — cada entidade tem
+    seu próprio fragmento (Formação, Histórico de Vínculo, e futuramente
+    Experiência/Pendência/Capacidade quando o CRUD for replicado).
+    """
+    template_fragmento = None
+
+    def eh_parcial(self):
+        return self.request.GET.get('parcial') == '1'
+
+    def get_template_names(self):
+        if self.eh_parcial():
+            assert self.template_fragmento, (
+                f"{self.__class__.__name__} precisa definir template_fragmento"
+            )
+            return [self.template_fragmento]
+        return [self.template_name]
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.eh_parcial():
+            return JsonResponse({'sucesso': True})
+        return response
+
+
+class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
+    """
+    CRUD independente (piloto da migração de arquitetura descrita em docs/21):
+    adiciona uma FormacaoDocente a um Docente já existente, persistindo direto
+    no banco via ModelForm — sem Formset, sem cloneNode(), sem TOTAL_FORMS.
 
     Segurança: o DadosDocente "pai" é resolvido em dispatch() a partir do
-    <int:pk> da URL, nunca de um campo do POST — impede que alguém edite a
-    URL para anexar uma Formação a um Docente que não é o pretendido.
+    <int:pk> da URL, nunca de um campo do POST — impede que alguém anexe uma
+    Formação a um Docente que não é o pretendido só editando a URL.
     """
     model = FormacaoDocente
     form_class = FormacaoDocenteModelForm
     template_name = 'cadastros/form_formacao.html'
+    template_fragmento = 'cadastros/_form_formacao_fragment.html'
 
     def dispatch(self, request, *args, **kwargs):
         self.dados_docente = get_object_or_404(DadosDocente, pk=kwargs['pk'])
@@ -351,7 +390,83 @@ class AdicionarFormacaoDocenteView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['dados_docente'] = self.dados_docente
+        context['editando'] = False
         return context
 
     def get_success_url(self):
         return reverse('preencher-requisitos-docente', kwargs={'pk': self.dados_docente.pk})
+
+
+class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
+    """
+    Segunda metade do CRUD independente de FormacaoDocente: edita um registro
+    já existente. Não recebe o pk do Docente pela URL — o objeto já sabe a
+    quem pertence via `self.object.dados_docente`.
+    """
+    model = FormacaoDocente
+    form_class = FormacaoDocenteModelForm
+    template_name = 'cadastros/form_formacao.html'
+    template_fragmento = 'cadastros/_form_formacao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['dados_docente'] = self.object.dados_docente
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('preencher-requisitos-docente', kwargs={'pk': self.object.dados_docente_id})
+
+
+class AdicionarHistoricoVinculoFormalView(ModalCrudMixin, CreateView):
+    """
+    Adiciona um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já
+    existente (Docente ou Gestão) — ex: quando a entidade contratante muda
+    ao longo do tempo (FAPETI até 2026, FUSSUSS a partir de 2026). A
+    AtribuicaoFuncao "pai" é resolvida pela URL, nunca por um campo do POST.
+    Acessível pela tela de detalhe da Pessoa (docs/21).
+    """
+    model = HistoricoVinculoFormal
+    form_class = HistoricoVinculoFormalModelForm
+    template_name = 'cadastros/form_historico_vinculo.html'
+    template_fragmento = 'cadastros/_form_historico_vinculo_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.atribuicao = get_object_or_404(AtribuicaoFuncao, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.atribuicao = self.atribuicao
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.atribuicao
+        context['encerrando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.atribuicao.pessoa_id})
+
+
+class EncerrarHistoricoVinculoFormalView(ModalCrudMixin, UpdateView):
+    """
+    Encerra um período de Vínculo Formal já existente — nunca Delete, só
+    preenche 'data_fim' (mais 'observacao' opcional, para registrar erro de
+    cadastro ou contexto). Usa EncerrarHistoricoVinculoFormalForm (só esses
+    2 campos), não o ModelForm completo — impede reabrir vinculo_formal/
+    data_inicio por engano.
+    """
+    model = HistoricoVinculoFormal
+    form_class = EncerrarHistoricoVinculoFormalForm
+    template_name = 'cadastros/form_historico_vinculo.html'
+    template_fragmento = 'cadastros/_form_historico_vinculo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.object.atribuicao
+        context['encerrando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})

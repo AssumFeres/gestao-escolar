@@ -1,0 +1,19 @@
+<h3>{% if editando %}Editar Formação{% else %}Adicionar Formação{% endif %}</h3>
+<p>{{ dados_docente.atribuicao.pessoa.nome_completo }}</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <div class="grid-2-colunas">
+        <div>
+            <div class="campo">{{ form.tipo_formacao.label_tag }} {{ form.tipo_formacao }} {{ form.tipo_formacao.errors }}</div>
+            <div class="campo">{{ form.curso.label_tag }} {{ form.curso }} {{ form.curso.errors }}</div>
+            <div class="campo">{{ form.entidade.label_tag }} {{ form.entidade }} {{ form.entidade.errors }}</div>
+        </div>
+        <div>
+            <div class="campo">{{ form.cidade.label_tag }} {{ form.cidade }} {{ form.cidade.errors }}</div>
+            <div class="campo">{{ form.uf.label_tag }} {{ form.uf }} {{ form.uf.errors }}</div>
+            <div class="campo">{{ form.ano_conclusao.label_tag }} {{ form.ano_conclusao }} {{ form.ano_conclusao.errors }}</div>
+        </div>
+    </div>
+    <button type="submit">Salvar Formação</button>
+</form>

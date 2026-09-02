@@ -231,6 +231,11 @@ class HistoricoVinculoFormal(models.Model):
     vinculo_formal = models.ForeignKey(VinculoFormal, on_delete=models.PROTECT, related_name='historicos')
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
+    observacao = models.TextField(
+        blank=True,
+        help_text="Contexto ou correção de erro de cadastro — não há exclusão de um "
+                   "Histórico de Vínculo Formal, só encerramento (preencher data_fim)."
+    )
 
     def __str__(self):
         return f"{self.vinculo_formal.nome} ({self.data_inicio} - {self.data_fim or 'atual'})"

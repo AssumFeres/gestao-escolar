@@ -1,7 +1,7 @@
-/**
+﻿/**
  * cadastros/static/cadastros/js/form-dinamico.js
  *
- * Três responsabilidades (Etapa 7.4d):
+ * Quatro responsabilidades (Etapa 7.4d):
  *  1. Mostrar/esconder QUALQUER elemento com o atributo `data-categoria`, em
  *     qualquer nível de aninhamento, comparando com a categoria da Funcao
  *     escolhida no dropdown. `data-categoria` aceita uma ou mais categorias
@@ -18,6 +18,14 @@
  *     navegador (que sempre mostra a origem da pagina, "127.0.0.1:8000
  *     diz", e nao pode ser estilizado) e sem depender de um temporizador
  *     (o usuario fecha quando quiser, lendo com calma).
+ *  4. Botao "Editar" (desabilitado de proposito) ao lado de cada "+
+ *     Adicionar" no cadastro inicial -- editar uma linha ja adicionada ao
+ *     Formset exigiria reconstruir o formulario a partir da tabela-resumo
+ *     (nao trivial com cloneNode(), ver docs/21), entao por enquanto o botao
+ *     so avisa que a edicao de verdade acontece depois, na tela de
+ *     Requisitos do Docente (ja implementada para Formacao, ver
+ *     modal-formacao.js) -- evita frustrar quem tenta clicar em "Editar"
+ *     esperando algo que ainda nao existe.
  */
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -116,16 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var labels = bloco.dataset.labels.split(',');
         var campoObrigatorio = bloco.dataset.required;
 
-        // Campos que, se o campo-sinal (campoObrigatorio) estiver preenchido,
-        // tambem precisam estar preenchidos -- espelha o clean() de cada Form
-        // em forms.py (ex: Formacao exige tipo_formacao/entidade/cidade/uf/
-        // ano_conclusao quando 'curso' esta preenchido). Sem essa checagem no
-        // JS, o botao deixava adicionar uma linha incompleta na tabela-resumo,
-        // que so era rejeitada mais tarde pelo backend ao clicar Salvar --
-        // com pouco feedback visual sobre qual campo faltava. Bloco sem esse
-        // atributo (ex: Pendencia) mantem o comportamento antigo, checando
-        // so o campo-sinal, porque o Model nao tem mais nenhum campo
-        // obrigatorio alem dele.
         var obrigatoriosCompletos = bloco.dataset.obrigatoriosCompletos
             ? bloco.dataset.obrigatoriosCompletos.split(',')
             : [campoObrigatorio];
@@ -182,13 +180,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var clone = templateArea.cloneNode(true);
 
-            // Bug conhecido de navegador: cloneNode() NÃO preserva a opção
-            // selecionada de um <select> — o clone sempre volta para a opção
-            // padrão do HTML, mesmo que o usuário tenha escolhido outra na
-            // tela. Corrigido copiando manualmente o .value de cada <select>
-            // original para o <select> correspondente no clone, na mesma
-            // ordem em que aparecem no DOM (querySelectorAll é determinístico
-            // aqui porque o clone tem exatamente a mesma estrutura).
             var selectsOriginais = templateArea.querySelectorAll('select');
             var selectsClone = clone.querySelectorAll('select');
             selectsOriginais.forEach(function (selectOriginal, indice) {
@@ -224,4 +215,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.querySelectorAll('.formset-bloco').forEach(initFormsetDinamico);
+
+    // ---------- 4. Botão "Editar" desabilitado (aviso) ao lado de "+ Adicionar" ----------
+
+    document.querySelectorAll('.btn-adicionar').forEach(function (botaoAdicionar) {
+        var botaoEditar = document.createElement('button');
+        botaoEditar.type = 'button';
+        botaoEditar.textContent = 'Editar';
+        botaoEditar.className = 'btn-adicionar';
+        botaoEditar.style.marginLeft = '8px';
+        botaoEditar.addEventListener('click', function (evento) {
+            evento.preventDefault();
+            mostrarToast(
+                'A edição só é possível depois que o cadastro desta Função for finalizado. ' +
+                'Salve o cadastro e edite pela tela de detalhe/Requisitos do Docente.'
+            );
+        });
+        botaoAdicionar.insertAdjacentElement('afterend', botaoEditar);
+    });
 });
+
