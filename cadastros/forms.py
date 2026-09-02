@@ -45,6 +45,14 @@ de verdade: se o campo sinal estiver preenchido, os demais campos obrigatórios
 do Model passam a ser exigidos também. `PendenciaCadastroForm` não precisa de
 `clean()`: seu único outro campo (`descricao`) já é opcional de verdade no Model.
 Bug descoberto em teste manual em 31/08/2026 (ver docs/17), corrigido aqui.
+
+Nos ModelForms do CRUD independente, campos de data usam sempre
+`forms.DateInput(attrs={'type': 'date'})` (mesmo padrão dos outros Forms do
+projeto) — sem isso, o Django usa um <input type="text"> comum, sem o
+calendário do navegador. Campos de texto longo (Textarea) recebem
+`style="width:100%; box-sizing:border-box;"` — sem isso, a largura padrão do
+navegador para <textarea> (baseada no atributo `cols`) pode ultrapassar a
+largura da caixa do popup/modal. Bug descoberto em teste manual em 01/09/2026.
 """
 
 from django import forms
@@ -239,6 +247,12 @@ class FormacaoDocenteModelForm(forms.ModelForm):
         fields = ['tipo_formacao', 'curso', 'entidade', 'cidade', 'uf', 'ano_conclusao']
 
 
+_WIDGET_OBSERVACAO = forms.Textarea(attrs={
+    'rows': 3,
+    'style': 'width:100%; box-sizing:border-box;',
+})
+
+
 class HistoricoVinculoFormalModelForm(forms.ModelForm):
     """
     ModelForm para adicionar um NOVO período de Vínculo Formal a uma
@@ -249,6 +263,11 @@ class HistoricoVinculoFormalModelForm(forms.ModelForm):
     class Meta:
         model = HistoricoVinculoFormal
         fields = ['vinculo_formal', 'data_inicio', 'data_fim', 'observacao']
+        widgets = {
+            'data_inicio': forms.DateInput(attrs={'type': 'date'}),
+            'data_fim': forms.DateInput(attrs={'type': 'date'}),
+            'observacao': _WIDGET_OBSERVACAO,
+        }
 
 
 class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
@@ -262,6 +281,10 @@ class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
     class Meta:
         model = HistoricoVinculoFormal
         fields = ['data_fim', 'observacao']
+        widgets = {
+            'data_fim': forms.DateInput(attrs={'type': 'date'}),
+            'observacao': _WIDGET_OBSERVACAO,
+        }
 
 
 # Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
