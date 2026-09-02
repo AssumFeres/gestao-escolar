@@ -243,6 +243,15 @@ class NovoCadastroPessoaView(View):
             "situacao": dados["situacao"],
         }
 
+        # Requisitos de Contratação (RBAC 141) — todos exceto Discente.
+        # Coletados já no cadastro inicial desde 02/09/2026 (antes só dava
+        # pra preencher depois, pela tela de detalhe). O JS (data-categoria)
+        # esconde o bloco visualmente para Discente, mas o back-end também
+        # não grava esses valores nesse caso, por segurança.
+        if funcao.categoria != CategoriaFuncao.DISCENTE:
+            dados_atribuicao["requisito_contratacao"] = dados.get("requisito_contratacao", "")
+            dados_atribuicao["documento_comprobatorio"] = dados.get("documento_comprobatorio", "")
+
         dados_extensao = None
         formacoes = None
         experiencias = None

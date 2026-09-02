@@ -1,81 +1,21 @@
 """
 cadastros/forms.py
 
-Form de entrada para a Template View de cadastro (Etapa 7.3/7.4c - formulário
-completo, único, com dropdown de Funcao; JavaScript, na Etapa 7.4d, mostra/esconde
-os blocos de campos conforme a categoria da Funcao escolhida).
+(ver documentação completa no cabeçalho de views.py/docs do projeto)
 
-Estrutura:
-    CadastrarPessoaForm            — campos fixos: Pessoa (completo), Funcao,
-                                     AtribuicaoFuncao, e os campos de DadosDiscente
-                                     (aplicáveis só quando a Funcao é de categoria Discente).
-    FormacaoDocenteForm            — 1 linha de Graduação/Formação/Aperfeiçoamento (Docente),
-                                     usada só no cadastro INICIAL (Formset).
-    ExperienciaProfissionalForm    — 1 linha de Experiência Profissional (Gestão),
-                                     usada só no cadastro INICIAL (Formset).
-    HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão),
-                                     usada só no cadastro INICIAL (Formset).
-    PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
-                                     qualquer categoria), usada só no cadastro INICIAL (Formset).
-
-    ModelForms do CRUD independente (piloto docs/21), usados FORA do cadastro
-    inicial — depois que a Pessoa/AtribuicaoFuncao já existe:
-    EditarPessoaForm                       — Edita os campos comuns da Pessoa em si
-                                             (identificação, endereço) — nunca o CPF
-                                             (imutável), nunca a Função (item futuro
-                                             "Edição de Funções"), nunca os campos de
-                                             DadosDiscente (a organizar visualmente
-                                             numa etapa futura, com fieldsets aninhados).
-    FormacaoDocenteModelForm               — Adicionar/Editar uma Formação.
-    HistoricoVinculoFormalModelForm        — Adicionar um novo período de Vínculo Formal.
-    EncerrarHistoricoVinculoFormalForm     — Encerrar um período já existente (só
-                                             data_fim + observacao — nunca reabre
-                                             vinculo_formal/data_inicio; não há Delete
-                                             para esta entidade, só encerramento).
-    ExperienciaProfissionalModelForm       — Adicionar/Editar uma Experiência
-                                             Profissional (Delete real permitido,
-                                             diferente de Vínculo Formal).
-    PendenciaCadastroModelForm              — Adicionar uma Pendência (tipo + descricao;
-                                             resolvida/resolvida_em não fazem sentido
-                                             numa pendência recém-criada).
-    EditarPendenciaCadastroForm             — Editar uma Pendência já existente,
-                                             incluindo marcar como resolvida — a View
-                                             preenche resolvida_em automaticamente,
-                                             não é campo do formulário.
-    EditarRequisitoContratacaoForm          — Edita requisito_contratacao (escolha
-                                             única entre 3 opções, RBAC 141) +
-                                             documento_comprobatorio (texto livre) de
-                                             uma AtribuicaoFuncao já existente — Docente
-                                             ou Gestão, nunca Discente.
-
-Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
-(forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
-repetindo os mesmos campos, com JavaScript controlando quantas aparecem na tela
-(Etapa 7.4d). Usar Form comum (não ModelForm) ali: no momento do cadastro inicial,
-o objeto pai (DadosDocente/AtribuicaoFuncao) ainda não existe — o Service é quem
-cria os Models de verdade a partir dos dicts já validados pelo Form.
-
-Todos os campos de linha (Formação/Experiência/Histórico) são `required=False`
-de propósito, para que a linha `extra=1` do Formset possa ser enviada em branco
-sem gerar erro quando o usuário não quer adicionar nenhuma. Isso abre uma brecha
-de preenchimento parcial (ex: Curso preenchido, Ano de conclusão vazio) que só
-seria barrada no banco (IntegrityError, pouco amigável) sem um `clean()`
-customizado — daí o `clean()` em cada Form abaixo que tem campos realmente
-obrigatórios no Model. Cada `clean()` usa o mesmo campo "sinal" que
-`views.py::_CAMPO_PREENCHIDO` já usa para decidir se uma linha foi preenchida
-de verdade: se o campo sinal estiver preenchido, os demais campos obrigatórios
-do Model passam a ser exigidos também. `PendenciaCadastroForm` não precisa de
-`clean()`: seu único outro campo (`descricao`) já é opcional de verdade no Model.
-Bug descoberto em teste manual em 31/08/2026 (ver docs/17), corrigido aqui.
-
-Nos ModelForms do CRUD independente, campos de data usam sempre
-`forms.DateInput(attrs={'type': 'date'})` (mesmo padrão dos outros Forms do
-projeto) — sem isso, o Django usa um <input type="text"> comum, sem o
-calendário do navegador. Campos de texto longo (Textarea) recebem
-`style="width:100%; box-sizing:border-box;"` — sem isso, a largura padrão do
-navegador para <textarea> (baseada no atributo `cols`) pode ultrapassar a
-largura da caixa do popup/modal. Bug descoberto em teste manual em 01/09/2026.
+`data_nascimento` (CadastrarPessoaForm/EditarPessoaForm):
+- `min` fixo em 1900-01-01, `max` calculado dinamicamente como a data de HOJE
+  a cada instância do Form (não um valor fixo como "2070-12-31") — trava no
+  próprio navegador contra ano digitado errado (bug real de teste manual em
+  02/09/2026, "12121-12-03") e contra data de nascimento no futuro.
+- `clean_data_nascimento()` é a validação AUTORITATIVA (o `max` do HTML é só
+  uma trava de navegador, sempre contornável) — rejeita Data de Nascimento
+  igual a hoje ou no futuro, com uma mensagem de erro clara. Regra confirmada
+  em 02/09/2026: ninguém nasce no futuro, então essa combinação é sempre
+  inválida, não uma advertência.
 """
+
+from datetime import date
 
 from django import forms
 
@@ -87,12 +27,26 @@ from .models import (
 )
 
 
+def _validar_data_nascimento_nao_futura(valor):
+    """
+    Compartilhada por CadastrarPessoaForm e EditarPessoaForm — Data de
+    Nascimento igual a hoje ou no futuro é sempre inválida (ninguém nasce
+    no futuro). Levanta ValidationError se a regra for violada.
+    """
+    if valor and valor >= date.today():
+        raise forms.ValidationError(
+            "Data de nascimento inválida: não pode ser hoje nem uma data futura."
+        )
+    return valor
+
+
 class CadastrarPessoaForm(forms.Form):
     # --- Pessoa: dados básicos ---
     nome_completo = forms.CharField(max_length=200, label="Nome completo")
     cpf = forms.CharField(max_length=11, label="CPF")
     data_nascimento = forms.DateField(
-        label="Data de nascimento", widget=forms.DateInput(attrs={'type': 'date'})
+        label="Data de nascimento",
+        widget=forms.DateInput(attrs={'type': 'date', 'min': '1900-01-01'})
     )
     email = forms.EmailField(label="E-mail")
     telefone = forms.CharField(max_length=20, label="Telefone")
@@ -134,6 +88,16 @@ class CadastrarPessoaForm(forms.Form):
     )
     situacao = forms.CharField(max_length=30, initial="ATIVO", label="Situacao")
 
+    # --- AtribuicaoFuncao: Requisitos de Contratação (RBAC 141), todos exceto
+    # Discente. Coletados já no cadastro inicial (decisão de 02/09/2026).
+    requisito_contratacao = forms.ChoiceField(
+        choices=RequisitoContratacao.choices, required=False,
+        widget=forms.RadioSelect(), label="Requisito de Contratação"
+    )
+    documento_comprobatorio = forms.CharField(
+        max_length=200, required=False, label="Documento comprobatório"
+    )
+
     # --- DadosDiscente (só relevante quando Funcao.categoria == DISCENTE) ---
     codigo_matricula_anac = forms.CharField(
         max_length=20, required=False, label="Código de Matrícula ANAC"
@@ -174,6 +138,15 @@ class CadastrarPessoaForm(forms.Form):
         max_length=50, required=False, label="Responsável legal - Qualificação (pai/mãe/tutor)"
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 'max' calculado a cada instância (não um valor fixo) — sempre a
+        # data de hoje, real, no momento em que o formulário é exibido.
+        self.fields['data_nascimento'].widget.attrs['max'] = date.today().isoformat()
+
+    def clean_data_nascimento(self):
+        return _validar_data_nascimento_nao_futura(self.cleaned_data.get('data_nascimento'))
+
 
 class FormacaoDocenteForm(forms.Form):
     """1 linha de Graduação/Formação Profissional/Aperfeiçoamento (FE 008, seções 3-5)."""
@@ -189,8 +162,6 @@ class FormacaoDocenteForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # 'curso' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO
-        # para decidir se esta linha do Formset foi preenchida de verdade.
         if cleaned_data.get('curso'):
             campos_obrigatorios = ['tipo_formacao', 'entidade', 'cidade', 'uf', 'ano_conclusao']
             for campo in campos_obrigatorios:
@@ -212,7 +183,6 @@ class ExperienciaProfissionalForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # 'organizacao' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO.
         if cleaned_data.get('organizacao'):
             campos_obrigatorios = ['cargo', 'data_inicio']
             for campo in campos_obrigatorios:
@@ -235,20 +205,13 @@ class HistoricoVinculoFormalForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # 'vinculo_formal' é o mesmo campo-sinal usado em views.py::_CAMPO_PREENCHIDO.
         if cleaned_data.get('vinculo_formal') and not cleaned_data.get('data_inicio'):
             self.add_error('data_inicio', "Obrigatório quando o Vínculo Formal é preenchido.")
         return cleaned_data
 
 
 class PendenciaCadastroForm(forms.Form):
-    """
-    1 linha de Pendência de documentação — universal, qualquer categoria,
-    usada só no cadastro INICIAL (Formset). Sem `clean()` customizado:
-    diferente dos 3 Forms acima, o único outro campo além do sinal ('tipo')
-    é 'descricao', que já é opcional de verdade no Model (`blank=True`) —
-    não existe combinação parcial inválida aqui.
-    """
+    """1 linha de Pendência de documentação — universal, qualquer categoria."""
     tipo = forms.ChoiceField(
         choices=[('', '---------')] + list(TipoPendencia.choices),
         required=False, label="Tipo"
@@ -261,24 +224,9 @@ class PendenciaCadastroForm(forms.Form):
 class EditarPessoaForm(forms.ModelForm):
     """
     Edita os campos COMUNS da Pessoa (identificação + endereço) — qualquer
-    categoria. Escopo deliberadamente restrito (decisão de 02/09/2026):
-
-    - 'cpf' fica de fora de `fields`: imutável por regra de negócio (é a
-      chave usada para buscar-ou-criar no cadastro inicial; se pudesse
-      mudar, quebraria essa busca).
-    - Função/AtribuicaoFuncao (situação, datas) fica de fora: é um item
-      futuro próprio ("Edição de Funções"), não faz parte de editar a
-      Pessoa em si.
-    - Os campos de DadosDiscente (Código de Matrícula ANAC, Passaporte,
-      Contato de Emergência, Responsável legal) ficam de fora: Discente
-      ainda não tem nenhum CRUD próprio para esses campos (diferente de
-      Docente/Gestão, que já ganharam popups para tudo) — organizar isso
-      é uma etapa futura, junto de uma reorganização visual mais ampla
-      (fieldsets aninhados por sub-grupo: Passaporte, Responsável,
-      Contato de Emergência).
-    - Regra de negócio confirmada: Pessoa nunca é excluída, só Create/
-      Read/Update (nunca Delete) — 'ativo' também fica de fora deste Form
-      por ora, tratado por uma ação própria de inativar quando implementada.
+    categoria. 'cpf' fora (imutável), Função fora (item futuro), campos de
+    DadosDiscente fora (Discente ainda sem CRUD próprio). Pessoa nunca é
+    excluída — só Create/Read/Update.
     """
     class Meta:
         model = Pessoa
@@ -292,20 +240,20 @@ class EditarPessoaForm(forms.ModelForm):
             'endereco_bairro', 'endereco_cidade', 'endereco_uf',
         ]
         widgets = {
-            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            'data_nascimento': forms.DateInput(attrs={'type': 'date', 'min': '1900-01-01'}),
             'data_emissao_identidade': forms.DateInput(attrs={'type': 'date'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_nascimento'].widget.attrs['max'] = date.today().isoformat()
+
+    def clean_data_nascimento(self):
+        return _validar_data_nascimento_nao_futura(self.cleaned_data.get('data_nascimento'))
+
 
 class FormacaoDocenteModelForm(forms.ModelForm):
-    """
-    ModelForm para o CRUD independente de FormacaoDocente (Create/Update),
-    usado fora do fluxo de cadastro inicial — depois que o Docente já existe.
-    Primeiro passo da migração de arquitetura descrita em docs/21: o pai
-    (DadosDocente) é resolvido pela View a partir da URL, nunca por um campo
-    enviado pelo navegador — 'dados_docente' fica de fora de `fields`, de
-    propósito, para não poder ser manipulado pelo POST.
-    """
+    """ModelForm para o CRUD independente de FormacaoDocente (Create/Update)."""
     class Meta:
         model = FormacaoDocente
         fields = ['tipo_formacao', 'curso', 'entidade', 'cidade', 'uf', 'ano_conclusao']
@@ -318,12 +266,7 @@ _WIDGET_OBSERVACAO = forms.Textarea(attrs={
 
 
 class HistoricoVinculoFormalModelForm(forms.ModelForm):
-    """
-    ModelForm para adicionar um NOVO período de Vínculo Formal a uma
-    AtribuicaoFuncao já existente (Docente ou Gestão) — ex: quando a entidade
-    contratante muda (FAPETI até 2026, FUSSUSS a partir de 2026). 'atribuicao'
-    fica de fora de `fields`: é resolvida pela View a partir da URL.
-    """
+    """ModelForm para adicionar um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já existente."""
     class Meta:
         model = HistoricoVinculoFormal
         fields = ['vinculo_formal', 'data_inicio', 'data_fim', 'observacao']
@@ -335,13 +278,7 @@ class HistoricoVinculoFormalModelForm(forms.ModelForm):
 
 
 class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
-    """
-    ModelForm restrito para ENCERRAR um período de Vínculo Formal já
-    existente — nunca Delete, só preencher 'data_fim' (mais 'observacao'
-    para registrar erro de cadastro ou contexto do encerramento). 'vinculo_
-    formal' e 'data_inicio' ficam de fora de `fields` de propósito: uma vez
-    criado, esse período não pode ser reaberto/reescrito, só encerrado.
-    """
+    """ModelForm restrito para ENCERRAR um período de Vínculo Formal já existente — nunca Delete."""
     class Meta:
         model = HistoricoVinculoFormal
         fields = ['data_fim', 'observacao']
@@ -352,13 +289,7 @@ class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
 
 
 class ExperienciaProfissionalModelForm(forms.ModelForm):
-    """
-    ModelForm para o CRUD independente de ExperienciaProfissional (Create/
-    Update/Delete) — diferente de HistoricoVinculoFormal, esta entidade
-    permite exclusão real (não há regra de negócio de "nunca apagar" aqui).
-    'atribuicao' fica de fora de `fields`: é resolvida pela View a partir
-    da URL.
-    """
+    """ModelForm para o CRUD independente de ExperienciaProfissional (Create/Update/Delete)."""
     class Meta:
         model = ExperienciaProfissional
         fields = ['organizacao', 'cargo', 'data_inicio', 'data_fim']
@@ -369,27 +300,14 @@ class ExperienciaProfissionalModelForm(forms.ModelForm):
 
 
 class PendenciaCadastroModelForm(forms.ModelForm):
-    """
-    ModelForm para CRIAR uma nova PendenciaCadastro — só 'tipo' e
-    'descricao'. 'resolvida'/'resolvida_em' não fazem sentido numa pendência
-    recém-criada (ela nasce sempre pendente, resolvida=False por default do
-    Model); marcar como resolvida é responsabilidade de
-    EditarPendenciaCadastroForm. 'atribuicao' fica de fora de `fields`: é
-    resolvida pela View a partir da URL.
-    """
+    """ModelForm para CRIAR uma nova PendenciaCadastro — só 'tipo' e 'descricao'."""
     class Meta:
         model = PendenciaCadastro
         fields = ['tipo', 'descricao']
 
 
 class EditarPendenciaCadastroForm(forms.ModelForm):
-    """
-    ModelForm para EDITAR uma PendenciaCadastro já existente, incluindo
-    marcar como resolvida. 'resolvida_em' fica de fora de `fields` de
-    propósito: a View preenche automaticamente com a data/hora atual quando
-    'resolvida' passa a True (e limpa se voltar a False), evitando que o
-    usuário digite uma data manualmente incoerente com o clique real.
-    """
+    """ModelForm para EDITAR uma PendenciaCadastro já existente, incluindo marcar como resolvida."""
     class Meta:
         model = PendenciaCadastro
         fields = ['tipo', 'descricao', 'resolvida']
@@ -398,15 +316,8 @@ class EditarPendenciaCadastroForm(forms.ModelForm):
 class EditarRequisitoContratacaoForm(forms.ModelForm):
     """
     Edita os Requisitos de Contratação (RBAC 141) de uma AtribuicaoFuncao já
-    existente — Docente ou Gestão, nunca Discente. Diferente das outras
-    entidades do CRUD independente, não é uma lista repetível (não tem
-    Adicionar/Excluir, só Editar): 'requisito_contratacao' e
-    'documento_comprobatorio' são campos diretos na própria AtribuicaoFuncao.
-
-    'requisito_contratacao' usa RadioSelect (escolha única entre as 3
-    opções, decisão confirmada em 02/09/2026), diferente do <select> usado
-    nos outros campos de choices do projeto — aqui faz mais sentido ver as
-    3 opções lado a lado, já que são poucas e o texto de cada uma é longo.
+    existente — Docente ou Gestão. Usado fora do cadastro inicial, para
+    corrigir/completar depois pela tela de detalhe.
     """
     class Meta:
         model = AtribuicaoFuncao
@@ -416,9 +327,7 @@ class EditarRequisitoContratacaoForm(forms.ModelForm):
         }
 
 
-# Formsets — "fábricas" que embrulham cada Form acima, permitindo 0-N linhas.
-# extra=1: a tela já nasce com 1 linha em branco visível (decisão da Etapa 7.3).
-# Definidos aqui, uma vez só, para serem reaproveitados igual em views.py (GET e POST).
+# Formsets
 FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
 ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
 HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)

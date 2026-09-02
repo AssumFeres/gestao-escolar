@@ -1,31 +1,19 @@
-﻿/**
+/**
  * cadastros/static/cadastros/js/form-dinamico.js
  *
- * Quatro responsabilidades (Etapa 7.4d):
- *  1. Mostrar/esconder QUALQUER elemento com o atributo `data-categoria`, em
- *     qualquer nível de aninhamento, comparando com a categoria da Funcao
- *     escolhida no dropdown. `data-categoria` aceita uma ou mais categorias
- *     separadas por vírgula (ex: "DOCENTE,GESTAO" para o bloco de Vínculo
- *     Formal, que se aplica às duas categorias). Elementos sem esse atributo
- *     nunca são tocados — ficam sempre visíveis, por definição.
- *  2. "Adicionar linha" nos Formsets (Formacao, Experiencia, Historico,
- *     Pendencia): le os valores do "formulario-modelo" visivel, adiciona uma
- *     linha na tabela-resumo, guarda o formulario preenchido (oculto) para
- *     ser enviado no POST, e reindexa o formulario visivel para a proxima
- *     entrada, em branco.
- *  3. Mensagens de aviso (campo obrigatorio faltando) via um popup proprio,
- *     centralizado na tela, com botao "OK" -- em vez de alert() nativo do
- *     navegador (que sempre mostra a origem da pagina, "127.0.0.1:8000
- *     diz", e nao pode ser estilizado) e sem depender de um temporizador
- *     (o usuario fecha quando quiser, lendo com calma).
- *  4. Botao "Editar" (desabilitado de proposito) ao lado de cada "+
- *     Adicionar" no cadastro inicial -- editar uma linha ja adicionada ao
- *     Formset exigiria reconstruir o formulario a partir da tabela-resumo
- *     (nao trivial com cloneNode(), ver docs/21), entao por enquanto o botao
- *     so avisa que a edicao de verdade acontece depois, na tela de
- *     Requisitos do Docente (ja implementada para Formacao, ver
- *     modal-formacao.js) -- evita frustrar quem tenta clicar em "Editar"
- *     esperando algo que ainda nao existe.
+ * Responsabilidades (Etapa 7.4d + ajustes posteriores):
+ *  1. Mostrar/esconder QUALQUER elemento com o atributo `data-categoria`.
+ *  2. "Adicionar linha" nos Formsets (Formacao, Experiencia, Historico, Pendencia).
+ *  3. Popup proprio de aviso (substitui alert() nativo do navegador).
+ *  4. Botao "Editar" (desabilitado de proposito) ao lado de cada "+ Adicionar".
+ *  5. Data de Nascimento: valida no cliente (feedback imediato, a validacao
+ *     de verdade e no backend, forms.py::clean_data_nascimento) duas coisas
+ *     diferentes:
+ *     a) Data igual a hoje ou no futuro -- sempre invalida (ninguem nasce no
+ *        futuro), aviso de ERRO.
+ *     b) Idade calculada menor que 18 anos -- aviso informativo, NAO
+ *        bloqueia o cadastro (esperado para Discente; para Docente/Gestao
+ *        e uma situacao estranha mas a decisao de 02/09/2026 foi so avisar).
  */
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -221,9 +209,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.btn-adicionar').forEach(function (botaoAdicionar) {
         var botaoEditar = document.createElement('button');
         botaoEditar.type = 'button';
-        botaoEditar.textContent = 'Editar';
         botaoEditar.className = 'btn-adicionar';
         botaoEditar.style.marginLeft = '8px';
+        botaoEditar.textContent = 'Editar';
         botaoEditar.addEventListener('click', function (evento) {
             evento.preventDefault();
             mostrarToast(
@@ -233,5 +221,44 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         botaoAdicionar.insertAdjacentElement('afterend', botaoEditar);
     });
-});
 
+    // ---------- 5. Data de Nascimento: futura (erro) + menor de idade (aviso) ----------
+
+    var campoDataNascimento = document.getElementById('id_data_nascimento');
+    if (campoDataNascimento) {
+        campoDataNascimento.addEventListener('change', function () {
+            if (!campoDataNascimento.value) return;
+
+            var partes = campoDataNascimento.value.split('-');
+            var nascimento = new Date(
+                parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10)
+            );
+            var agora = new Date();
+            var hojeSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+
+            // a) Data igual a hoje ou no futuro -- sempre invalida.
+            if (nascimento >= hojeSemHora) {
+                mostrarToast('Data de nascimento inválida: não pode ser hoje nem uma data futura.');
+                return;
+            }
+
+            // b) Idade menor que 18 anos -- so aviso, nao bloqueia.
+            var idade = agora.getFullYear() - nascimento.getFullYear();
+            var aniversarioJaFezEsteAno = (
+                agora.getMonth() > nascimento.getMonth() ||
+                (agora.getMonth() === nascimento.getMonth() && agora.getDate() >= nascimento.getDate())
+            );
+            if (!aniversarioJaFezEsteAno) {
+                idade -= 1;
+            }
+
+            if (idade < 18) {
+                mostrarToast(
+                    'Atenção: com essa Data de Nascimento, a pessoa tem ' + idade + ' ano(s) ' +
+                    '(menor de idade). Para Discente isso é esperado (preencha o Responsável Legal). ' +
+                    'Para Docente ou Gestão, confira se a data está correta antes de salvar.'
+                );
+            }
+        });
+    }
+});
