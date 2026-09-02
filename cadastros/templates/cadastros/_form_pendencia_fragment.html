@@ -1,0 +1,12 @@
+<h3>{% if editando %}Editar{% else %}Adicionar{% endif %} Pendência de Documentação</h3>
+<p>{{ atribuicao.pessoa.nome_completo }} — {{ atribuicao.funcao.nome }}</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <div class="campo">{{ form.tipo.label_tag }} {{ form.tipo }} {{ form.tipo.errors }}</div>
+    <div class="campo">{{ form.descricao.label_tag }} {{ form.descricao }} {{ form.descricao.errors }}</div>
+    {% if editando %}
+    <div class="campo">{{ form.resolvida.label_tag }} {{ form.resolvida }} {{ form.resolvida.errors }}</div>
+    {% endif %}
+    <button type="submit">Salvar Pendência</button>
+</form>

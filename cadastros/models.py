@@ -209,6 +209,13 @@ class VinculoFormal(models.Model):
         return self.nome
 
 
+class RequisitoContratacao(models.TextChoices):
+    """Critério de contratação (RBAC 141), aplicável a Docente e Gestão — escolha única."""
+    EXPERIENCIA_DOCENTE = 'EXPERIENCIA_DOCENTE', 'Experiência docente comprovada (6 meses geral + 6 meses na área específica)'
+    FORMACAO_ESPECIFICA = 'FORMACAO_ESPECIFICA', 'Formação específica na área de atuação'
+    OUTRO = 'OUTRO', 'Outro'
+
+
 class AtribuicaoFuncao(models.Model):
     pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='atribuicoes')
     funcao = models.ForeignKey(Funcao, on_delete=models.PROTECT, related_name='atribuicoes')
@@ -216,6 +223,11 @@ class AtribuicaoFuncao(models.Model):
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
+    requisito_contratacao = models.CharField(
+        max_length=30, choices=RequisitoContratacao.choices, blank=True,
+        help_text="Aplicável a Docente e Gestão (RBAC 141) — não relevante para Discente."
+    )
+    documento_comprobatorio = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
         return f"{self.pessoa.nome_completo} - {self.funcao.nome}"

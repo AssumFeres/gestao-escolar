@@ -6,6 +6,7 @@ Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negóci
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.views.generic import ListView, DetailView, View, CreateView, UpdateView, DeleteView
 
@@ -16,11 +17,13 @@ from rest_framework import status
 from .models import (
     Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente,
     AtribuicaoFuncao, HistoricoVinculoFormal, ExperienciaProfissional,
+    PendenciaCadastro,
 )
 from .forms import (
     CadastrarPessoaForm, FormacaoDocenteModelForm,
     HistoricoVinculoFormalModelForm, EncerrarHistoricoVinculoFormalForm,
-    ExperienciaProfissionalModelForm,
+    ExperienciaProfissionalModelForm, PendenciaCadastroModelForm,
+    EditarPendenciaCadastroForm, EditarRequisitoContratacaoForm,
     FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
     HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
 )
@@ -323,6 +326,11 @@ class PreencherRequisitosDocenteView(View):
     de novo — o botão "Preencher Requisitos de Contratação" já sabe qual Docente
     acabou de ser cadastrado). Hoje já mostra e permite gerenciar as Formações
     (CRUD independente, ver docs/21), além de confirmar que o Docente existe.
+
+    NOTA (02/09/2026): decisão tomada de eliminar esta tela e consolidar tudo
+    em detalhe.html, movendo o CRUD de Formação para lá — mas essa mudança
+    (Etapa B) ainda NÃO foi executada. Esta View e seus botões continuam
+    funcionando normalmente até essa etapa ser feita numa sessão futura.
     """
     template_name = 'cadastros/preencher_requisitos_docente.html'
 
@@ -344,8 +352,8 @@ class ModalCrudMixin:
 
     `template_fragmento` é obrigatório em cada subclasse — cada entidade tem
     seu próprio fragmento (Formação, Histórico de Vínculo, Experiência
-    Profissional, e futuramente Pendência/Capacidade quando o CRUD for
-    replicado). A confirmação de exclusão usa um fragmento genérico único
+    Profissional, Pendência de Cadastro, Requisito de Contratação). A
+    confirmação de exclusão usa um fragmento genérico único
     (`_confirmar_exclusao_fragment.html`), reaproveitado por todas as
     entidades que permitem Delete real.
     """
@@ -434,7 +442,7 @@ class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
     Terceira e última metade do CRUD de FormacaoDocente: exclusão real
     (diferente de HistoricoVinculoFormal, que nunca permite Delete). Usa o
     fragmento genérico de confirmação, compartilhado com qualquer outra
-    entidade que permita Delete real (ver ExcluirExperienciaProfissionalView).
+    entidade que permita Delete real.
     """
     model = FormacaoDocente
     template_name = 'cadastros/confirmar_exclusao.html'
@@ -508,7 +516,7 @@ class AdicionarExperienciaProfissionalView(ModalCrudMixin, CreateView):
     CRUD independente de ExperienciaProfissional (Gestão) — mesma estrutura
     de AdicionarFormacaoDocenteView, mas o pai é uma AtribuicaoFuncao, não
     um DadosDocente. Diferente de HistoricoVinculoFormal, esta entidade
-    permite Delete real (ver ExcluirExperienciaProfissionalView).
+    permite Delete real.
     """
     model = ExperienciaProfissional
     form_class = ExperienciaProfissionalModelForm
@@ -566,3 +574,93 @@ class ExcluirExperienciaProfissionalView(ModalCrudMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+
+
+class AdicionarPendenciaCadastroView(ModalCrudMixin, CreateView):
+    """
+    CRUD independente de PendenciaCadastro — universal, qualquer categoria
+    (Discente/Docente/Gestão), diferente de Experiência/Histórico que são
+    condicionais. O pai é uma AtribuicaoFuncao, resolvida pela URL.
+    """
+    model = PendenciaCadastro
+    form_class = PendenciaCadastroModelForm
+    template_name = 'cadastros/form_pendencia.html'
+    template_fragmento = 'cadastros/_form_pendencia_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.atribuicao = get_object_or_404(AtribuicaoFuncao, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.atribuicao = self.atribuicao
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.atribuicao
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.atribuicao.pessoa_id})
+
+
+class EditarPendenciaCadastroView(ModalCrudMixin, UpdateView):
+    """
+    Edita uma PendenciaCadastro já existente, incluindo marcar como
+    resolvida. 'resolvida_em' é preenchido/limpo automaticamente aqui
+    (não é campo do EditarPendenciaCadastroForm) — evita o usuário digitar
+    uma data manual incoerente com o clique real de "resolvida".
+    """
+    model = PendenciaCadastro
+    form_class = EditarPendenciaCadastroForm
+    template_name = 'cadastros/form_pendencia.html'
+    template_fragmento = 'cadastros/_form_pendencia_fragment.html'
+
+    def form_valid(self, form):
+        if form.instance.resolvida and not form.instance.resolvida_em:
+            form.instance.resolvida_em = timezone.now()
+        elif not form.instance.resolvida:
+            form.instance.resolvida_em = None
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['atribuicao'] = self.object.atribuicao
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+
+
+class ExcluirPendenciaCadastroView(ModalCrudMixin, DeleteView):
+    """Exclusão real de PendenciaCadastro — mesmo fragmento genérico de confirmação."""
+    model = PendenciaCadastro
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.atribuicao.pessoa_id})
+
+
+class EditarRequisitoContratacaoView(ModalCrudMixin, UpdateView):
+    """
+    Edita os Requisitos de Contratação (RBAC 141) de uma AtribuicaoFuncao já
+    existente — Docente ou Gestão. Diferente das outras entidades do CRUD
+    independente, não é uma lista repetível: não há Adicionar nem Excluir,
+    só Editar 2 campos direto na própria AtribuicaoFuncao (não precisa de
+    dispatch() resolvendo um "pai" — o objeto editado já é o pai).
+    """
+    model = AtribuicaoFuncao
+    form_class = EditarRequisitoContratacaoForm
+    template_name = 'cadastros/form_requisito_contratacao.html'
+    template_fragmento = 'cadastros/_form_requisito_contratacao_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-pessoa', kwargs={'pk': self.object.pessoa_id})

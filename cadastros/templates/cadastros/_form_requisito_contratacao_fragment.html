@@ -1,0 +1,17 @@
+<h3>Requisitos de Contratação</h3>
+<p>{{ object.pessoa.nome_completo }} — {{ object.funcao.nome }}</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <div class="campo">
+        {{ form.requisito_contratacao.label_tag }}
+        {{ form.requisito_contratacao }}
+        {{ form.requisito_contratacao.errors }}
+    </div>
+    <div class="campo">
+        {{ form.documento_comprobatorio.label_tag }}
+        {{ form.documento_comprobatorio }}
+        {{ form.documento_comprobatorio.errors }}
+    </div>
+    <button type="submit">Salvar Requisitos</button>
+</form>

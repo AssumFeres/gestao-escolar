@@ -158,161 +158,216 @@ de Gestao Escolar{% endblock %} {% block content %}
 <p>Nenhuma funcao cadastrada.</p>
 {% endif %}
 
+<h3>Requisitos de Contratação</h3>
+{% for atribuicao in pessoa.atribuicoes.all %}
+  {% if atribuicao.funcao.categoria != 'DISCENTE' %}
+  <fieldset>
+    <legend>{{ atribuicao.funcao.nome }}</legend>
+    <table>
+      <tr>
+        <th>Critério</th>
+        <td>{{ atribuicao.get_requisito_contratacao_display|default:"-----" }}</td>
+      </tr>
+      <tr>
+        <th>Documento comprobatório</th>
+        <td>{{ atribuicao.documento_comprobatorio|default:"-----" }}</td>
+      </tr>
+    </table>
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'editar-requisito-contratacao' pk=atribuicao.id %}">
+      Editar Requisitos
+    </button>
+  </fieldset>
+  {% endif %}
+{% endfor %}
+
 <h3>Pendências de Documentação</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Função</th>
-      <th>Tipo</th>
-      <th>Descrição</th>
-      <th>Resolvida</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for atribuicao in pessoa.atribuicoes.all %}
-      {% for pendencia in atribuicao.pendencias.all %}
-      <tr>
-        <td>{{ atribuicao.funcao.nome }}</td>
-        <td>{{ pendencia.get_tipo_display }}</td>
-        <td>{{ pendencia.descricao|default:"-----" }}</td>
-        <td>{{ pendencia.resolvida|yesno:"Sim,Não" }}</td>
-      </tr>
-      {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
+{% for atribuicao in pessoa.atribuicoes.all %}
+  <fieldset>
+    <legend>{{ atribuicao.funcao.nome }}</legend>
+    {% if atribuicao.pendencias.all %}
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Descrição</th>
+          <th>Resolvida</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pendencia in atribuicao.pendencias.all %}
+        <tr>
+          <td>{{ pendencia.get_tipo_display }}</td>
+          <td>{{ pendencia.descricao|default:"-----" }}</td>
+          <td>{{ pendencia.resolvida|yesno:"Sim,Não" }}</td>
+          <td>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'editar-pendencia' pk=pendencia.id %}">
+              Editar
+            </button>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'excluir-pendencia' pk=pendencia.id %}">
+              Excluir
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>Nenhuma pendência cadastrada.</p>
+    {% endif %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'adicionar-pendencia' pk=atribuicao.id %}">
+      + Adicionar Pendência
+    </button>
+  </fieldset>
+{% endfor %}
 
-<h3>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Tipo</th>
-      <th>Curso</th>
-      <th>Entidade</th>
-      <th>Cidade/UF</th>
-      <th>Ano</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for atribuicao in pessoa.atribuicoes.all %}
-      {% for formacao in atribuicao.dados_docente.formacoes.all %}
+<fieldset>
+  <legend>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</legend>
+  <table>
+    <thead>
       <tr>
-        <td>{{ formacao.get_tipo_formacao_display }}</td>
-        <td>{{ formacao.curso }}</td>
-        <td>{{ formacao.entidade }}</td>
-        <td>{{ formacao.cidade }}/{{ formacao.uf }}</td>
-        <td>{{ formacao.ano_conclusao }}</td>
+        <th>Tipo</th>
+        <th>Curso</th>
+        <th>Entidade</th>
+        <th>Cidade/UF</th>
+        <th>Ano</th>
       </tr>
+    </thead>
+    <tbody>
+      {% for atribuicao in pessoa.atribuicoes.all %}
+        {% for formacao in atribuicao.dados_docente.formacoes.all %}
+        <tr>
+          <td>{{ formacao.get_tipo_formacao_display }}</td>
+          <td>{{ formacao.curso }}</td>
+          <td>{{ formacao.entidade }}</td>
+          <td>{{ formacao.cidade }}/{{ formacao.uf }}</td>
+          <td>{{ formacao.ano_conclusao }}</td>
+        </tr>
+        {% endfor %}
       {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</fieldset>
 
-<h3>Disciplinas Habilitadas (Capacidade)</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Disciplina</th>
-      <th>Data início</th>
-      <th>Data fim</th>
-      <th>Ativo</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for atribuicao in pessoa.atribuicoes.all %}
-      {% for capacidade in atribuicao.dados_docente.capacidades.all %}
+<fieldset>
+  <legend>Disciplinas Habilitadas (Capacidade)</legend>
+  <table>
+    <thead>
       <tr>
-        <td>{{ capacidade.disciplina }}</td>
-        <td>{{ capacidade.data_inicio|date:"d/m/Y" }}</td>
-        <td>{{ capacidade.data_fim|date:"d/m/Y"|default:"-----" }}</td>
-        <td>{{ capacidade.ativo|yesno:"Sim,Não" }}</td>
+        <th>Disciplina</th>
+        <th>Data início</th>
+        <th>Data fim</th>
+        <th>Ativo</th>
       </tr>
+    </thead>
+    <tbody>
+      {% for atribuicao in pessoa.atribuicoes.all %}
+        {% for capacidade in atribuicao.dados_docente.capacidades.all %}
+        <tr>
+          <td>{{ capacidade.disciplina }}</td>
+          <td>{{ capacidade.data_inicio|date:"d/m/Y" }}</td>
+          <td>{{ capacidade.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+          <td>{{ capacidade.ativo|yesno:"Sim,Não" }}</td>
+        </tr>
+        {% endfor %}
       {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</fieldset>
 
 <h3>Experiência Profissional</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria == 'GESTAO' %}
-  <p>
-    <strong>{{ atribuicao.funcao.nome }}</strong>
-    <button type="button" class="btn-abrir-modal-crud"
+  <fieldset>
+    <legend>{{ atribuicao.funcao.nome }}</legend>
+    {% if atribuicao.experiencias_profissionais.all %}
+    <table>
+      <thead>
+        <tr>
+          <th>Organização</th>
+          <th>Cargo</th>
+          <th>Data início</th>
+          <th>Data fim</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for experiencia in atribuicao.experiencias_profissionais.all %}
+        <tr>
+          <td>{{ experiencia.organizacao }}</td>
+          <td>{{ experiencia.cargo }}</td>
+          <td>{{ experiencia.data_inicio|date:"d/m/Y" }}</td>
+          <td>{{ experiencia.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+          <td>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'editar-experiencia' pk=experiencia.id %}">
+              Editar
+            </button>
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'excluir-experiencia' pk=experiencia.id %}">
+              Excluir
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>Nenhuma Experiência Profissional cadastrada.</p>
+    {% endif %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
             data-url="{% url 'adicionar-experiencia' pk=atribuicao.id %}">
       + Adicionar Experiência
     </button>
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th>Organização</th>
-        <th>Cargo</th>
-        <th>Data início</th>
-        <th>Data fim</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for experiencia in atribuicao.experiencias_profissionais.all %}
-      <tr>
-        <td>{{ experiencia.organizacao }}</td>
-        <td>{{ experiencia.cargo }}</td>
-        <td>{{ experiencia.data_inicio|date:"d/m/Y" }}</td>
-        <td>{{ experiencia.data_fim|date:"d/m/Y"|default:"-----" }}</td>
-        <td>
-          <button type="button" class="btn-abrir-modal-crud"
-                  data-url="{% url 'editar-experiencia' pk=experiencia.id %}">
-            Editar
-          </button>
-          <button type="button" class="btn-abrir-modal-crud"
-                  data-url="{% url 'excluir-experiencia' pk=experiencia.id %}">
-            Excluir
-          </button>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  </fieldset>
   {% endif %}
 {% endfor %}
 
 <h3>Histórico de Vínculo Formal</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria != 'DISCENTE' %}
-  <p>
-    <strong>{{ atribuicao.funcao.nome }}</strong>
-    <button type="button" class="btn-abrir-modal-crud"
+  <fieldset>
+    <legend>{{ atribuicao.funcao.nome }}</legend>
+    {% if atribuicao.historico_vinculo_formal.all %}
+    <table>
+      <thead>
+        <tr>
+          <th>Vínculo Formal</th>
+          <th>Data início</th>
+          <th>Data fim</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for historico in atribuicao.historico_vinculo_formal.all %}
+        <tr>
+          <td>{{ historico.vinculo_formal.nome }}</td>
+          <td>{{ historico.data_inicio|date:"d/m/Y" }}</td>
+          <td>{{ historico.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+          <td>
+            {% if not historico.data_fim %}
+            <button type="button" class="btn-abrir-modal-crud btn-crud"
+                    data-url="{% url 'encerrar-historico-vinculo' pk=historico.id %}">
+              Encerrar
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>Nenhum Vínculo Formal cadastrado.</p>
+    {% endif %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
             data-url="{% url 'adicionar-historico-vinculo' pk=atribuicao.id %}">
       + Adicionar Vínculo
     </button>
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th>Vínculo Formal</th>
-        <th>Data início</th>
-        <th>Data fim</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for historico in atribuicao.historico_vinculo_formal.all %}
-      <tr>
-        <td>{{ historico.vinculo_formal.nome }}</td>
-        <td>{{ historico.data_inicio|date:"d/m/Y" }}</td>
-        <td>{{ historico.data_fim|date:"d/m/Y"|default:"-----" }}</td>
-        <td>
-          {% if not historico.data_fim %}
-          <button type="button" class="btn-abrir-modal-crud"
-                  data-url="{% url 'encerrar-historico-vinculo' pk=historico.id %}">
-            Encerrar
-          </button>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  </fieldset>
   {% endif %}
 {% endfor %}
 

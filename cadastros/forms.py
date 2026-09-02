@@ -16,7 +16,7 @@ Estrutura:
     HistoricoVinculoFormalForm     — 1 linha de Vínculo Formal (Docente ou Gestão),
                                      usada só no cadastro INICIAL (Formset).
     PendenciaCadastroForm          — 1 linha de Pendência de documentação (universal,
-                                     qualquer categoria — Discente, Docente ou Gestão).
+                                     qualquer categoria), usada só no cadastro INICIAL (Formset).
 
     ModelForms do CRUD independente (piloto docs/21), usados FORA do cadastro
     inicial — depois que a Pessoa/AtribuicaoFuncao já existe:
@@ -29,6 +29,21 @@ Estrutura:
     ExperienciaProfissionalModelForm     — Adicionar/Editar uma Experiência
                                            Profissional (Delete real permitido,
                                            diferente de Vínculo Formal).
+    PendenciaCadastroModelForm            — Adicionar uma Pendência (tipo + descricao;
+                                           resolvida/resolvida_em não fazem sentido
+                                           numa pendência recém-criada).
+    EditarPendenciaCadastroForm           — Editar uma Pendência já existente,
+                                           incluindo marcar como resolvida — a View
+                                           preenche resolvida_em automaticamente,
+                                           não é campo do formulário.
+    EditarRequisitoContratacaoForm        — Edita requisito_contratacao (escolha
+                                           única entre 3 opções, RBAC 141) +
+                                           documento_comprobatorio (texto livre) de
+                                           uma AtribuicaoFuncao já existente — Docente
+                                           ou Gestão, nunca Discente. Diferente das
+                                           outras entidades do CRUD independente, não
+                                           é uma lista repetível: edita 2 campos
+                                           direto na própria AtribuicaoFuncao.
 
 Os 4 Forms de linha (Formação/Experiência/Histórico/Pendência acima) viram Formsets
 (forms.formset_factory) — permitem 0 a N linhas no cadastro inicial, cada uma
@@ -64,7 +79,8 @@ from django import forms
 from .models import (
     Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
     Sexo, EstadoCivil, RacaCor, FormacaoDocente, HistoricoVinculoFormal,
-    ExperienciaProfissional,
+    ExperienciaProfissional, PendenciaCadastro, AtribuicaoFuncao,
+    RequisitoContratacao,
 )
 
 
@@ -224,10 +240,11 @@ class HistoricoVinculoFormalForm(forms.Form):
 
 class PendenciaCadastroForm(forms.Form):
     """
-    1 linha de Pendência de documentação — universal, qualquer categoria.
-    Sem `clean()` customizado: diferente dos 3 Forms acima, o único outro
-    campo além do sinal ('tipo') é 'descricao', que já é opcional de verdade
-    no Model (`blank=True`) — não existe combinação parcial inválida aqui.
+    1 linha de Pendência de documentação — universal, qualquer categoria,
+    usada só no cadastro INICIAL (Formset). Sem `clean()` customizado:
+    diferente dos 3 Forms acima, o único outro campo além do sinal ('tipo')
+    é 'descricao', que já é opcional de verdade no Model (`blank=True`) —
+    não existe combinação parcial inválida aqui.
     """
     tipo = forms.ChoiceField(
         choices=[('', '---------')] + list(TipoPendencia.choices),
@@ -306,6 +323,54 @@ class ExperienciaProfissionalModelForm(forms.ModelForm):
         widgets = {
             'data_inicio': forms.DateInput(attrs={'type': 'date'}),
             'data_fim': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+class PendenciaCadastroModelForm(forms.ModelForm):
+    """
+    ModelForm para CRIAR uma nova PendenciaCadastro — só 'tipo' e
+    'descricao'. 'resolvida'/'resolvida_em' não fazem sentido numa pendência
+    recém-criada (ela nasce sempre pendente, resolvida=False por default do
+    Model); marcar como resolvida é responsabilidade de
+    EditarPendenciaCadastroForm. 'atribuicao' fica de fora de `fields`: é
+    resolvida pela View a partir da URL.
+    """
+    class Meta:
+        model = PendenciaCadastro
+        fields = ['tipo', 'descricao']
+
+
+class EditarPendenciaCadastroForm(forms.ModelForm):
+    """
+    ModelForm para EDITAR uma PendenciaCadastro já existente, incluindo
+    marcar como resolvida. 'resolvida_em' fica de fora de `fields` de
+    propósito: a View preenche automaticamente com a data/hora atual quando
+    'resolvida' passa a True (e limpa se voltar a False), evitando que o
+    usuário digite uma data manualmente incoerente com o clique real.
+    """
+    class Meta:
+        model = PendenciaCadastro
+        fields = ['tipo', 'descricao', 'resolvida']
+
+
+class EditarRequisitoContratacaoForm(forms.ModelForm):
+    """
+    Edita os Requisitos de Contratação (RBAC 141) de uma AtribuicaoFuncao já
+    existente — Docente ou Gestão, nunca Discente. Diferente das outras
+    entidades do CRUD independente, não é uma lista repetível (não tem
+    Adicionar/Excluir, só Editar): 'requisito_contratacao' e
+    'documento_comprobatorio' são campos diretos na própria AtribuicaoFuncao.
+
+    'requisito_contratacao' usa RadioSelect (escolha única entre as 3
+    opções, decisão confirmada em 02/09/2026), diferente do <select> usado
+    nos outros campos de choices do projeto — aqui faz mais sentido ver as
+    3 opções lado a lado, já que são poucas e o texto de cada uma é longo.
+    """
+    class Meta:
+        model = AtribuicaoFuncao
+        fields = ['requisito_contratacao', 'documento_comprobatorio']
+        widgets = {
+            'requisito_contratacao': forms.RadioSelect(),
         }
 
 
