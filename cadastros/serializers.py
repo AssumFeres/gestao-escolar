@@ -1,11 +1,12 @@
 """
-pessoas/serializers.py
+cadastros/serializers.py
 
-Serializers de entrada (Input) e saída (Output) - separados por ISP,
+Serializers de entrada (Input) e saida (Output) - separados por ISP,
 evitando contratos inchados com campos opcionais desnecessarios.
 """
-
 from rest_framework import serializers
+
+from .models import Pessoa
 
 
 class BuscarCepInputSerializer(serializers.Serializer):
@@ -24,9 +25,9 @@ class EnderecoOutputSerializer(serializers.Serializer):
 
 class CadastrarPessoaInputSerializer(serializers.Serializer):
     """
-    Serializer de ENTRADA — dados da Pessoa + Função a atribuir + dados da atribuição.
-    Não cria extensões (DadosDiscente/DadosDocente) — isso é responsabilidade
-    da Etapa 7, quando os formulários especializados por categoria existirem.
+    Serializer de ENTRADA -- dados da Pessoa + Funcao a atribuir + dados da atribuicao.
+    Nao cria extensoes (DadosDiscente/DadosDocente) -- isso e responsabilidade
+    da Etapa 7, quando os formularios especializados por categoria existirem.
     """
     # Dados da Pessoa
     nome_completo = serializers.CharField(max_length=200)
@@ -41,8 +42,7 @@ class CadastrarPessoaInputSerializer(serializers.Serializer):
     endereco_bairro = serializers.CharField(max_length=100)
     endereco_cidade = serializers.CharField(max_length=100)
     endereco_uf = serializers.CharField(max_length=2)
-
-    # Função a atribuir
+    # Funcao a atribuir
     funcao_id = serializers.IntegerField()
     data_inicio = serializers.DateField()
     situacao = serializers.CharField(max_length=30, default="ATIVO")
@@ -54,4 +54,29 @@ class CadastrarPessoaOutputSerializer(serializers.Serializer):
     funcao = serializers.CharField()
     atribuicao_id = serializers.IntegerField()
 
-    
+
+class BuscarPessoaPorCpfInputSerializer(serializers.Serializer):
+    cpf = serializers.CharField(max_length=11)
+
+
+class PessoaOutputSerializer(serializers.ModelSerializer):
+    """
+    Saida da busca por CPF (docs/27) -- todos os campos comuns da Pessoa,
+    para pre-preencher o formulario de cadastro quando o CPF ja existir.
+
+    ModelSerializer aqui, ao inves de Serializer manual (padrao do resto
+    deste arquivo): evita declarar ~25 campos a mao so para repassar o que
+    ja esta no Model -- e puramente leitura, sem logica de validacao de
+    entrada (nunca e usado para receber dados, so para devolver).
+    """
+    class Meta:
+        model = Pessoa
+        fields = [
+            'id', 'nome_completo', 'cpf', 'data_nascimento', 'email', 'telefone',
+            'registro_matricula', 'registro_aluno', 'codigo_anac',
+            'sexo', 'identidade', 'data_emissao_identidade', 'orgao_expedidor_identidade',
+            'naturalidade', 'uf_naturalidade', 'nacionalidade',
+            'filiacao_1', 'filiacao_2', 'nivel_instrucao', 'estado_civil', 'raca_cor',
+            'endereco_cep', 'endereco_logradouro', 'endereco_numero', 'endereco_complemento',
+            'endereco_bairro', 'endereco_cidade', 'endereco_uf',
+        ]

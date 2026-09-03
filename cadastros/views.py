@@ -34,6 +34,7 @@ from .services import (
 from .serializers import (
     BuscarCepInputSerializer, EnderecoOutputSerializer,
     CadastrarPessoaInputSerializer, CadastrarPessoaOutputSerializer,
+    BuscarPessoaPorCpfInputSerializer, PessoaOutputSerializer,
 )
 
 
@@ -53,6 +54,27 @@ class BuscarCepView(APIView):
 
         output_serializer = EnderecoOutputSerializer(endereco.__dict__)
         return Response(output_serializer.data, status=status.HTTP_200_OK)
+
+
+class BuscarPessoaPorCpfView(APIView):
+    """
+    SRP: busca uma Pessoa por CPF, para pré-preencher o formulário de
+    cadastro quando o CPF já existir — parte da funcionalidade de
+    reaproveitamento/edição de dados (docs/27). Só leitura, nunca cria
+    nem altera nada — a atualização de verdade só acontece se o formulário
+    for submetido depois (via CadastrarPessoaComFuncaoService).
+    """
+
+    def get(self, request, cpf):
+        input_serializer = BuscarPessoaPorCpfInputSerializer(data={"cpf": cpf})
+        input_serializer.is_valid(raise_exception=True)
+
+        pessoa = Pessoa.objects.filter(cpf=input_serializer.validated_data["cpf"]).first()
+        if not pessoa:
+            return Response({"encontrada": False}, status=status.HTTP_200_OK)
+
+        output_serializer = PessoaOutputSerializer(pessoa)
+        return Response({"encontrada": True, "pessoa": output_serializer.data}, status=status.HTTP_200_OK)
 
 
 class CadastrarPessoaView(APIView):
@@ -121,11 +143,7 @@ class ListaPessoasView(ListView):
 class DetalhePessoaView(DetailView):
     """
     Template View: mostra os dados completos de uma Pessoa e suas Funções.
-    Único "centro de comando" da Pessoa desde a Etapa B (02/09/2026) — o
-    CRUD de Formação, que antes vivia numa tela separada
-    (preencher_requisitos_docente.html, removida), foi movido para cá,
-    unificando com Requisitos de Contratação, Pendências, Experiência e
-    Histórico de Vínculo Formal, todos já consolidados nesta mesma tela.
+    Único "centro de comando" da Pessoa desde a Etapa B (02/09/2026).
     """
     model = Pessoa
     template_name = 'cadastros/detalhe.html'
@@ -153,12 +171,11 @@ class NovoCadastroPessoaView(View):
     da API (CadastrarPessoaComFuncaoService) — mesma regra de negocio,
     caminho de entrada diferente.
 
-    Formulário único com dropdown de Funcao; os Formsets de Formação/
-    Experiência/Histórico de Vínculo Formal/Pendências são sempre enviados,
-    mas só os relevantes para a categoria escolhida são de fato usados pelo
-    Service (Pendências é universal, sempre usada) — o Template/JavaScript
-    (Etapa 7.4c/d) é quem decide quais blocos mostrar visualmente, mas o
-    back-end aceita o POST completo de qualquer forma.
+    Busca por CPF (docs/27): o campo CPF, ao apertar Enter, consulta
+    /api/cadastros/pessoa-por-cpf/<cpf>/ e pré-preenche os demais campos
+    se a Pessoa já existir — ver static/cadastros/js/buscar-cpf.js. Isso é
+    só front-end; o back-end sempre aceita o POST completo normalmente,
+    e o Service decide se cria ou atualiza a Pessoa pelo CPF.
     """
     template_name = 'cadastros/form_pessoa.html'
 
@@ -244,10 +261,6 @@ class NovoCadastroPessoaView(View):
         }
 
         # Requisitos de Contratação (RBAC 141) — todos exceto Discente.
-        # Coletados já no cadastro inicial desde 02/09/2026 (antes só dava
-        # pra preencher depois, pela tela de detalhe). O JS (data-categoria)
-        # esconde o bloco visualmente para Discente, mas o back-end também
-        # não grava esses valores nesse caso, por segurança.
         if funcao.categoria != CategoriaFuncao.DISCENTE:
             dados_atribuicao["requisito_contratacao"] = dados.get("requisito_contratacao", "")
             dados_atribuicao["documento_comprobatorio"] = dados.get("documento_comprobatorio", "")
@@ -325,9 +338,6 @@ class NovoCadastroPessoaView(View):
                 'funcao_categorias': self._funcao_categorias(),
             })
 
-        # Etapa B (02/09/2026): detalhe.html virou o unico "centro de comando"
-        # da Pessoa, para qualquer categoria -- nao ha mais uma tela separada
-        # de Requisitos para redirecionar o Docente.
         return redirect('detalhe-pessoa', pk=pessoa.id)
 
 
@@ -341,13 +351,6 @@ class ModalCrudMixin:
     JavaScript do modal saber que deu certo (ver static/cadastros/js/
     modal-crud.js). Funciona tanto para CreateView/UpdateView (via form_valid)
     quanto para DeleteView (via delete) — mesmo mecanismo nos dois casos.
-
-    `template_fragmento` é obrigatório em cada subclasse — cada entidade tem
-    seu próprio fragmento (Pessoa, Formação, Histórico de Vínculo, Experiência
-    Profissional, Pendência de Cadastro, Requisito de Contratação). A
-    confirmação de exclusão usa um fragmento genérico único
-    (`_confirmar_exclusao_fragment.html`), reaproveitado por todas as
-    entidades que permitem Delete real.
     """
     template_fragmento = None
 
@@ -376,14 +379,7 @@ class ModalCrudMixin:
 
 
 class EditarPessoaView(ModalCrudMixin, UpdateView):
-    """
-    Edita os campos comuns da Pessoa (identificação + endereço) — escopo
-    deliberadamente restrito, ver docstring de EditarPessoaForm. Assim como
-    EditarRequisitoContratacaoView, não é uma lista repetível: não há
-    Adicionar nem Excluir (Pessoa nunca é excluída — regra de negócio
-    confirmada em 02/09/2026, só Create/Read/Update), só Editar direto no
-    próprio objeto (não precisa de dispatch() resolvendo um "pai").
-    """
+    """Edita os campos comuns da Pessoa (identificação + endereço)."""
     model = Pessoa
     form_class = EditarPessoaForm
     template_name = 'cadastros/form_pessoa_editar.html'
@@ -394,18 +390,7 @@ class EditarPessoaView(ModalCrudMixin, UpdateView):
 
 
 class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
-    """
-    CRUD independente (piloto da migração de arquitetura descrita em docs/21):
-    adiciona uma FormacaoDocente a um Docente já existente, persistindo direto
-    no banco via ModelForm — sem Formset, sem cloneNode(), sem TOTAL_FORMS.
-
-    Segurança: o DadosDocente "pai" é resolvido em dispatch() a partir do
-    <int:pk> da URL, nunca de um campo do POST — impede que alguém anexe uma
-    Formação a um Docente que não é o pretendido só editando a URL.
-
-    Desde a Etapa B (02/09/2026): acessível pela tela de detalhe da Pessoa
-    (não mais pela extinta preencher_requisitos_docente.html).
-    """
+    """Adiciona uma FormacaoDocente a um Docente já existente."""
     model = FormacaoDocente
     form_class = FormacaoDocenteModelForm
     template_name = 'cadastros/form_formacao.html'
@@ -430,11 +415,7 @@ class AdicionarFormacaoDocenteView(ModalCrudMixin, CreateView):
 
 
 class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
-    """
-    Segunda metade do CRUD independente de FormacaoDocente: edita um registro
-    já existente. Não recebe o pk do Docente pela URL — o objeto já sabe a
-    quem pertence via `self.object.dados_docente`.
-    """
+    """Edita um registro de Formação já existente."""
     model = FormacaoDocente
     form_class = FormacaoDocenteModelForm
     template_name = 'cadastros/form_formacao.html'
@@ -451,12 +432,7 @@ class EditarFormacaoDocenteView(ModalCrudMixin, UpdateView):
 
 
 class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
-    """
-    Terceira e última metade do CRUD de FormacaoDocente: exclusão real
-    (diferente de HistoricoVinculoFormal, que nunca permite Delete). Usa o
-    fragmento genérico de confirmação, compartilhado com qualquer outra
-    entidade que permita Delete real.
-    """
+    """Exclusão real de FormacaoDocente."""
     model = FormacaoDocente
     template_name = 'cadastros/confirmar_exclusao.html'
     template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
@@ -471,13 +447,7 @@ class ExcluirFormacaoDocenteView(ModalCrudMixin, DeleteView):
 
 
 class AdicionarHistoricoVinculoFormalView(ModalCrudMixin, CreateView):
-    """
-    Adiciona um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já
-    existente (Docente ou Gestão) — ex: quando a entidade contratante muda
-    ao longo do tempo (FAPETI até 2026, FUSSUSS a partir de 2026). A
-    AtribuicaoFuncao "pai" é resolvida pela URL, nunca por um campo do POST.
-    Acessível pela tela de detalhe da Pessoa (docs/21).
-    """
+    """Adiciona um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já existente."""
     model = HistoricoVinculoFormal
     form_class = HistoricoVinculoFormalModelForm
     template_name = 'cadastros/form_historico_vinculo.html'
@@ -502,13 +472,7 @@ class AdicionarHistoricoVinculoFormalView(ModalCrudMixin, CreateView):
 
 
 class EncerrarHistoricoVinculoFormalView(ModalCrudMixin, UpdateView):
-    """
-    Encerra um período de Vínculo Formal já existente — nunca Delete, só
-    preenche 'data_fim' (mais 'observacao' opcional, para registrar erro de
-    cadastro ou contexto). Usa EncerrarHistoricoVinculoFormalForm (só esses
-    2 campos), não o ModelForm completo — impede reabrir vinculo_formal/
-    data_inicio por engano.
-    """
+    """Encerra um período de Vínculo Formal já existente — nunca Delete."""
     model = HistoricoVinculoFormal
     form_class = EncerrarHistoricoVinculoFormalForm
     template_name = 'cadastros/form_historico_vinculo.html'
@@ -525,12 +489,7 @@ class EncerrarHistoricoVinculoFormalView(ModalCrudMixin, UpdateView):
 
 
 class AdicionarExperienciaProfissionalView(ModalCrudMixin, CreateView):
-    """
-    CRUD independente de ExperienciaProfissional (Gestão) — mesma estrutura
-    de AdicionarFormacaoDocenteView, mas o pai é uma AtribuicaoFuncao, não
-    um DadosDocente. Diferente de HistoricoVinculoFormal, esta entidade
-    permite Delete real.
-    """
+    """CRUD independente de ExperienciaProfissional (Gestão)."""
     model = ExperienciaProfissional
     form_class = ExperienciaProfissionalModelForm
     template_name = 'cadastros/form_experiencia.html'
@@ -572,10 +531,7 @@ class EditarExperienciaProfissionalView(ModalCrudMixin, UpdateView):
 
 
 class ExcluirExperienciaProfissionalView(ModalCrudMixin, DeleteView):
-    """
-    Exclusão real de ExperienciaProfissional — usa o mesmo fragmento
-    genérico de confirmação que ExcluirFormacaoDocenteView.
-    """
+    """Exclusão real de ExperienciaProfissional."""
     model = ExperienciaProfissional
     template_name = 'cadastros/confirmar_exclusao.html'
     template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
@@ -590,11 +546,7 @@ class ExcluirExperienciaProfissionalView(ModalCrudMixin, DeleteView):
 
 
 class AdicionarPendenciaCadastroView(ModalCrudMixin, CreateView):
-    """
-    CRUD independente de PendenciaCadastro — universal, qualquer categoria
-    (Discente/Docente/Gestão), diferente de Experiência/Histórico que são
-    condicionais. O pai é uma AtribuicaoFuncao, resolvida pela URL.
-    """
+    """CRUD independente de PendenciaCadastro — universal, qualquer categoria."""
     model = PendenciaCadastro
     form_class = PendenciaCadastroModelForm
     template_name = 'cadastros/form_pendencia.html'
@@ -619,12 +571,7 @@ class AdicionarPendenciaCadastroView(ModalCrudMixin, CreateView):
 
 
 class EditarPendenciaCadastroView(ModalCrudMixin, UpdateView):
-    """
-    Edita uma PendenciaCadastro já existente, incluindo marcar como
-    resolvida. 'resolvida_em' é preenchido/limpo automaticamente aqui
-    (não é campo do EditarPendenciaCadastroForm) — evita o usuário digitar
-    uma data manual incoerente com o clique real de "resolvida".
-    """
+    """Edita uma PendenciaCadastro já existente, incluindo marcar como resolvida."""
     model = PendenciaCadastro
     form_class = EditarPendenciaCadastroForm
     template_name = 'cadastros/form_pendencia.html'
@@ -648,7 +595,7 @@ class EditarPendenciaCadastroView(ModalCrudMixin, UpdateView):
 
 
 class ExcluirPendenciaCadastroView(ModalCrudMixin, DeleteView):
-    """Exclusão real de PendenciaCadastro — mesmo fragmento genérico de confirmação."""
+    """Exclusão real de PendenciaCadastro."""
     model = PendenciaCadastro
     template_name = 'cadastros/confirmar_exclusao.html'
     template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
@@ -663,13 +610,7 @@ class ExcluirPendenciaCadastroView(ModalCrudMixin, DeleteView):
 
 
 class EditarRequisitoContratacaoView(ModalCrudMixin, UpdateView):
-    """
-    Edita os Requisitos de Contratação (RBAC 141) de uma AtribuicaoFuncao já
-    existente — Docente ou Gestão. Diferente das outras entidades do CRUD
-    independente, não é uma lista repetível: não há Adicionar nem Excluir,
-    só Editar 2 campos direto na própria AtribuicaoFuncao (não precisa de
-    dispatch() resolvendo um "pai" — o objeto editado já é o pai).
-    """
+    """Edita os Requisitos de Contratação (RBAC 141) de uma AtribuicaoFuncao já existente."""
     model = AtribuicaoFuncao
     form_class = EditarRequisitoContratacaoForm
     template_name = 'cadastros/form_requisito_contratacao.html'

@@ -1,5 +1,5 @@
 """
-pessoas/services.py
+cadastros/services.py
 
 Camada de Services: regras de negócio que envolvem mais de uma entidade,
 ou que precisam de validação além do que o Model sozinho garante.
@@ -17,10 +17,13 @@ class CadastrarPessoaComFuncaoService:
     uma nova (evita duplicidade quando a mesma pessoa acumula uma nova Função ou repete
     curso).
 
-    Para Docente, cadastra até a etapa preenchível por Secretaria/Aux. Administrativo
-    (dados básicos + Formações). Requisitos de Contratação e Capacidades/Disciplinas
-    (seções 6-7 da FE 008) ficam para PreencherRequisitosEDisciplinasDocenteService,
-    chamado numa segunda tela — depende de as Formações já estarem salvas com id.
+    Busca por CPF com reaproveitamento/edição de dados (decisão de 02/09/2026): quando
+    a Pessoa já existe, os dados enviados em `dados_pessoa` deixam de ser ignorados
+    (comportamento antigo do `get_or_create` puro) e passam a ATUALIZAR a Pessoa
+    existente de verdade — exceto o CPF, que nunca muda. O fluxo esperado é a tela
+    buscar a Pessoa pelo CPF primeiro e pré-preencher os campos com os dados atuais,
+    para o usuário só editar o que precisa corrigir, nunca reenviar o formulário em
+    branco por cima de um cadastro já preenchido.
 
     Regra de negócio: uma Pessoa com Função de Discente (identificada pela existência de
     DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca pelo texto de Funcao.nome
@@ -48,23 +51,26 @@ class CadastrarPessoaComFuncaoService:
         )
 
         with transaction.atomic():
-            pessoa_ja_existe = Pessoa.objects.filter(cpf=dados_pessoa['cpf']).exists()
+            pessoa_existente = Pessoa.objects.filter(cpf=dados_pessoa['cpf']).first()
 
-            if not pessoa_ja_existe:
-                # Só vale checar duplicidade de RM/RA/CANAC quando uma Pessoa NOVA
-                # será criada — se o CPF já existe, os valores de dados_pessoa são
-                # só `defaults` (ignorados pelo get_or_create), não há inserção nova.
-                campos_unicos = [
-                    ('registro_matricula', 'RM'),
-                    ('registro_aluno', 'RA'),
-                    ('codigo_anac', 'CANAC'),
-                ]
-                for campo, rotulo in campos_unicos:
-                    valor = dados_pessoa.get(campo)
-                    if valor and Pessoa.objects.filter(**{campo: valor}).exists():
-                        raise ValidationError(
-                            f"{rotulo} '{valor}' já está em uso por outra pessoa."
-                        )
+            # Duplicidade de RM/RA/CANAC — exclui a própria Pessoa existente
+            # da checagem (senão o valor dela mesma "colidiria" com ela).
+            campos_unicos = [
+                ('registro_matricula', 'RM'),
+                ('registro_aluno', 'RA'),
+                ('codigo_anac', 'CANAC'),
+            ]
+            for campo, rotulo in campos_unicos:
+                valor = dados_pessoa.get(campo)
+                if not valor:
+                    continue
+                consulta = Pessoa.objects.filter(**{campo: valor})
+                if pessoa_existente:
+                    consulta = consulta.exclude(pk=pessoa_existente.pk)
+                if consulta.exists():
+                    raise ValidationError(
+                        f"{rotulo} '{valor}' já está em uso por outra pessoa."
+                    )
 
             if funcao.categoria == CategoriaFuncao.DISCENTE:
                 codigo_cma = (dados_extensao or {}).get('codigo_matricula_anac')
@@ -79,6 +85,13 @@ class CadastrarPessoaComFuncaoService:
             )
 
             if not criada:
+                # Atualiza de verdade os campos da Pessoa existente com o
+                # que veio do formulário — exceto 'cpf', que nunca muda.
+                for campo, valor in dados_pessoa.items():
+                    if campo != 'cpf':
+                        setattr(pessoa, campo, valor)
+                pessoa.save()
+
                 ja_e_discente = pessoa.atribuicoes.filter(dados_discente__isnull=False).exists()
                 if ja_e_discente:
                     raise ValidationError(
@@ -117,20 +130,26 @@ class CadastrarPessoaComFuncaoService:
 
 class PreencherRequisitosEDisciplinasDocenteService:
     """
-    SRP: completa o cadastro de um Docente já existente — Requisitos de Contratação
-    (seção 6 da FE 008) e Disciplinas Habilitadas/Capacidade (seção 7) — etapa que só
-    pode acontecer depois que as Formações (tabelas 3-5) já estão salvas, já que os
-    Requisitos e a comprovação de Capacidade referenciam uma Formação existente.
+    SRP: completa o cadastro de um Docente já existente — Disciplinas
+    Habilitadas/Capacidade (seção 7 da FE 008) — etapa que só pode acontecer
+    depois que as Formações (tabelas 3-5) já estão salvas, já que a
+    comprovação de Capacidade referencia uma Formação existente.
+
+    NOTA (02/09/2026): 'dados_requisitos' (experiencia_docente_comprovada /
+    formacao_especifica_comprobatoria) é código desatualizado — esses campos
+    não existem mais em DadosDocente; os Requisitos de Contratação (RBAC 141)
+    hoje moram em AtribuicaoFuncao.requisito_contratacao/documento_
+    comprobatorio, coletados direto no cadastro inicial ou editados via
+    EditarRequisitoContratacaoView. Este Service nunca chegou a ser
+    conectado a nenhuma tela (a tela de Requisitos foi removida na Etapa B).
+    Marcado no Backlog para limpeza — 'dados_requisitos' fica sem uso real
+    até essa limpeza acontecer.
     """
 
     def executar(self, dados_docente, dados_requisitos: dict, capacidades: list):
         from .models import Capacidade
 
         with transaction.atomic():
-            dados_docente.experiencia_docente_comprovada = dados_requisitos.get('experiencia_docente_comprovada', '')
-            dados_docente.formacao_especifica_comprobatoria = dados_requisitos.get('formacao_especifica_comprobatoria')
-            dados_docente.save()
-
             for capacidade in (capacidades or []):
                 Capacidade.objects.create(dados_docente=dados_docente, **capacidade)
 
