@@ -246,8 +246,8 @@ fieldset fieldset legend {
 /* Para grupos com exatamente 3 campos (ex: Identificadores, Função) */
 .grid-3-colunas {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  column-gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
   width: 100%;
 }
 
