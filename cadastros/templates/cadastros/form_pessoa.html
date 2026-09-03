@@ -35,6 +35,18 @@
                     <div class="campo">{{ form.telefone.label_tag }} {{ form.telefone }} {{ form.telefone.errors }}</div>
                 </div>
             </div>
+            <fieldset>
+                <legend>Dados de Contato Complemetares</legend>
+                    <div class="grid-2-colunas">
+                    <div>
+                        <div class="campo">{{ form.email_2.label_tag }} {{ form.email_2 }} {{ form.email_2.errors }}</div>
+                    </div>
+
+                    <div>
+                        <div class="campo">{{ form.telefone_2.label_tag }} {{ form.telefone_2 }} {{ form.telefone_2.errors }}</div>
+                    </div>
+                </div>
+            </fieldset>
         </fieldset>
 
         <fieldset>
@@ -51,6 +63,8 @@
             <div class="grid-2-colunas">
                 <div>
                     <div class="campo">{{ form.sexo.label_tag }} {{ form.sexo }} {{ form.sexo.errors }}</div>
+                    <div class="campo">{{ form.raca_cor.label_tag }} {{ form.raca_cor }} {{ form.raca_cor.errors }}</div>
+                    <div class="campo">{{ form.estado_civil.label_tag }} {{ form.estado_civil }} {{ form.estado_civil.errors }}</div>
                     <div class="campo">{{ form.identidade.label_tag }} {{ form.identidade }} {{ form.identidade.errors }}</div>
                     <div class="campo">{{ form.data_emissao_identidade.label_tag }} {{ form.data_emissao_identidade }} {{ form.data_emissao_identidade.errors }}</div>
                     <div class="campo">{{ form.orgao_expedidor_identidade.label_tag }} {{ form.orgao_expedidor_identidade }} {{ form.orgao_expedidor_identidade.errors }}</div>
@@ -62,8 +76,11 @@
                     <div class="campo">{{ form.filiacao_1.label_tag }} {{ form.filiacao_1 }} {{ form.filiacao_1.errors }}</div>
                     <div class="campo">{{ form.filiacao_2.label_tag }} {{ form.filiacao_2 }} {{ form.filiacao_2.errors }}</div>
                     <div class="campo">{{ form.nivel_instrucao.label_tag }} {{ form.nivel_instrucao }} {{ form.nivel_instrucao.errors }}</div>
-                    <div class="campo">{{ form.estado_civil.label_tag }} {{ form.estado_civil }} {{ form.estado_civil.errors }}</div>
-                    <div class="campo">{{ form.raca_cor.label_tag }} {{ form.raca_cor }} {{ form.raca_cor.errors }}</div>
+                    <div class="campo">{{ form.passaporte.label_tag }} {{ form.passaporte }} {{ form.passaporte.errors }}</div>
+                    <div class="campo">{{ form.autorizacao_permanencia.label_tag }} {{ form.autorizacao_permanencia }} {{ form.autorizacao_permanencia.errors }}</div>
+                    <div class="campo">{{ form.titulo_eleitor.label_tag }} {{ form.titulo_eleitor }} {{ form.titulo_eleitor.errors }}</div>
+                    <div class="campo">{{ form.zona_eleitoral.label_tag }} {{ form.zona_eleitoral }} {{ form.zona_eleitoral.errors }}</div>
+                    <div class="campo">{{ form.secao_eleitoral.label_tag }} {{ form.secao_eleitoral }} {{ form.secao_eleitoral.errors }}</div>
                 </div>
             </div>
         </fieldset>
@@ -99,12 +116,8 @@
         <legend>Dados do Discente (FE 007)</legend>
 
         <fieldset>
-            <legend>Matrícula e Documentação de Estrangeiro</legend>
-            <div class="grid-3-colunas">
-                <div class="campo">{{ form.codigo_matricula_anac.label_tag }} {{ form.codigo_matricula_anac }} {{ form.codigo_matricula_anac.errors }}</div>
-                <div class="campo">{{ form.passaporte.label_tag }} {{ form.passaporte }} {{ form.passaporte.errors }}</div>
-                <div class="campo">{{ form.autorizacao_permanencia.label_tag }} {{ form.autorizacao_permanencia }} {{ form.autorizacao_permanencia.errors }}</div>
-            </div>
+            <legend>Matrícula</legend>
+            <div class="campo">{{ form.codigo_matricula_anac.label_tag }} {{ form.codigo_matricula_anac }} {{ form.codigo_matricula_anac.errors }}</div>
         </fieldset>
 
         <fieldset>

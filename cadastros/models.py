@@ -1,4 +1,4 @@
-﻿"""
+"""
 pessoas/models.py
 
 Módulo de domínio: Gestão de Pessoas.
@@ -7,7 +7,11 @@ Classes:
     Pessoa                  — dados cadastrais da pessoa física, com Endereco como VO embutido;
                               inclui identificação ampliada (FE 007/FE 008) e identificadores
                               específicos (RM, RA, CANAC — opcionais, null=True para não
-                              conflitar entre si na constraint unique quando vazios).
+                              conflitar entre si na constraint unique quando vazios). Também
+                              guarda Título de Eleitor/Zona/Seção, E-mail 2, Telefone 2 e
+                              Passaporte/Autorização de Permanência (esses dois últimos,
+                              movidos de DadosDiscente em 03/09/2026 — a FE 008 mostra que
+                              Docente também usa essa documentação, não é exclusiva de Discente).
     Disciplina               — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
     CategoriaFuncao          — enum que classifica uma Funcao como Discente/Docente/Gestão,
                               usado pela interface para decidir qual formulário exibir
@@ -30,8 +34,10 @@ Classes:
                               de pendências por Turma/Aluno entregue ao Coordenador de Curso.
     DadosDiscente            — extensão de AtribuicaoFuncao (OneToOne) para Discente:
                               código de matrícula ANAC (específico do curso, diferente do
-                              CANAC de Pessoa — ver nota no campo), documentação de
-                              estrangeiro, contato de emergência, responsável legal.
+                              CANAC de Pessoa — ver nota no campo), contato de emergência,
+                              responsável legal. Passaporte/Autorização de Permanência
+                              vivem em Pessoa desde 03/09/2026 (uso compartilhado com
+                              Docente, ver FE 008).
     DadosDocente             — extensão de AtribuicaoFuncao (OneToOne) para Docente;
                               inclui os Requisitos de Contratação da FE 008 (RBAC 141).
     FormacaoDocente          — Graduação/Formação Profissional/Aperfeiçoamento (FE 008,
@@ -126,6 +132,21 @@ class Pessoa(models.Model):
     nivel_instrucao = models.CharField(max_length=100, blank=True)
     estado_civil = models.CharField(max_length=30, choices=EstadoCivil.choices, blank=True)
     raca_cor = models.CharField(max_length=30, choices=RacaCor.choices, blank=True)
+
+    # Título de Eleitor (FE 008, Docente) — lacuna aprovada na auditoria de 03/09/2026
+    titulo_eleitor = models.CharField(max_length=12, blank=True, default='', verbose_name="Título de Eleitor")
+    zona_eleitoral = models.CharField(max_length=3, blank=True, default='', verbose_name="Zona Eleitoral")
+    secao_eleitoral = models.CharField(max_length=4, blank=True, default='', verbose_name="Seção Eleitoral")
+
+    # E-mail 2 / Telefone 2 (FE 008 Docente / FOP 402 Gestão) — lacunas aprovadas em 03/09/2026
+    email_2 = models.EmailField(blank=True, default='', verbose_name="E-mail 2")
+    telefone_2 = models.CharField(max_length=20, blank=True, default='', verbose_name="Telefone 2 / Celular")
+
+    # Passaporte / Autorização de Permanência — movidos de DadosDiscente para cá em
+    # 03/09/2026 (auditoria de campos): a FE 008 mostra que Docente também usa essa
+    # documentação quando estrangeiro, não é exclusiva de Discente como o modelo assumia.
+    passaporte = models.CharField(max_length=20, blank=True, default='')
+    autorizacao_permanencia = models.CharField(max_length=50, blank=True, default='')
 
     endereco_cep = models.CharField(max_length=8)
     endereco_logradouro = models.CharField(max_length=200)
@@ -301,10 +322,6 @@ class DadosDiscente(models.Model):
         verbose_name="Código de Matrícula ANAC"
     )
 
-    # Documentação de estrangeiro (FE 007)
-    passaporte = models.CharField(max_length=20, blank=True)
-    autorizacao_permanencia = models.CharField(max_length=50, blank=True)
-
     # Contato de emergência ("quem avisar") — texto simples, sem entidade própria
     contato_emergencia_nome = models.CharField(max_length=200, blank=True)
     contato_emergencia_parentesco = models.CharField(max_length=50, blank=True)
@@ -405,4 +422,3 @@ class ExperienciaProfissional(models.Model):
 
     def __str__(self):
         return f"{self.cargo} em {self.organizacao}"
-

@@ -80,8 +80,26 @@ de Gestao Escolar{% endblock %} {% block content %}
   <tr>
     <th>Raça/Cor</th>
     <td>{{ pessoa.get_raca_cor_display|default:"-----" }}</td>
-    <td></td>
-    <td></td>
+    <th>E-mail 2</th>
+    <td>{{ pessoa.email_2|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Telefone 2 / Celular</th>
+    <td>{{ pessoa.telefone_2|default:"-----" }}</td>
+    <th>Título de Eleitor</th>
+    <td>{{ pessoa.titulo_eleitor|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Zona Eleitoral</th>
+    <td>{{ pessoa.zona_eleitoral|default:"-----" }}</td>
+    <th>Seção Eleitoral</th>
+    <td>{{ pessoa.secao_eleitoral|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Passaporte</th>
+    <td>{{ pessoa.passaporte|default:"-----" }}</td>
+    <th>Autorização de Permanência</th>
+    <td>{{ pessoa.autorizacao_permanencia|default:"-----" }}</td>
   </tr>
 </table>
 
@@ -92,13 +110,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 <table>
   <tr>
     <th>Código de Matrícula ANAC</th>
-    <td>{{ dd.codigo_matricula_anac|default:"-----" }}</td>
-    <th>Passaporte</th>
-    <td>{{ dd.passaporte|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Autorização de Permanência</th>
-    <td colspan="3">{{ dd.autorizacao_permanencia|default:"-----" }}</td>
+    <td colspan="3">{{ dd.codigo_matricula_anac|default:"-----" }}</td>
   </tr>
   <tr>
     <th>Contato Emergência - Nome</th>

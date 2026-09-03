@@ -246,6 +246,13 @@ class NovoCadastroPessoaView(View):
             "nivel_instrucao": dados.get("nivel_instrucao", ""),
             "estado_civil": dados.get("estado_civil", ""),
             "raca_cor": dados.get("raca_cor", ""),
+            "titulo_eleitor": dados.get("titulo_eleitor", ""),
+            "zona_eleitoral": dados.get("zona_eleitoral", ""),
+            "secao_eleitoral": dados.get("secao_eleitoral", ""),
+            "email_2": dados.get("email_2", ""),
+            "telefone_2": dados.get("telefone_2", ""),
+            "passaporte": dados.get("passaporte", ""),
+            "autorizacao_permanencia": dados.get("autorizacao_permanencia", ""),
             "endereco_cep": dados["endereco_cep"],
             "endereco_logradouro": dados["endereco_logradouro"],
             "endereco_numero": dados["endereco_numero"],
@@ -273,8 +280,6 @@ class NovoCadastroPessoaView(View):
         if funcao.categoria == CategoriaFuncao.DISCENTE:
             dados_extensao = {
                 "codigo_matricula_anac": dados.get("codigo_matricula_anac") or None,
-                "passaporte": dados.get("passaporte", ""),
-                "autorizacao_permanencia": dados.get("autorizacao_permanencia", ""),
                 "contato_emergencia_nome": dados.get("contato_emergencia_nome", ""),
                 "contato_emergencia_parentesco": dados.get("contato_emergencia_parentesco", ""),
                 "contato_emergencia_telefone": dados.get("contato_emergencia_telefone", ""),

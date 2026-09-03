@@ -13,6 +13,11 @@ cadastros/forms.py
   igual a hoje ou no futuro, com uma mensagem de erro clara. Regra confirmada
   em 02/09/2026: ninguém nasce no futuro, então essa combinação é sempre
   inválida, não uma advertência.
+
+Passaporte/Autorização de Permanência (03/09/2026): campos de Pessoa desde a
+auditoria de campos FE 007/FE 008/FOP 402 — visíveis na Identificação Ampliada,
+para qualquer categoria (Docente também usa essa documentação, não é exclusiva
+de Discente).
 """
 
 from datetime import date
@@ -72,6 +77,21 @@ class CadastrarPessoaForm(forms.Form):
     estado_civil = forms.ChoiceField(choices=[('', '---------')] + list(EstadoCivil.choices), required=False, label="Estado civil")
     raca_cor = forms.ChoiceField(choices=[('', '---------')] + list(RacaCor.choices), required=False, label="Raça/Cor")
 
+    # --- Pessoa: Título de Eleitor / E-mail 2 / Telefone 2 / Passaporte (aprovados
+    # na auditoria de campos de 03/09/2026 — ver docs/28) ---
+    titulo_eleitor = forms.CharField(max_length=12, required=False, label="Título de Eleitor")
+    zona_eleitoral = forms.CharField(max_length=3, required=False, label="Zona Eleitoral")
+    secao_eleitoral = forms.CharField(max_length=4, required=False, label="Seção Eleitoral")
+    email_2 = forms.EmailField(required=False, label="E-mail 2")
+    telefone_2 = forms.CharField(max_length=20, required=False, label="Telefone 2 / Celular")
+
+    # Passaporte/Autorização de Permanência: campo de Pessoa desde 03/09/2026 (visível
+    # para qualquer categoria na Identificação Ampliada, não só Discente).
+    passaporte = forms.CharField(max_length=20, required=False, label="Nº do Passaporte")
+    autorizacao_permanencia = forms.CharField(
+        max_length=50, required=False, label="Autorização de Permanência"
+    )
+
     # --- Pessoa: endereço ---
     endereco_cep = forms.CharField(max_length=8, label="CEP")
     endereco_logradouro = forms.CharField(max_length=200, label="Logradouro")
@@ -101,10 +121,6 @@ class CadastrarPessoaForm(forms.Form):
     # --- DadosDiscente (só relevante quando Funcao.categoria == DISCENTE) ---
     codigo_matricula_anac = forms.CharField(
         max_length=20, required=False, label="Código de Matrícula ANAC"
-    )
-    passaporte = forms.CharField(max_length=20, required=False, label="Nº do Passaporte")
-    autorizacao_permanencia = forms.CharField(
-        max_length=50, required=False, label="Autorização de Permanência"
     )
     contato_emergencia_nome = forms.CharField(
         max_length=200, required=False, label="Contato de emergência - Nome"
@@ -231,11 +247,13 @@ class EditarPessoaForm(forms.ModelForm):
     class Meta:
         model = Pessoa
         fields = [
-            'nome_completo', 'data_nascimento', 'email', 'telefone',
+            'nome_completo', 'data_nascimento', 'email', 'email_2', 'telefone', 'telefone_2',
             'registro_matricula', 'registro_aluno', 'codigo_anac',
             'sexo', 'identidade', 'data_emissao_identidade', 'orgao_expedidor_identidade',
             'naturalidade', 'uf_naturalidade', 'nacionalidade',
             'filiacao_1', 'filiacao_2', 'nivel_instrucao', 'estado_civil', 'raca_cor',
+            'titulo_eleitor', 'zona_eleitoral', 'secao_eleitoral',
+            'passaporte', 'autorizacao_permanencia',
             'endereco_cep', 'endereco_logradouro', 'endereco_numero', 'endereco_complemento',
             'endereco_bairro', 'endereco_cidade', 'endereco_uf',
         ]
