@@ -12,7 +12,36 @@ Classes:
                               Passaporte/Autorização de Permanência (esses dois últimos,
                               movidos de DadosDiscente em 03/09/2026 — a FE 008 mostra que
                               Docente também usa essa documentação, não é exclusiva de Discente).
-    Disciplina               — versão mínima; campo 'modulo' será adicionado no módulo de Turmas.
+    Disciplina               — nome/sigla únicos (3 letras, regex), cargas horárias
+                              teórica/prática digitadas + carga do Programa de Instrução
+                              aprovado pela ANAC; carga_horaria_total/hora_aula_* são
+                              calculados (property); clean() bloqueia se a soma
+                              teórica+prática não bater com o PI aprovado (05/09/2026,
+                              ver docs/33 — risco real de não-conformidade com a ANAC).
+    ConteudoProgramatico     — linhas do conteúdo programático de uma Disciplina; 'ordem'
+                              é só organização de exibição, sem regra de negócio — é uma
+                              trilha para o professor, não um trilho (docs/33).
+    CatalogoComSigla         — base abstrata (sigla 3 letras única + regex, ativo),
+                              compartilhada por Disciplina/SubModulo/Modulo (docs/33).
+    SubModulo                — agrupa Disciplinas (via SubModuloDisciplina, M2M com
+                              'ordem'); carga_horaria é calculada (soma das Disciplinas
+                              vinculadas), nunca editável — não pode divergir do PI aprovado.
+    SubModuloDisciplina      — tabela intermediária SubModulo×Disciplina, com 'ordem'
+                              (uma Disciplina pode pertencer a mais de um SubModulo).
+    Modulo                   — catálogo aberto (Básico, Especializado em Aviônica, etc.);
+                              nome livre único + sigla (3 letras, usada em geração de PDF).
+    ModuloSubModulo          — tabela intermediária Modulo×SubModulo, com 'ordem' (um
+                              SubModulo pode pertencer a mais de um Módulo).
+    OfertaModulo             — um Módulo oferecido num ano letivo; data_inicio obrigatória
+                              no cadastro, data_fim só quando encerrada (mesmo padrão de
+                              AtribuicaoFuncao); 'ativo' em vez de campo de situação.
+    Turma                    — pertence a uma OfertaModulo (herda as datas dela); tem
+                              periodo (Matutino/Vespertino/Noturno — pode variar entre
+                              Turmas da mesma Oferta) e situacao própria.
+    Ata                      — catálogo de Atas (Ordinária/Extraordinária × Início/
+                              Término de Vínculo/Orientação/Conselho de Ensino/Outro,
+                              eixos independentes); referenciada futuramente por
+                              TurmaAluno (módulo Atribuição, ainda não implementado).
     CategoriaFuncao          — enum que classifica uma Funcao como Discente/Docente/Gestão,
                               usado pela interface para decidir qual formulário exibir
                               (não é regra de negócio — essa mora nas extensões, por estrutura).
@@ -53,7 +82,9 @@ Regras de negócio complexas ficam em services.py, não aqui.
 """
 
 from dataclasses import dataclass
+from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from django.core.validators import RegexValidator
@@ -179,23 +210,244 @@ class Pessoa(models.Model):
         return self.nome_completo
 
 
-class Disciplina(models.Model):
-    """Versão mínima — campo 'modulo' será adicionado quando o módulo de Turmas for construído."""
-    sigla = models.CharField(
-        max_length=3,
-        unique=True,
-        validators=[
-            RegexValidator(
-                regex=r'^[A-Z]{3}$',
-                message="Sigla deve conter exatamente 3 letras maiúsculas (ex: CBA, PSO, TCX)."
-            )
-        ]
-    )
+SIGLA_3_LETRAS_VALIDATOR = RegexValidator(
+    regex=r'^[A-Z]{3}$',
+    message="Sigla deve conter exatamente 3 letras maiúsculas (ex: CBA, PSO, TCX)."
+)
+
+
+class CatalogoComSigla(models.Model):
+    """
+    Base abstrata compartilhada por Disciplina/SubModulo/Modulo (mesma "forma":
+    sigla de 3 letras única + regex, mais soft-deactivate via 'ativo') — evita
+    repetir o validador e os campos em 3 lugares (decisão registrada em docs/33).
+    """
+    sigla = models.CharField(max_length=3, unique=True, validators=[SIGLA_3_LETRAS_VALIDATOR])
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+
+class Disciplina(CatalogoComSigla):
+    """
+    Cargas horárias em horas-relógio decimais (não "tempos de aula"). A carga total
+    (teórica + prática) precisa bater exatamente com o Programa de Instrução aprovado
+    pela ANAC — divergência aqui pode gerar notificação da ANAC à escola, por isso a
+    trava é em clean() (ver nota abaixo sobre importação em lote).
+    """
     nome = models.CharField(max_length=100, unique=True)
-    carga_horaria = models.IntegerField()
+    carga_horaria_programa_de_instrucao = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        help_text="Valor fixo, definido no Programa de Instrução aprovado pela ANAC."
+    )
+    carga_horaria_teorica = models.DecimalField(max_digits=6, decimal_places=2)
+    carga_horaria_pratica = models.DecimalField(max_digits=6, decimal_places=2)
+
+    @property
+    def carga_horaria_total(self):
+        return self.carga_horaria_teorica + self.carga_horaria_pratica
+
+    @property
+    def hora_aula_total(self):
+        """1 hora-aula = 45 minutos = 0,75h."""
+        return self.carga_horaria_total / Decimal('0.75')
+
+    @property
+    def hora_aula_teorica(self):
+        return self.carga_horaria_teorica / Decimal('0.75')
+
+    @property
+    def hora_aula_pratica(self):
+        return self.carga_horaria_pratica / Decimal('0.75')
+
+    def clean(self):
+        if self.carga_horaria_total != self.carga_horaria_programa_de_instrucao:
+            raise ValidationError(
+                f"Carga horária total (teórica {self.carga_horaria_teorica}h + prática "
+                f"{self.carga_horaria_pratica}h = {self.carga_horaria_total}h) não bate "
+                f"com o Programa de Instrução aprovado ({self.carga_horaria_programa_de_instrucao}h)."
+            )
 
     def __str__(self):
         return f"{self.sigla} - {self.nome}"
+
+
+class ConteudoProgramatico(models.Model):
+    """
+    Uma linha/tópico do conteúdo programático de uma Disciplina. 'ordem' é só para
+    organizar a exibição no cadastro — o Conteúdo Programático é uma trilha para o
+    professor, não um trilho: o instrutor decide a sequência real de ensino conforme
+    a turma (conhecimentos prévios, lacunas cognitivas), sem nenhuma regra de negócio
+    amarrada a 'ordem' (confirmado em 05/09/2026, ver docs/33).
+
+    on_delete=PROTECT (não CASCADE): impede excluir uma Disciplina que já tenha
+    Conteúdo Programático cadastrado — preserva rastreabilidade do que foi definido
+    para ser ministrado; força desativar (Disciplina.ativo=False) em vez de apagar.
+    """
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='conteudos_programaticos')
+    ordem = models.PositiveSmallIntegerField()
+    descricao = models.TextField()
+    observacao = models.TextField(blank=True)
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['disciplina', 'ordem'], name='unique_ordem_por_disciplina'),
+        ]
+
+    def __str__(self):
+        return f"{self.disciplina.sigla} #{self.ordem} - {self.descricao[:50]}"
+
+
+class SubModulo(CatalogoComSigla):
+    """
+    carga_horaria é CALCULADA (soma das Disciplinas vinculadas via SubModuloDisciplina),
+    nunca editável manualmente — não pode divergir do Programa de Instrução aprovado,
+    já que o valor calculado É o valor oficial (decisão de 05/09/2026, ver docs/33).
+    """
+    nome = models.CharField(max_length=150)
+
+    @property
+    def carga_horaria(self):
+        total = Decimal('0')
+        for vinculo in self.disciplinas_vinculadas.select_related('disciplina'):
+            total += vinculo.disciplina.carga_horaria_total
+        return total
+
+    def __str__(self):
+        return f"{self.sigla} - {self.nome}"
+
+
+class SubModuloDisciplina(models.Model):
+    """Tabela intermediária: quais Disciplinas compõem um SubModulo, e em que ordem (só organização, sem regra de negócio)."""
+    submodulo = models.ForeignKey(SubModulo, on_delete=models.PROTECT, related_name='disciplinas_vinculadas')
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, related_name='submodulos_vinculados')
+    ordem = models.PositiveSmallIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['submodulo', 'disciplina'], name='unique_disciplina_por_submodulo'),
+            models.UniqueConstraint(fields=['submodulo', 'ordem'], name='unique_ordem_disciplina_por_submodulo'),
+        ]
+
+    def __str__(self):
+        return f"{self.submodulo.sigla} - {self.disciplina.sigla} (#{self.ordem})"
+
+
+class Modulo(CatalogoComSigla):
+    """
+    Catálogo aberto — Básico, Especializado em Aviônica, Especializado em Célula,
+    Especializado em GMP, Extracurricular. 'nome' é texto cadastrado, livre, não
+    choices (permite criar novos Módulos sem alterar código). 'sigla' usada em
+    geração futura de PDFs (hábito da escola), ex: "2026 BAS NOT R3 MAT".
+    """
+    nome = models.CharField(max_length=150, unique=True)
+    descricao = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.sigla} - {self.nome}"
+
+
+class ModuloSubModulo(models.Model):
+    """Tabela intermediária: quais SubModulos compõem um Modulo, e em que ordem (só organização, sem regra de negócio)."""
+    modulo = models.ForeignKey(Modulo, on_delete=models.PROTECT, related_name='submodulos_vinculados')
+    submodulo = models.ForeignKey(SubModulo, on_delete=models.PROTECT, related_name='modulos_vinculados')
+    ordem = models.PositiveSmallIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['modulo', 'submodulo'], name='unique_submodulo_por_modulo'),
+            models.UniqueConstraint(fields=['modulo', 'ordem'], name='unique_ordem_submodulo_por_modulo'),
+        ]
+
+    def __str__(self):
+        return f"{self.modulo.sigla} - {self.submodulo.sigla} (#{self.ordem})"
+
+
+class OfertaModulo(models.Model):
+    """
+    Um Modulo oferecido num ano letivo específico. Mesmo padrão de AtribuicaoFuncao:
+    'data_inicio' obrigatória no cadastro, 'data_fim' só preenchida ao encerrar
+    (tela/popup futura); 'ativo' substitui um campo de situação separado.
+    """
+    modulo = models.ForeignKey(Modulo, on_delete=models.PROTECT, related_name='ofertas')
+    ano_letivo = models.PositiveSmallIntegerField()
+    data_inicio = models.DateField()
+    data_fim = models.DateField(null=True, blank=True)
+    ativo = models.BooleanField(default=True)
+    observacao = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.modulo.nome} {self.ano_letivo}"
+
+
+class PeriodoTurma(models.TextChoices):
+    MATUTINO = 'MATUTINO', 'Matutino'
+    VESPERTINO = 'VESPERTINO', 'Vespertino'
+    NOTURNO = 'NOTURNO', 'Noturno'
+
+
+class SituacaoTurma(models.TextChoices):
+    PLANEJADA = 'PLANEJADA', 'Planejada'
+    EM_ANDAMENTO = 'EM_ANDAMENTO', 'Em Andamento'
+    ENCERRADA = 'ENCERRADA', 'Encerrada'
+
+
+class Turma(models.Model):
+    """
+    Pertence a uma OfertaModulo e herda as datas dela (sem data_inicio/data_fim
+    próprias — confirmado em 05/09/2026). 'periodo' vive aqui, não em OfertaModulo,
+    porque pode variar entre Turmas da mesma Oferta (ex: Básico 2026 com turma no
+    vespertino e outra no noturno).
+    """
+    oferta_modulo = models.ForeignKey(OfertaModulo, on_delete=models.PROTECT, related_name='turmas')
+    nome = models.CharField(max_length=100)
+    sigla = models.CharField(max_length=10)
+    periodo = models.CharField(max_length=20, choices=PeriodoTurma.choices)
+    capacidade_maxima = models.PositiveSmallIntegerField(null=True, blank=True)
+    situacao = models.CharField(max_length=20, choices=SituacaoTurma.choices, default=SituacaoTurma.PLANEJADA)
+    observacao = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['oferta_modulo', 'sigla'], name='unique_sigla_por_oferta'),
+        ]
+
+    def __str__(self):
+        return f"{self.nome} ({self.oferta_modulo})"
+
+
+class TipoAta(models.TextChoices):
+    ORDINARIA = 'ORDINARIA', 'Ordinária'
+    EXTRAORDINARIA = 'EXTRAORDINARIA', 'Extraordinária'
+
+
+class FinalidadeAta(models.TextChoices):
+    INICIO_VINCULO = 'INICIO_VINCULO', 'Início de Vínculo'
+    TERMINO_VINCULO = 'TERMINO_VINCULO', 'Término de Vínculo'
+    ORIENTACAO = 'ORIENTACAO', 'Orientação'
+    CONSELHO_ENSINO = 'CONSELHO_ENSINO', 'Conselho de Ensino'
+    OUTRO = 'OUTRO', 'Outro'
+
+
+class Ata(models.Model):
+    """
+    Catálogo independente — 'tipo' e 'finalidade' são eixos independentes (uma Ata
+    de finalidade Término de Vínculo pode ser tipo Ordinária ou Extraordinária).
+    Sem 'ativo': uma Ata é, por natureza, um registro histórico fechado. Referenciada
+    futuramente por TurmaAluno.ata_inicio/ata_termino (módulo Atribuição, não
+    implementado ainda) — não tem campo de motivo aqui de propósito.
+    """
+    numero = models.CharField(max_length=20, unique=True)
+    tipo = models.CharField(max_length=20, choices=TipoAta.choices)
+    finalidade = models.CharField(max_length=20, choices=FinalidadeAta.choices)
+    data = models.DateField()
+    assunto = models.CharField(max_length=255, blank=True)
+    observacao = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Ata {self.get_tipo_display()} {self.numero} - {self.get_finalidade_display()}"
 
 
 class CategoriaFuncao(models.TextChoices):
