@@ -345,6 +345,14 @@ class Modulo(CatalogoComSigla):
     nome = models.CharField(max_length=150, unique=True)
     descricao = models.TextField(blank=True)
 
+    @property
+    def carga_horaria(self):
+        """Soma das cargas horárias (já calculadas) dos SubModulos vinculados via ModuloSubModulo."""
+        total = Decimal('0')
+        for vinculo in self.submodulos_vinculados.select_related('submodulo'):
+            total += vinculo.submodulo.carga_horaria
+        return total
+
     def __str__(self):
         return f"{self.sigla} - {self.nome}"
 
@@ -405,7 +413,6 @@ class Turma(models.Model):
     nome = models.CharField(max_length=100)
     sigla = models.CharField(max_length=10)
     periodo = models.CharField(max_length=20, choices=PeriodoTurma.choices)
-    capacidade_maxima = models.PositiveSmallIntegerField(null=True, blank=True)
     situacao = models.CharField(max_length=20, choices=SituacaoTurma.choices, default=SituacaoTurma.PLANEJADA)
     observacao = models.TextField(blank=True)
 
@@ -448,6 +455,30 @@ class Ata(models.Model):
 
     def __str__(self):
         return f"Ata {self.get_tipo_display()} {self.numero} - {self.get_finalidade_display()}"
+
+
+class AtaPessoa(models.Model):
+    """
+    Vincula uma Pessoa (Discente) a uma Ata — mesmo espírito de
+    ModuloSubModulo/SubModuloDisciplina: vínculo sem estado, sem data própria.
+
+    EXCEÇÃO PROVISÓRIA ao princípio "Pessoa amarrada = módulo Atribuição"
+    (docs/29): implementada aqui em 05/09/2026 só para destravar o uso real de
+    Ata de Conselho/Orientação/Outro antes do módulo Atribuição existir.
+    Confirmado com a pessoa responsável que este Model MIGRA para o módulo
+    Atribuição quando ele for construído — não é definitivo em cadastros
+    (ver docs/35).
+    """
+    ata = models.ForeignKey(Ata, on_delete=models.PROTECT, related_name='pessoas_vinculadas')
+    pessoa = models.ForeignKey(Pessoa, on_delete=models.PROTECT, related_name='atas_vinculadas')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['ata', 'pessoa'], name='unique_pessoa_por_ata'),
+        ]
+
+    def __str__(self):
+        return f"{self.ata.numero} - {self.pessoa.nome_completo}"
 
 
 class CategoriaFuncao(models.TextChoices):

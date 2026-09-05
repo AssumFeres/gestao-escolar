@@ -1,0 +1,11 @@
+<h3>Vincular Pessoa</h3>
+<p>Ata: <strong>{{ ata.numero }} - {{ ata.get_finalidade_display }}</strong></p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo">{{ form.pessoa.label_tag }} {{ form.pessoa }} {{ form.pessoa.errors }}</div>
+    <button type="submit">Vincular</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_ata_pessoa_fragment.html</p>

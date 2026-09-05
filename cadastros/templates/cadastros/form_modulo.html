@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Novo{% endif %} Modulo - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'lista-modulos' %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_modulo_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: cadastros/templates/cadastros/form_modulo.html</p>
+{% endblock %}

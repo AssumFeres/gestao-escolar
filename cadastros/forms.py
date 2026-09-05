@@ -23,12 +23,15 @@ de Discente).
 from datetime import date
 
 from django import forms
+from django.db.models import Q
 
 from .models import (
     Funcao, VinculoFormal, TipoFormacaoDocente, TipoPendencia,
     Sexo, EstadoCivil, RacaCor, FormacaoDocente, HistoricoVinculoFormal,
     ExperienciaProfissional, PendenciaCadastro, AtribuicaoFuncao,
-    RequisitoContratacao, Pessoa,
+    RequisitoContratacao, Pessoa, Disciplina, ConteudoProgramatico,
+    SubModulo, SubModuloDisciplina, Modulo, ModuloSubModulo,
+    OfertaModulo, Turma, Ata, AtaPessoa,
 )
 
 
@@ -343,6 +346,276 @@ class EditarRequisitoContratacaoForm(forms.ModelForm):
         widgets = {
             'requisito_contratacao': forms.RadioSelect(),
         }
+
+
+class DisciplinaModelForm(forms.ModelForm):
+    """
+    ModelForm para Criar/Editar Disciplina (CRU — sem Delete, ver docs/33).
+    'ativo' fica de fora de propósito: o toggle Ativo/Inativo é uma ação própria
+    (ToggleAtivoDisciplinaView), separada da edição normal dos dados da Disciplina
+    — mesmo raciocínio já aplicado a AtribuicaoFuncao (situação não se mistura
+    com edição de dados comuns).
+
+    A validação de conformidade com o Programa de Instrução (Disciplina.clean())
+    dispara automaticamente aqui — ModelForm.is_valid() chama instance.full_clean(),
+    que inclui clean(). Mesma trava que já funciona no Admin, sem duplicar código.
+    """
+    class Meta:
+        model = Disciplina
+        fields = [
+            'nome', 'sigla',
+            'carga_horaria_programa_de_instrucao', 'carga_horaria_teorica', 'carga_horaria_pratica',
+        ]
+
+
+class DisciplinaToggleAtivoForm(forms.ModelForm):
+    """
+    Sem campos próprios — só inverte 'ativo' ao salvar. Usado pela tela de
+    confirmação (botão simples + confirmação), nunca editável diretamente.
+    """
+    class Meta:
+        model = Disciplina
+        fields = []
+
+    def save(self, commit=True):
+        self.instance.ativo = not self.instance.ativo
+        if commit:
+            self.instance.save()
+        return self.instance
+
+
+class ConteudoProgramaticoModelForm(forms.ModelForm):
+    """
+    ModelForm para Criar/Editar uma linha de Conteúdo Programático — 'disciplina'
+    resolvida pela URL (dispatch), nunca pelo formulário. CRU — sem Delete, mesmo
+    padrão de Disciplina (rastreabilidade do que foi definido para ser ministrado).
+    """
+    class Meta:
+        model = ConteudoProgramatico
+        fields = ['ordem', 'descricao', 'observacao']
+        widgets = {
+            'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
+        }
+
+
+class ConteudoProgramaticoToggleAtivoForm(forms.ModelForm):
+    """Mesmo padrão de DisciplinaToggleAtivoForm, para uma linha de Conteúdo Programático."""
+    class Meta:
+        model = ConteudoProgramatico
+        fields = []
+
+    def save(self, commit=True):
+        self.instance.ativo = not self.instance.ativo
+        if commit:
+            self.instance.save()
+        return self.instance
+
+
+class SubModuloModelForm(forms.ModelForm):
+    """Criar/Editar SubModulo (CRU — sem Delete, mesmo padrão de Disciplina). 'ativo' fica de fora, toggle é ação própria."""
+    class Meta:
+        model = SubModulo
+        fields = ['nome', 'sigla']
+
+
+class SubModuloToggleAtivoForm(forms.ModelForm):
+    """Mesmo padrão de DisciplinaToggleAtivoForm."""
+    class Meta:
+        model = SubModulo
+        fields = []
+
+    def save(self, commit=True):
+        self.instance.ativo = not self.instance.ativo
+        if commit:
+            self.instance.save()
+        return self.instance
+
+
+class SubModuloDisciplinaModelForm(forms.ModelForm):
+    """
+    Vincula uma Disciplina já cadastrada a um SubModulo, com 'ordem'. 'submodulo'
+    é passado pela View (nunca pelo formulário) e usado aqui só para validar
+    duplicidade com mensagem amigável — o UNIQUE do banco já protege, isso é
+    só para o erro aparecer de forma clara (ver docs/34).
+
+    Desvincular (Delete real de SubModuloDisciplina) não afeta rastreabilidade:
+    ConteudoProgramatico.disciplina aponta direto para Disciplina, nunca passa
+    por este vínculo — decisão confirmada em 05/09/2026, ver docs/34.
+    """
+    class Meta:
+        model = SubModuloDisciplina
+        fields = ['disciplina', 'ordem']
+
+    def __init__(self, *args, **kwargs):
+        self.submodulo = kwargs.pop('submodulo')
+        super().__init__(*args, **kwargs)
+        # Só oferece Disciplinas ativas no dropdown — catálogo pequeno hoje
+        # (dezenas de itens), dropdown simples é suficiente por enquanto.
+        self.fields['disciplina'].queryset = Disciplina.objects.filter(ativo=True).order_by('nome')
+
+    def clean_disciplina(self):
+        disciplina = self.cleaned_data['disciplina']
+        if SubModuloDisciplina.objects.filter(submodulo=self.submodulo, disciplina=disciplina).exists():
+            raise forms.ValidationError("Esta Disciplina já está vinculada a este SubModulo.")
+        return disciplina
+
+    def clean_ordem(self):
+        ordem = self.cleaned_data['ordem']
+        if SubModuloDisciplina.objects.filter(submodulo=self.submodulo, ordem=ordem).exists():
+            raise forms.ValidationError("Já existe uma Disciplina nesta posição (ordem) deste SubModulo.")
+        return ordem
+
+
+class ModuloModelForm(forms.ModelForm):
+    """Criar/Editar Modulo (CRU — sem Delete, mesmo padrão de Disciplina/SubModulo)."""
+    class Meta:
+        model = Modulo
+        fields = ['nome', 'sigla', 'descricao']
+
+
+class ModuloToggleAtivoForm(forms.ModelForm):
+    """Mesmo padrão de DisciplinaToggleAtivoForm/SubModuloToggleAtivoForm."""
+    class Meta:
+        model = Modulo
+        fields = []
+
+    def save(self, commit=True):
+        self.instance.ativo = not self.instance.ativo
+        if commit:
+            self.instance.save()
+        return self.instance
+
+
+class ModuloSubModuloModelForm(forms.ModelForm):
+    """
+    Vincula um SubModulo já cadastrado a um Modulo, com 'ordem'. Mesmo padrão de
+    SubModuloDisciplinaModelForm — 'modulo' vem da View, validação de duplicidade
+    com mensagem amigável, Delete real permitido no vínculo (desvincular não
+    afeta rastreabilidade, ver docs/34).
+    """
+    class Meta:
+        model = ModuloSubModulo
+        fields = ['submodulo', 'ordem']
+
+    def __init__(self, *args, **kwargs):
+        self.modulo = kwargs.pop('modulo')
+        super().__init__(*args, **kwargs)
+        self.fields['submodulo'].queryset = SubModulo.objects.filter(ativo=True).order_by('nome')
+
+    def clean_submodulo(self):
+        submodulo = self.cleaned_data['submodulo']
+        if ModuloSubModulo.objects.filter(modulo=self.modulo, submodulo=submodulo).exists():
+            raise forms.ValidationError("Este SubModulo já está vinculado a este Modulo.")
+        return submodulo
+
+    def clean_ordem(self):
+        ordem = self.cleaned_data['ordem']
+        if ModuloSubModulo.objects.filter(modulo=self.modulo, ordem=ordem).exists():
+            raise forms.ValidationError("Já existe um SubModulo nesta posição (ordem) deste Modulo.")
+        return ordem
+
+
+class OfertaModuloModelForm(forms.ModelForm):
+    """
+    Criar/Editar OfertaModulo — 'data_fim' e 'ativo' ficam de fora: preenchidos
+    só pela ação de Encerrar (EncerrarOfertaModuloForm), nunca aqui.
+
+    Reativar uma Oferta encerrada só é possível pelo Django Admin, de propósito
+    (decisão de 05/09/2026) — a tela mostra um aviso, sem botão de Reativar.
+    """
+    class Meta:
+        model = OfertaModulo
+        fields = ['modulo', 'ano_letivo', 'data_inicio', 'observacao']
+        widgets = {
+            'data_inicio': forms.DateInput(attrs={'type': 'date'}),
+            'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Só Módulos ativos no dropdown — mas, ao editar uma Oferta já existente,
+        # mantém visível o Módulo atual mesmo que ele tenha sido inativado depois.
+        queryset = Modulo.objects.filter(ativo=True)
+        if self.instance.pk and self.instance.modulo_id:
+            queryset = Modulo.objects.filter(Q(ativo=True) | Q(pk=self.instance.modulo_id))
+        self.fields['modulo'].queryset = queryset.order_by('nome')
+
+
+class EncerrarOfertaModuloForm(forms.ModelForm):
+    """
+    Encerra uma OfertaModulo — exige 'data_fim' (diferente do Model, onde é
+    opcional) e marca 'ativo=False'. Mesmo padrão de
+    EncerrarHistoricoVinculoFormalForm.
+    """
+    class Meta:
+        model = OfertaModulo
+        fields = ['data_fim']
+        widgets = {
+            'data_fim': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_fim'].required = True
+
+    def save(self, commit=True):
+        self.instance.ativo = False
+        return super().save(commit=commit)
+
+
+class TurmaModelForm(forms.ModelForm):
+    """
+    Criar/Editar Turma — 'oferta_modulo' resolvido pela URL (dispatch), nunca
+    pelo formulário. CRU — nunca há Delete de Turma (decisão de 05/09/2026).
+    'situacao' é um campo comum, editável direto aqui — sem botão dedicado
+    (diferente do padrão Ativo/Inativo de Disciplina/SubModulo/Modulo).
+    """
+    class Meta:
+        model = Turma
+        fields = ['nome', 'sigla', 'periodo', 'situacao', 'observacao']
+        widgets = {
+            'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
+        }
+
+
+class AtaModelForm(forms.ModelForm):
+    """Criar/Editar Ata — CRU; Delete só pelo Django Admin (decisão de 05/09/2026)."""
+    class Meta:
+        model = Ata
+        fields = ['numero', 'tipo', 'finalidade', 'data', 'assunto', 'observacao']
+        widgets = {
+            'data': forms.DateInput(attrs={'type': 'date'}),
+            'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
+        }
+
+
+class AtaPessoaModelForm(forms.ModelForm):
+    """
+    Vincula um Discente ativo a uma Ata. 'ata' vem da View (dispatch), nunca do
+    formulário. Dropdown mostra só Pessoas com AtribuicaoFuncao de Discente
+    ATIVA (matriculado agora, não ex-aluno já encerrado) — decisão de
+    05/09/2026, ver docs/35.
+
+    EXCEÇÃO PROVISÓRIA (ver AtaPessoa.__doc__ em models.py): este vínculo migra
+    para o módulo Atribuição quando ele existir.
+    """
+    class Meta:
+        model = AtaPessoa
+        fields = ['pessoa']
+
+    def __init__(self, *args, **kwargs):
+        self.ata = kwargs.pop('ata')
+        super().__init__(*args, **kwargs)
+        self.fields['pessoa'].queryset = Pessoa.objects.filter(
+            atribuicoes__dados_discente__isnull=False,
+            atribuicoes__ativo=True,
+        ).distinct().order_by('nome_completo')
+
+    def clean_pessoa(self):
+        pessoa = self.cleaned_data['pessoa']
+        if AtaPessoa.objects.filter(ata=self.ata, pessoa=pessoa).exists():
+            raise forms.ValidationError("Esta Pessoa já está vinculada a esta Ata.")
+        return pessoa
 
 
 # Formsets

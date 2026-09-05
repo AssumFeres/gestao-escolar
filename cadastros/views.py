@@ -17,7 +17,9 @@ from rest_framework import status
 from .models import (
     Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente,
     AtribuicaoFuncao, HistoricoVinculoFormal, ExperienciaProfissional,
-    PendenciaCadastro,
+    PendenciaCadastro, Disciplina, ConteudoProgramatico,
+    SubModulo, SubModuloDisciplina, Modulo, ModuloSubModulo,
+    OfertaModulo, Turma, Ata, AtaPessoa,
 )
 from .forms import (
     CadastrarPessoaForm, EditarPessoaForm, FormacaoDocenteModelForm,
@@ -26,6 +28,12 @@ from .forms import (
     EditarPendenciaCadastroForm, EditarRequisitoContratacaoForm,
     FormacaoDocenteFormSet, ExperienciaProfissionalFormSet,
     HistoricoVinculoFormalFormSet, PendenciaCadastroFormSet,
+    DisciplinaModelForm, DisciplinaToggleAtivoForm,
+    ConteudoProgramaticoModelForm, ConteudoProgramaticoToggleAtivoForm,
+    SubModuloModelForm, SubModuloToggleAtivoForm, SubModuloDisciplinaModelForm,
+    ModuloModelForm, ModuloToggleAtivoForm, ModuloSubModuloModelForm,
+    OfertaModuloModelForm, EncerrarOfertaModuloForm, TurmaModelForm,
+    AtaModelForm, AtaPessoaModelForm,
 )
 from .services import (
     BuscarEnderecoPorCepService,
@@ -623,3 +631,537 @@ class EditarRequisitoContratacaoView(ModalCrudMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('detalhe-pessoa', kwargs={'pk': self.object.pessoa_id})
+
+
+# --- Disciplina + ConteudoProgramatico (estrutura curricular, docs/33) ---
+# CRU — sem Delete (nunca excluir Disciplina/ConteudoProgramatico de verdade,
+# ver docs/33): o toggle de 'ativo' substitui a exclusão nos dois casos.
+
+class ListaDisciplinasView(ListView):
+    model = Disciplina
+    template_name = 'cadastros/lista_disciplinas.html'
+    context_object_name = 'disciplinas'
+    ordering = ['nome']
+
+
+class DetalheDisciplinaView(DetailView):
+    model = Disciplina
+    template_name = 'cadastros/detalhe_disciplina.html'
+    context_object_name = 'disciplina'
+
+
+class AdicionarDisciplinaView(ModalCrudMixin, CreateView):
+    model = Disciplina
+    form_class = DisciplinaModelForm
+    template_name = 'cadastros/form_disciplina.html'
+    template_fragmento = 'cadastros/_form_disciplina_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.object.pk})
+
+
+class EditarDisciplinaView(ModalCrudMixin, UpdateView):
+    model = Disciplina
+    form_class = DisciplinaModelForm
+    template_name = 'cadastros/form_disciplina.html'
+    template_fragmento = 'cadastros/_form_disciplina_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.object.pk})
+
+
+class ToggleAtivoDisciplinaView(ModalCrudMixin, UpdateView):
+    """Confirmação simples + inverte Disciplina.ativo — substitui Excluir (CRU, sem Delete)."""
+    model = Disciplina
+    form_class = DisciplinaToggleAtivoForm
+    template_name = 'cadastros/form_toggle_ativo_disciplina.html'
+    template_fragmento = 'cadastros/_form_toggle_ativo_disciplina_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.object.pk})
+
+
+class AdicionarConteudoProgramaticoView(ModalCrudMixin, CreateView):
+    model = ConteudoProgramatico
+    form_class = ConteudoProgramaticoModelForm
+    template_name = 'cadastros/form_conteudo_programatico.html'
+    template_fragmento = 'cadastros/_form_conteudo_programatico_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.disciplina = get_object_or_404(Disciplina, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.disciplina = self.disciplina
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['disciplina'] = self.disciplina
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.disciplina.pk})
+
+
+class EditarConteudoProgramaticoView(ModalCrudMixin, UpdateView):
+    model = ConteudoProgramatico
+    form_class = ConteudoProgramaticoModelForm
+    template_name = 'cadastros/form_conteudo_programatico.html'
+    template_fragmento = 'cadastros/_form_conteudo_programatico_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['disciplina'] = self.object.disciplina
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.object.disciplina_id})
+
+
+class ToggleAtivoConteudoProgramaticoView(ModalCrudMixin, UpdateView):
+    """Confirmação simples + inverte ConteudoProgramatico.ativo — substitui Excluir."""
+    model = ConteudoProgramatico
+    form_class = ConteudoProgramaticoToggleAtivoForm
+    template_name = 'cadastros/form_toggle_ativo_conteudo_programatico.html'
+    template_fragmento = 'cadastros/_form_toggle_ativo_conteudo_programatico_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-disciplina', kwargs={'pk': self.object.disciplina_id})
+
+
+# --- SubModulo + SubModuloDisciplina (estrutura curricular, docs/33/docs/34) ---
+# SubModulo é CRU (sem Delete, mesmo padrão de Disciplina). O vínculo com
+# Disciplina (SubModuloDisciplina) permite Delete real — desvincular não afeta
+# rastreabilidade, ConteudoProgramatico.disciplina aponta direto para
+# Disciplina, nunca passa por este vínculo (ver docs/34).
+
+class ListaSubModulosView(ListView):
+    model = SubModulo
+    template_name = 'cadastros/lista_submodulos.html'
+    context_object_name = 'submodulos'
+    ordering = ['nome']
+
+
+class DetalheSubModuloView(DetailView):
+    model = SubModulo
+    template_name = 'cadastros/detalhe_submodulo.html'
+    context_object_name = 'submodulo'
+
+
+class AdicionarSubModuloView(ModalCrudMixin, CreateView):
+    model = SubModulo
+    form_class = SubModuloModelForm
+    template_name = 'cadastros/form_submodulo.html'
+    template_fragmento = 'cadastros/_form_submodulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-submodulo', kwargs={'pk': self.object.pk})
+
+
+class EditarSubModuloView(ModalCrudMixin, UpdateView):
+    model = SubModulo
+    form_class = SubModuloModelForm
+    template_name = 'cadastros/form_submodulo.html'
+    template_fragmento = 'cadastros/_form_submodulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-submodulo', kwargs={'pk': self.object.pk})
+
+
+class ToggleAtivoSubModuloView(ModalCrudMixin, UpdateView):
+    """Confirmação simples + inverte SubModulo.ativo — substitui Excluir (CRU, sem Delete)."""
+    model = SubModulo
+    form_class = SubModuloToggleAtivoForm
+    template_name = 'cadastros/form_toggle_ativo_submodulo.html'
+    template_fragmento = 'cadastros/_form_toggle_ativo_submodulo_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-submodulo', kwargs={'pk': self.object.pk})
+
+
+class AdicionarSubModuloDisciplinaView(ModalCrudMixin, CreateView):
+    """Vincula uma Disciplina já cadastrada a um SubModulo, com 'ordem'."""
+    model = SubModuloDisciplina
+    form_class = SubModuloDisciplinaModelForm
+    template_name = 'cadastros/form_submodulo_disciplina.html'
+    template_fragmento = 'cadastros/_form_submodulo_disciplina_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.submodulo = get_object_or_404(SubModulo, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['submodulo'] = self.submodulo
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.submodulo = self.submodulo
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submodulo'] = self.submodulo
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-submodulo', kwargs={'pk': self.submodulo.pk})
+
+
+class ExcluirSubModuloDisciplinaView(ModalCrudMixin, DeleteView):
+    """
+    Desvincula uma Disciplina de um SubModulo — Delete real do VÍNCULO
+    (SubModuloDisciplina), não da Disciplina em si. Reaproveita o template
+    genérico de confirmação (mesmo usado por Formação/Experiência/Pendência).
+    """
+    model = SubModuloDisciplina
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('detalhe-submodulo', kwargs={'pk': self.object.submodulo_id})
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-submodulo', kwargs={'pk': self.object.submodulo_id})
+
+
+# --- Modulo + ModuloSubModulo (estrutura curricular, docs/33/docs/34) ---
+# Mesmo padrão de SubModulo/SubModuloDisciplina, uma camada acima: Modulo é
+# CRU (sem Delete); o vínculo com SubModulo permite Delete real (desvincular
+# não afeta rastreabilidade, mesmo raciocínio de docs/34).
+
+class ListaModulosView(ListView):
+    model = Modulo
+    template_name = 'cadastros/lista_modulos.html'
+    context_object_name = 'modulos'
+    ordering = ['nome']
+
+
+class DetalheModuloView(DetailView):
+    model = Modulo
+    template_name = 'cadastros/detalhe_modulo.html'
+    context_object_name = 'modulo'
+
+
+class AdicionarModuloView(ModalCrudMixin, CreateView):
+    model = Modulo
+    form_class = ModuloModelForm
+    template_name = 'cadastros/form_modulo.html'
+    template_fragmento = 'cadastros/_form_modulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-modulo', kwargs={'pk': self.object.pk})
+
+
+class EditarModuloView(ModalCrudMixin, UpdateView):
+    model = Modulo
+    form_class = ModuloModelForm
+    template_name = 'cadastros/form_modulo.html'
+    template_fragmento = 'cadastros/_form_modulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-modulo', kwargs={'pk': self.object.pk})
+
+
+class ToggleAtivoModuloView(ModalCrudMixin, UpdateView):
+    """Confirmação simples + inverte Modulo.ativo — substitui Excluir (CRU, sem Delete)."""
+    model = Modulo
+    form_class = ModuloToggleAtivoForm
+    template_name = 'cadastros/form_toggle_ativo_modulo.html'
+    template_fragmento = 'cadastros/_form_toggle_ativo_modulo_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-modulo', kwargs={'pk': self.object.pk})
+
+
+class AdicionarModuloSubModuloView(ModalCrudMixin, CreateView):
+    """Vincula um SubModulo já cadastrado a um Modulo, com 'ordem'."""
+    model = ModuloSubModulo
+    form_class = ModuloSubModuloModelForm
+    template_name = 'cadastros/form_modulo_submodulo.html'
+    template_fragmento = 'cadastros/_form_modulo_submodulo_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.modulo = get_object_or_404(Modulo, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['modulo'] = self.modulo
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.modulo = self.modulo
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['modulo'] = self.modulo
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-modulo', kwargs={'pk': self.modulo.pk})
+
+
+class ExcluirModuloSubModuloView(ModalCrudMixin, DeleteView):
+    """Desvincula um SubModulo de um Modulo — Delete real do VÍNCULO, não do SubModulo em si."""
+    model = ModuloSubModulo
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('detalhe-modulo', kwargs={'pk': self.object.modulo_id})
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-modulo', kwargs={'pk': self.object.modulo_id})
+
+
+# --- OfertaModulo + Turma (estrutura curricular, docs/33/docs/35) ---
+# OfertaModulo: lista independente (Módulo escolhido via dropdown, não pela URL).
+# Só "Encerrar" na tela (exige data_fim) — Reativar é só pelo Django Admin, de
+# propósito (decisão de 05/09/2026). Turma: CRU, nunca há Delete; 'situacao'
+# muda via edição normal, sem botão dedicado (diferente do padrão Ativo/Inativo
+# dos catálogos anteriores).
+
+class ListaOfertaModulosView(ListView):
+    model = OfertaModulo
+    template_name = 'cadastros/lista_ofertas_modulo.html'
+    context_object_name = 'ofertas'
+    ordering = ['-ano_letivo', 'modulo__nome']
+
+
+class DetalheOfertaModuloView(DetailView):
+    model = OfertaModulo
+    template_name = 'cadastros/detalhe_oferta_modulo.html'
+    context_object_name = 'oferta'
+
+
+class AdicionarOfertaModuloView(ModalCrudMixin, CreateView):
+    model = OfertaModulo
+    form_class = OfertaModuloModelForm
+    template_name = 'cadastros/form_oferta_modulo.html'
+    template_fragmento = 'cadastros/_form_oferta_modulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-oferta-modulo', kwargs={'pk': self.object.pk})
+
+
+class EditarOfertaModuloView(ModalCrudMixin, UpdateView):
+    model = OfertaModulo
+    form_class = OfertaModuloModelForm
+    template_name = 'cadastros/form_oferta_modulo.html'
+    template_fragmento = 'cadastros/_form_oferta_modulo_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-oferta-modulo', kwargs={'pk': self.object.pk})
+
+
+class EncerrarOfertaModuloView(ModalCrudMixin, UpdateView):
+    """Só usada quando a Oferta está ativa — Reativar é exclusivo do Admin."""
+    model = OfertaModulo
+    form_class = EncerrarOfertaModuloForm
+    template_name = 'cadastros/form_encerrar_oferta_modulo.html'
+    template_fragmento = 'cadastros/_form_encerrar_oferta_modulo_fragment.html'
+
+    def get_success_url(self):
+        return reverse('detalhe-oferta-modulo', kwargs={'pk': self.object.pk})
+
+
+class AdicionarTurmaView(ModalCrudMixin, CreateView):
+    model = Turma
+    form_class = TurmaModelForm
+    template_name = 'cadastros/form_turma.html'
+    template_fragmento = 'cadastros/_form_turma_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.oferta_modulo = get_object_or_404(OfertaModulo, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.oferta_modulo = self.oferta_modulo
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['oferta_modulo'] = self.oferta_modulo
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-oferta-modulo', kwargs={'pk': self.oferta_modulo.pk})
+
+
+class EditarTurmaView(ModalCrudMixin, UpdateView):
+    model = Turma
+    form_class = TurmaModelForm
+    template_name = 'cadastros/form_turma.html'
+    template_fragmento = 'cadastros/_form_turma_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['oferta_modulo'] = self.object.oferta_modulo
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-oferta-modulo', kwargs={'pk': self.object.oferta_modulo_id})
+
+
+class ListaTurmasView(ListView):
+    """
+    Lista global de Turmas, de todas as Ofertas de Modulo -- so leitura. Cada
+    linha leva para o detalhe da Oferta correspondente (onde a Turma ja e
+    editada via popup) -- decisao de 07/09/2026: nao existe detalhe_turma.html
+    proprio, pois Turma nao tem nenhum "filho" (diferente de Modulo/Disciplina)
+    e criaria uma segunda superficie de edicao sem necessidade real.
+    """
+    model = Turma
+    template_name = 'cadastros/lista_turmas.html'
+    context_object_name = 'turmas'
+
+    def get_queryset(self):
+        return Turma.objects.select_related('oferta_modulo', 'oferta_modulo__modulo').order_by(
+            '-oferta_modulo__ano_letivo', 'oferta_modulo__modulo__nome', 'nome'
+        )
+
+
+# --- Ata + AtaPessoa (estrutura curricular, docs/33; docs/35) ---
+# Ata é CRU — Delete só pelo Django Admin (decisão de 05/09/2026). AtaPessoa é
+# EXCEÇÃO PROVISÓRIA ao princípio "Pessoa amarrada = módulo Atribuição" (ver
+# docstring de AtaPessoa em models.py) — destrava o uso real de Ata de
+# Conselho/Orientação/Outro antes do módulo Atribuição existir; migra para lá
+# quando ele for construído.
+
+class ListaAtasView(ListView):
+    model = Ata
+    template_name = 'cadastros/lista_atas.html'
+    context_object_name = 'atas'
+    ordering = ['-data']
+
+
+class DetalheAtaView(DetailView):
+    model = Ata
+    template_name = 'cadastros/detalhe_ata.html'
+    context_object_name = 'ata'
+
+
+class AdicionarAtaView(ModalCrudMixin, CreateView):
+    model = Ata
+    form_class = AtaModelForm
+    template_name = 'cadastros/form_ata.html'
+    template_fragmento = 'cadastros/_form_ata_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = False
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-ata', kwargs={'pk': self.object.pk})
+
+
+class EditarAtaView(ModalCrudMixin, UpdateView):
+    model = Ata
+    form_class = AtaModelForm
+    template_name = 'cadastros/form_ata.html'
+    template_fragmento = 'cadastros/_form_ata_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-ata', kwargs={'pk': self.object.pk})
+
+
+class AdicionarAtaPessoaView(ModalCrudMixin, CreateView):
+    """Vincula um Discente ativo a uma Ata — botão só aparece para finalidade Orientação/Conselho de Ensino/Outro (ver template)."""
+    model = AtaPessoa
+    form_class = AtaPessoaModelForm
+    template_name = 'cadastros/form_ata_pessoa.html'
+    template_fragmento = 'cadastros/_form_ata_pessoa_fragment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.ata = get_object_or_404(Ata, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['ata'] = self.ata
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.ata = self.ata
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ata'] = self.ata
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-ata', kwargs={'pk': self.ata.pk})
+
+
+class ExcluirAtaPessoaView(ModalCrudMixin, DeleteView):
+    """Desvincula uma Pessoa de uma Ata — Delete real do VÍNCULO, não da Pessoa em si."""
+    model = AtaPessoa
+    template_name = 'cadastros/confirmar_exclusao.html'
+    template_fragmento = 'cadastros/_confirmar_exclusao_fragment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['url_voltar'] = reverse('detalhe-ata', kwargs={'pk': self.object.ata_id})
+        return context
+
+    def get_success_url(self):
+        return reverse('detalhe-ata', kwargs={'pk': self.object.ata_id})
+

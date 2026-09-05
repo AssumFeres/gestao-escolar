@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ oferta.modulo.sigla }} {{ oferta.ano_letivo }} - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'lista-ofertas-modulo' %}" class="botao-link">&larr; Voltar para Ofertas de Modulo</a></p>
+
+<h2>
+  <p align="center">{{ oferta.modulo.sigla }} - {{ oferta.modulo.nome }} ({{ oferta.ano_letivo }})</p>
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'editar-oferta-modulo' pk=oferta.pk %}"
+          style="font-size: 0.9rem; vertical-align: middle; margin-left: 12px;">
+    Editar
+  </button>
+  {% if oferta.ativo %}
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'encerrar-oferta-modulo' pk=oferta.pk %}"
+          style="font-size: 0.9rem; vertical-align: middle; margin-left: 6px;">
+    Encerrar
+  </button>
+  {% endif %}
+</h2>
+
+{% if not oferta.ativo %}
+<p style="color:#a94442; background-color:#f2dede; border:1px solid #ebccd1; padding:8px 12px; border-radius:4px;">
+    Esta Oferta está <strong>encerrada</strong> (Data Fim: {{ oferta.data_fim|date:"d/m/Y" }}).
+    A reativação só pode ser feita pelo Django Admin.
+</p>
+{% endif %}
+
+<table>
+  <tr>
+    <th>Situação</th>
+    <td>{{ oferta.ativo|yesno:"Ativa,Encerrada" }}</td>
+    <th>Ano Letivo</th>
+    <td>{{ oferta.ano_letivo }}</td>
+  </tr>
+  <tr>
+    <th>Data Início</th>
+    <td>{{ oferta.data_inicio|date:"d/m/Y" }}</td>
+    <th>Data Fim</th>
+    <td>{{ oferta.data_fim|date:"d/m/Y"|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Observação</th>
+    <td colspan="3">{{ oferta.observacao|default:"-----" }}</td>
+  </tr>
+</table>
+
+<fieldset>
+  <legend>Turmas</legend>
+  {% if oferta.turmas.all %}
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Sigla</th>
+        <th>Período</th>
+        <th>Situação</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for turma in oferta.turmas.all %}
+      <tr>
+        <td>{{ turma.nome }}</td>
+        <td>{{ turma.sigla }}</td>
+        <td>{{ turma.get_periodo_display }}</td>
+        <td>{{ turma.get_situacao_display }}</td>
+        <td>
+          <button type="button" class="btn-abrir-modal-crud btn-crud"
+                  data-url="{% url 'editar-turma' pk=turma.pk %}">
+            Editar
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Nenhuma turma cadastrada.</p>
+  {% endif %}
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'adicionar-turma' pk=oferta.pk %}">
+    + Nova Turma
+  </button>
+</fieldset>
+
+<div id="modal-crud-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div id="modal-crud-caixa" style="background-color:#ffffff; padding:24px 28px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:600px; width:90%; position:relative;">
+        <button type="button" id="modal-crud-fechar" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
+        <div id="modal-crud-corpo">Carregando...</div>
+    </div>
+</div>
+
+<script src="{% static 'cadastros/js/modal-crud.js' %}"></script>
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_oferta_modulo.html</p>
+{% endblock %}

@@ -1,0 +1,16 @@
+<h3>{% if editando %}Editar Disciplina{% else %}Nova Disciplina{% endif %}</h3>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo">{{ form.nome.label_tag }} {{ form.nome }} {{ form.nome.errors }}</div>
+    <div class="campo">{{ form.sigla.label_tag }} {{ form.sigla }} {{ form.sigla.errors }}</div>
+    <div class="grid-3-colunas">
+        <div class="campo">{{ form.carga_horaria_programa_de_instrucao.label_tag }} {{ form.carga_horaria_programa_de_instrucao }} {{ form.carga_horaria_programa_de_instrucao.errors }}</div>
+        <div class="campo">{{ form.carga_horaria_teorica.label_tag }} {{ form.carga_horaria_teorica }} {{ form.carga_horaria_teorica.errors }}</div>
+        <div class="campo">{{ form.carga_horaria_pratica.label_tag }} {{ form.carga_horaria_pratica }} {{ form.carga_horaria_pratica.errors }}</div>
+    </div>
+    <button type="submit">Salvar Disciplina</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_disciplina_fragment.html</p>
