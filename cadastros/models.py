@@ -445,13 +445,37 @@ class Ata(models.Model):
     Sem 'ativo': uma Ata é, por natureza, um registro histórico fechado. Referenciada
     futuramente por TurmaAluno.ata_inicio/ata_termino (módulo Atribuição, não
     implementado ainda) — não tem campo de motivo aqui de propósito.
+
+    'numero' é opcional no formulário: se deixado em branco, é gerado
+    automaticamente em save() — sequencial de 3 dígitos, reiniciado a cada ano
+    (o ano de 'data', não o ano do sistema), numa série própria por 'tipo'
+    (Ordinária e Extraordinária nunca competem pelo mesmo número). Corrige um
+    bug real de 05/09/2026: 'numero' sozinho como unique=True impedia duas
+    Atas de tipos diferentes terem o mesmo número no mesmo ano — a constraint
+    certa é composta (numero, tipo). Preenchimento manual continua permitido
+    (ex: corrigir um número, ou migrar numeração de um sistema antigo).
     """
-    numero = models.CharField(max_length=20, unique=True)
+    numero = models.CharField(
+        max_length=20, blank=True,
+        help_text="Deixe em branco para gerar automaticamente (3 dígitos/ano, por tipo)."
+    )
     tipo = models.CharField(max_length=20, choices=TipoAta.choices)
     finalidade = models.CharField(max_length=20, choices=FinalidadeAta.choices)
     data = models.DateField()
     assunto = models.CharField(max_length=255, blank=True)
     observacao = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['numero', 'tipo'], name='unique_numero_por_tipo'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            ano = self.data.year
+            sequencial = Ata.objects.filter(tipo=self.tipo, data__year=ano).count() + 1
+            self.numero = f"{sequencial:03d}/{ano}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Ata {self.get_tipo_display()} {self.numero} - {self.get_finalidade_display()}"
