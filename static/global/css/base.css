@@ -43,6 +43,9 @@ body {
   background-color: var(--fundo-pagina);
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* ----------------------------------------------------------
@@ -77,6 +80,11 @@ header {
   background-color: var(--cor-primaria);
   color: white;
   padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 header h1 {
@@ -96,9 +104,9 @@ nav a:hover {
 }
 
 main {
+  flex: 1 1 auto;
   padding: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
+  min-width: 0; /* evita que tabelas largas estourem o layout flex */
 }
 
 /* ----------------------------------------------------------
@@ -316,14 +324,138 @@ button[type="submit"] {
   color: white;
 }
 
-/* Logo no cabeçalho, ao lado do título */
+/* Logo no cabeçalho, ao lado do título — agora é um <a> (leva para a Home) */
 .header-titulo {
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
 }
 
 .logo {
   height: 50px;
   width: auto;
+}
+
+/* ----------------------------------------------------------
+   10. LAYOUT COM SIDEBAR (menu por ator, 06/09/2026)
+   ---------------------------------------------------------- */
+
+/* Área do usuário logado + logout, à direita do cabeçalho.
+   'header-usuario-nome' é um placeholder — não existe login/sessão real
+   ainda (ver Backlog); quando existir, o texto vem do usuário autenticado. */
+.header-usuario {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  font-weight: 600;
+}
+
+.header-logout {
+  color: white;
+  font-size: 1.3rem;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.header-logout:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* Envolve o sidebar + a área de trabalho (main), lado a lado */
+.layout-com-sidebar {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  background-color: var(--cor-primaria);
+  padding: 1rem 0;
+}
+
+.sidebar-grupo {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-grupo-titulo {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.2rem;
+  cursor: pointer;
+  border-radius: 0; /* sobrescreve o border-radius genérico de <button> */
+}
+
+.sidebar-grupo-titulo:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-submenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-submenu li {
+  padding: 0;
+}
+
+.sidebar-submenu a {
+  display: block;
+  color: #cbd5e1;
+  font-style: italic;
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.5rem 1.2rem 0.5rem 1.8rem;
+}
+
+.sidebar-submenu a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+/* Grupo expandido: só o titulo do grupo (o "botao") fica com fundo claro
+   (mesmo tom da area de trabalho, --fundo-pagina) -- da a sensacao de que a
+   area de trabalho "se estende" ate o menu (pedido de 07/09/2026). O FUNDO
+   DO SUBMENU EM SI NUNCA MUDA -- continua sempre --cor-primaria (#002060),
+   confirmado explicitamente em 07/09/2026 (correcao de uma tentativa
+   anterior que deixava o submenu inteiro claro, o que nao era o pedido).
+   */
+.sidebar-grupo.aberto .sidebar-grupo-titulo {
+  background-color: var(--fundo-pagina);
+  color: var(--cor-primaria);
+}
+
+/* Item ativo (a pagina que voce esta vendo agora) -- negrito + italico,
+   cor branca para se destacar contra o fundo escuro do submenu (que nunca
+   muda). Ajustado em 07/09/2026: antes só tinha negrito, faltava o italico
+   pedido. */
+.sidebar-submenu a.ativo {
+  font-weight: 700;
+  font-style: italic;
+  color: #ffffff;
+}
+
+/* Sem JS: todos os submenus ficam sempre visíveis (progressive enhancement —
+   ninguém perde acesso a um link só porque o script não carregou).
+   Com JS ('js-ativo' adicionada por sidebar.js): esconde os submenus dos
+   grupos fechados, comportamento de accordion. */
+.sidebar.js-ativo .sidebar-grupo:not(.aberto) .sidebar-submenu {
+  display: none;
 }
