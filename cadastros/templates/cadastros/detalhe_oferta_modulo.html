@@ -72,6 +72,9 @@
                   data-url="{% url 'editar-turma' pk=turma.pk %}">
             Editar
           </button>
+          <a href="{% url 'gerenciar-turma' pk=turma.pk %}" class="botao-link" style="font-size:0.85rem; padding:0.35rem 0.8rem;">
+            Gerenciar Alunos
+          </a>
         </td>
       </tr>
       {% endfor %}

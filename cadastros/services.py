@@ -193,6 +193,23 @@ class EncerrarVinculoService:
         return atribuicao_funcao
 
 
+class IniciarTurmaService:
+    """
+    PLANEJADA -> EM_ANDAMENTO. Chamado pelo módulo atribuicao ao "Finalizar
+    Planejamento" (docs/37, seção 4.2). Turma.situacao só avança, nunca
+    retrocede (exceto via Admin, fora deste Service).
+    """
+
+    def executar(self, turma):
+        from .models import SituacaoTurma
+
+        if turma.situacao != SituacaoTurma.PLANEJADA:
+            raise ValidationError("Só é possível iniciar uma Turma que está Planejada.")
+        turma.situacao = SituacaoTurma.EM_ANDAMENTO
+        turma.save()
+        return turma
+
+
 class ObterOuCriarAtribuicaoDiscenteService:
     """
     Usado pelo módulo atribuicao ao matricular uma Pessoa numa Turma (regular
