@@ -149,32 +149,34 @@ de Gestao Escolar{% endblock %} {% block content %}
 {% endwith %}
 {% endfor %}
 
-<h3>Funcoes</h3>
-{% if pessoa.atribuicoes.all %}
+<h3>Sumário Histórico de Vínculos</h3>
+{% if sumario_historico_vinculos %}
 <table>
   <thead>
     <tr>
-      <th>Funcao</th>
-      <th>Situacao</th>
-      <th>Data inicio</th>
-      <th>Data fim</th>
+      <th>Função</th>
+      <th>Situação</th>
+      <th>Ata</th>
+      <th>Data</th>
       <th>Turma</th>
+      <th>Status na Turma</th>
     </tr>
   </thead>
   <tbody>
-    {% for atribuicao in pessoa.atribuicoes.all %}
+    {% for linha in sumario_historico_vinculos %}
     <tr>
-      <td>{{ atribuicao.funcao.nome }}</td>
-      <td>{{ atribuicao.situacao }}</td>
-      <td>{{ atribuicao.data_inicio|date:"d/m/Y" }}</td>
-      <td>{{ atribuicao.data_fim|date:"d/m/Y"|default:"-----" }}</td>
-      <td>-----</td>
+      <td>{{ linha.funcao }}</td>
+      <td>{{ linha.situacao }}</td>
+      <td>{{ linha.ata|default:"-----" }}</td>
+      <td>{{ linha.data|date:"d/m/Y"|default:"-----" }}</td>
+      <td>{{ linha.turma|default:"-----" }}</td>
+      <td>{{ linha.status_turma|default:"-----" }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% else %}
-<p>Nenhuma funcao cadastrada.</p>
+<p>Nenhum vínculo cadastrado.</p>
 {% endif %}
 
 <h3>Requisitos de Contratação</h3>

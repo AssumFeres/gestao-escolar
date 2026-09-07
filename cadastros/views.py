@@ -150,12 +150,90 @@ class ListaPessoasView(ListView):
 
 class DetalhePessoaView(DetailView):
     """
-    Template View: mostra os dados completos de uma Pessoa e suas Funções.
-    Único "centro de comando" da Pessoa desde a Etapa B (02/09/2026).
+    Template View: mostra os dados completos de uma Pessoa e seu Sumário
+    Histórico de Vínculos. Único "centro de comando" da Pessoa desde a
+    Etapa B (02/09/2026).
+
+    "Funções" foi renomeado para "Sumário Histórico de Vínculos" em
+    07/09/2026 (docs/37, seção 6) — não é uma tabela nova, é uma consulta
+    consolidada: Docente/Gestão mostram 1-2 linhas direto de
+    AtribuicaoFuncao; Discente mostra 1 linha por MatriculaTurma (lida via
+    'atribuicao_funcao.matriculas_turma', o related_name do módulo
+    atribuicao — leitura pura, sem nenhum import de lá, respeitando a
+    fronteira entre os dois apps).
     """
     model = Pessoa
     template_name = 'cadastros/detalhe.html'
     context_object_name = 'pessoa'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sumario_historico_vinculos'] = self._construir_sumario_historico_vinculos()
+        return context
+
+    def _construir_sumario_historico_vinculos(self):
+        linhas = []
+        for atribuicao in self.object.atribuicoes.select_related('funcao').order_by('data_inicio'):
+            if hasattr(atribuicao, 'dados_discente'):
+                linhas.extend(self._linhas_discente(atribuicao))
+            else:
+                linhas.extend(self._linhas_docente_gestao(atribuicao))
+        return linhas
+
+    def _linhas_discente(self, atribuicao):
+        canac = atribuicao.dados_discente.codigo_matricula_anac
+        rotulo_funcao = f"{atribuicao.funcao.nome} (ANAC: {canac})" if canac else atribuicao.funcao.nome
+
+        matriculas = list(
+            atribuicao.matriculas_turma.select_related(
+                'turma__oferta_modulo__modulo', 'ata_inicio', 'ata_encerramento'
+            ).order_by('id')
+        )
+
+        if not matriculas:
+            return [{
+                'funcao': rotulo_funcao,
+                'situacao': atribuicao.get_situacao_display(),
+                'ata': None,
+                'data': atribuicao.data_inicio,
+                'turma': None,
+                'status_turma': 'Aguardando Atribuição',
+            }]
+
+        linhas = []
+        ultimo_indice = len(matriculas) - 1
+        for indice, matricula in enumerate(matriculas):
+            eh_ultima = (indice == ultimo_indice)
+            ata = matricula.ata_encerramento or matricula.ata_inicio
+            linhas.append({
+                'funcao': rotulo_funcao,
+                'situacao': atribuicao.get_situacao_display() if eh_ultima else 'Ativo',
+                'ata': str(ata) if ata else None,
+                'data': matricula.data_fim or matricula.data_inicio,
+                'turma': matricula.turma.nome,
+                'status_turma': matricula.get_status_display(),
+            })
+        return linhas
+
+    def _linhas_docente_gestao(self, atribuicao):
+        linhas = [{
+            'funcao': atribuicao.funcao.nome,
+            'situacao': 'Ativo' if atribuicao.data_fim else atribuicao.get_situacao_display(),
+            'ata': None,
+            'data': atribuicao.data_inicio,
+            'turma': None,
+            'status_turma': None,
+        }]
+        if atribuicao.data_fim:
+            linhas.append({
+                'funcao': atribuicao.funcao.nome,
+                'situacao': atribuicao.get_situacao_display(),
+                'ata': None,
+                'data': atribuicao.data_fim,
+                'turma': None,
+                'status_turma': None,
+            })
+        return linhas
 
 
 # Campo usado para decidir se uma linha de Formset foi de fato preenchida
