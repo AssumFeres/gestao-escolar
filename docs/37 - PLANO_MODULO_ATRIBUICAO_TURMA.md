@@ -165,12 +165,12 @@ class MatriculaTurma(models.Model):
 - **+ Adicionar Aluno** continua disponível (só para Relocados de outra turma, ou entrada nova em Extracurricular) — entra no fim da lista (`numero_na_turma = MAX+1` daquela Turma), sem popup de CANAC (Discente relocado já tem).
 - **Editar/CRU** por linha: **sem Excluir físico** (botão de excluir some) — só edição de `status` (choice: `RELOCADO`/`REPROVADO`/`TRANSFERIDO` com `motivo_saida`/`MATRICULA_EXCLUIDA`).
   - `RELOCADO`: fecha a linha atual (`data_fim`=hoje), abre uma `MatriculaTurma` nova na Turma destino (`CURSANDO`, sem `data_fim`). Não mexe em `AtribuicaoFuncao` (vínculo institucional continua `ATIVO`, sem Ata).
-  - `REPROVADO`/`TRANSFERIDO`/`MATRICULA_EXCLUIDA`: pede `data_fim` + `ata_encerramento` (❓ **ver pergunta em aberto, seção 8-B**, sobre se isso se aplica igual em Turma Básico); chama `EncerrarVinculoService` sobre a `AtribuicaoFuncao` correspondente (se a regra de fechamento se aplicar — depende do Módulo, ver seção 4.4).
+  - `REPROVADO`/`TRANSFERIDO`/`MATRICULA_EXCLUIDA`: **sempre** fim de ciclo do aluno na EMCA, independente do `Modulo.categoria` (seção 8-B, fechada em 07/09/2026) — pede `data_fim` + `ata_encerramento`; chama `EncerrarVinculoService` sobre a `AtribuicaoFuncao` correspondente.
 
 ### 4.4 — Botão "Encerrar Turma" (2 cliques)
 
 **1º clique:**
-- Popup de aviso + ❓ **lista de revisão pré-aprovação** (ver seção 8-A, ainda não fechada) → confirma → todo `Matriculado`/`CURSANDO` restante vira `APROVADO` em massa. `Turma.situacao` continua `EM_ANDAMENTO`.
+- Popup de aviso com **lista de revisão pré-aprovação** (seção 8-A — checkbox "Aprovar" por aluno, marcado por padrão, desmarcável) → confirma → todo `CURSANDO` ainda marcado vira `APROVADO` em massa; quem foi desmarcado continua `CURSANDO`, bloqueando o 2º clique até ser resolvido individualmente. `Turma.situacao` continua `EM_ANDAMENTO`.
 
 **2º clique** (só disponível quando não sobra ninguém `CURSANDO`):
 - Se `Modulo.categoria = BASICO` (ou `EXTRACURRICULAR`, conforme fechamento da seção 7): popup pede só `data_fim` da Turma; todo `APROVADO` fica "Aguardando Turma" (`AtribuicaoFuncao` continua `ATIVO`, sem Ata).
@@ -220,13 +220,15 @@ Rótulo único pra qualquer categoria (Discente/Docente/Gestão) — decisão co
 
 ## 8. Perguntas em aberto (não bloqueiam o início da implementação, mas precisam ser fechadas antes das Etapas correspondentes)
 
-### 8-A — Revisão pré-aprovação em massa (seção 4.4, 1º clique)
+### 8-A — Revisão pré-aprovação em massa (seção 4.4, 1º clique) — ✅ FECHADA em 07/09/2026
 
-A pessoa responsável tem uma preocupação real: promover `CURSANDO→APROVADO` em massa sem revisão pode aprovar, por engano, um aluno que devia ter sido marcado Reprovado/Desistente antes (hoje não existe Registro de Instrução pra saber se ele cumpriu frequência/avaliação). **Sugestão apresentada, ainda não confirmada:** o 1º clique abre uma lista de revisão com caixa "Aprovar" marcada por padrão em cada aluno `CURSANDO`, editável individualmente antes de confirmar — quem for desmarcado fica de fora da promoção em massa. Pessoa responsável vai validar com a secretaria antes de decidir.
+**Decisão confirmada:** o 1º clique em "Encerrar Turma" abre uma lista de revisão com todos os alunos ainda `CURSANDO`, cada um com uma caixa "Aprovar" marcada por padrão — editável individualmente antes de confirmar. Quem for desmarcado fica de fora da promoção em massa (permanece `CURSANDO`, precisa ser resolvido individualmente via Editar/CRU antes de a Turma poder ser encerrada de vez, ver seção 4.4 e regra da seção 12 do documento original).
 
-### 8-B — Encerramento individual em Turma Básico
+### 8-B — Encerramento individual em Turma Básico — ✅ FECHADA em 07/09/2026
 
-Quando um aluno é marcado `REPROVADO`/`TRANSFERIDO`/`MATRICULA_EXCLUIDA` **individualmente, no meio do ano**, numa Turma de `Modulo.categoria=BASICO` — isso fecha o vínculo institucional (`AtribuicaoFuncao→INATIVO`, com Ata), ou o Básico nunca fecha vínculo (nem em massa no fim do ano, nem individualmente no meio dele), permitindo o aluno tentar de novo numa Turma futura sem precisar de `AtribuicaoFuncao` nova? Não discutido ainda.
+**Decisão:** `REPROVADO`/`TRANSFERIDO`/`MATRICULA_EXCLUIDA` é sempre fim de ciclo do aluno na EMCA — **independente do `Modulo.categoria`** (Básico ou Especializado) e independente de ser resolvido individualmente no meio do ano ou antes do fechamento em massa da Turma. Sempre exige `ata_encerramento` em `MatriculaTurma` e sempre chama `EncerrarVinculoService` (`AtribuicaoFuncao → INATIVO`).
+
+Isso restringe a distinção Básico/Especializado a **um único lugar**: a promoção `APROVADO` em massa no "Encerrar Turma" (seção 4.4) — Básico aprovado vira "Aguardando Turma" (não fecha vínculo, é continuação natural pro Especializado); Especializado aprovado fecha vínculo (concluiu a habilitação). Fora desse caso específico de aprovação normal, qualquer término é término — não importa o Módulo.
 
 ---
 
@@ -234,7 +236,7 @@ Quando um aluno é marcado `REPROVADO`/`TRANSFERIDO`/`MATRICULA_EXCLUIDA` **indi
 
 1. **Etapa 0** (seção 2): consolidar `situacao`/`ativo`, corrigir bug do Service, adicionar `Modulo.categoria`, criar os 2 Services novos em `cadastros`. Baixo risco, testável isoladamente, sem tela nova.
 2. **App `atribuicao`**: `MatriculaTurma` + migration + Admin (Admin-only primeiro, mesmo padrão já usado nos outros catálogos).
-3. **Fechar 8-A e 8-B** antes de codar a tela de "Encerrar Turma" — as outras telas (Planejamento, Adicionar/Editar aluno em andamento) não dependem dessas respostas.
+3. ~~Fechar 8-A e 8-B antes de codar a tela de "Encerrar Turma"~~ — ✅ **as duas fechadas em 07/09/2026.** Nenhum bloqueio restante para codar a fase "Em Andamento" (Relocação, mudança de status) nem "Encerrar Turma".
 4. **Telas**: gestão de composição da Turma (Planejamento → Finalizar → Em Andamento → Encerrar), reaproveitando `ModalCrudMixin`/`modal-crud.js` como sempre.
 5. **`detalhe.html` de Pessoa**: renomear seção pra "Sumário Histórico de Vínculos", implementar a consulta consolidada (seção 6).
 6. **Extracurricular** (seção 7): fechar a regra de "não fechar vínculo se houver Turma regular ativa acumulada" antes de liberar matrícula extracurricular de verdade.
