@@ -92,10 +92,18 @@ class CadastrarPessoaComFuncaoService:
                         setattr(pessoa, campo, valor)
                 pessoa.save()
 
-                ja_e_discente = pessoa.atribuicoes.filter(dados_discente__isnull=False).exists()
-                if ja_e_discente:
+                # Corrigido em 07/09/2026 (docs/37, Etapa 0): antes checava só a
+                # EXISTÊNCIA de uma AtribuicaoFuncao Discente, bloqueando até quem já
+                # teve o vínculo encerrado há anos. Agora só bloqueia se houver uma
+                # ATIVA — cada passagem da Pessoa pela EMCA como Discente é sua
+                # própria AtribuicaoFuncao; um ex-aluno pode voltar como Discente
+                # novo (nova AtribuicaoFuncao), sem reabrir a antiga.
+                ja_e_discente_ativo = pessoa.atribuicoes.filter(
+                    dados_discente__isnull=False, situacao='ATIVO'
+                ).exists()
+                if ja_e_discente_ativo:
                     raise ValidationError(
-                        "Esta pessoa já possui a Função Discente e não pode acumular outra Função."
+                        "Esta pessoa já possui a Função Discente ativa e não pode acumular outra Função."
                     )
 
             atribuicao = AtribuicaoFuncao.objects.create(
@@ -164,3 +172,53 @@ class BuscarEnderecoPorCepService:
 
     def executar(self, cep: str):
         return self.cliente_cep.buscar_endereco(cep)
+
+
+class EncerrarVinculoService:
+    """
+    Encerra qualquer AtribuicaoFuncao — Discente, Docente ou Gestão (docs/37,
+    Etapa 0). Só situacao + data_fim: sem Ata aqui de propósito — a Ata de
+    encerramento de um Discente vive em MatriculaTurma.ata_encerramento
+    (módulo atribuicao), não em AtribuicaoFuncao. Usado tanto pelo botão
+    manual (Docente/Gestão, e Discente fora do fluxo de turma) quanto pelo
+    módulo atribuicao (encerramento individual ou em lote ao fechar Turma).
+    """
+
+    def executar(self, atribuicao_funcao, data_fim):
+        from .models import SituacaoAtribuicao
+
+        atribuicao_funcao.situacao = SituacaoAtribuicao.INATIVO
+        atribuicao_funcao.data_fim = data_fim
+        atribuicao_funcao.save()
+        return atribuicao_funcao
+
+
+class ObterOuCriarAtribuicaoDiscenteService:
+    """
+    Usado pelo módulo atribuicao ao matricular uma Pessoa numa Turma (regular
+    ou extracurricular, docs/37 seção 7). Reaproveita a AtribuicaoFuncao
+    Discente ATIVA existente, se houver — a mesma Pessoa pode acumular Turma
+    regular + Extracurricular na mesma AtribuicaoFuncao. Se não houver
+    nenhuma ativa (nunca foi Discente, ou só tem alguma já INATIVO no
+    passado), cria uma nova, mínima — sem código de matrícula ANAC, sem
+    nenhum requisito de aluno regular (já opcionais em DadosDiscente hoje).
+    Nunca reabre uma AtribuicaoFuncao já INATIVO.
+    """
+
+    def executar(self, pessoa, data_inicio):
+        from django.utils import timezone
+        from .models import AtribuicaoFuncao, CategoriaFuncao, DadosDiscente, Funcao, SituacaoAtribuicao
+
+        ativa = pessoa.atribuicoes.filter(dados_discente__isnull=False, situacao=SituacaoAtribuicao.ATIVO).first()
+        if ativa:
+            return ativa
+
+        funcao_discente = Funcao.objects.get(categoria=CategoriaFuncao.DISCENTE)
+        nova = AtribuicaoFuncao.objects.create(
+            pessoa=pessoa,
+            funcao=funcao_discente,
+            situacao=SituacaoAtribuicao.ATIVO,
+            data_inicio=data_inicio or timezone.now().date(),
+        )
+        DadosDiscente.objects.create(atribuicao=nova)
+        return nova

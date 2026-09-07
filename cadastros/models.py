@@ -335,14 +335,28 @@ class SubModuloDisciplina(models.Model):
         return f"{self.submodulo.sigla} - {self.disciplina.sigla} (#{self.ordem})"
 
 
+class CategoriaModulo(models.TextChoices):
+    """
+    Estruturado (07/09/2026, docs/37) — usado pela regra de negócio do módulo
+    Atribuição para decidir se encerrar uma Turma daquele Módulo fecha o
+    vínculo institucional do Discente (Especializado) ou não (Básico/
+    Extracurricular). Independente de 'nome', que continua livre.
+    """
+    BASICO = 'BASICO', 'Básico'
+    ESPECIALIZADO = 'ESPECIALIZADO', 'Especializado'
+    EXTRACURRICULAR = 'EXTRACURRICULAR', 'Extracurricular'
+
+
 class Modulo(CatalogoComSigla):
     """
     Catálogo aberto — Básico, Especializado em Aviônica, Especializado em Célula,
     Especializado em GMP, Extracurricular. 'nome' é texto cadastrado, livre, não
     choices (permite criar novos Módulos sem alterar código). 'sigla' usada em
     geração futura de PDFs (hábito da escola), ex: "2026 BAS NOT R3 MAT".
+    'categoria' é estruturado (ver CategoriaModulo) — não confundir com 'nome'.
     """
     nome = models.CharField(max_length=150, unique=True)
+    categoria = models.CharField(max_length=20, choices=CategoriaModulo.choices)
     descricao = models.TextField(blank=True)
 
     @property
@@ -544,13 +558,26 @@ class RequisitoContratacao(models.TextChoices):
     OUTRO = 'OUTRO', 'Outro'
 
 
+class SituacaoAtribuicao(models.TextChoices):
+    ATIVO = 'ATIVO', 'Ativo'
+    INATIVO = 'INATIVO', 'Inativo'
+
+
 class AtribuicaoFuncao(models.Model):
+    """
+    'situacao' consolidada em 07/09/2026 (docs/37, Etapa 0): antes havia dois
+    campos redundantes (situacao texto livre + ativo booleano), nenhum
+    editável por tela nenhuma até então. Agora é um único campo binário —
+    a distinção fina para Discente (Aguardando Atribuição/Aguardando Turma)
+    é calculada na exibição a partir de MatriculaTurma (módulo atribuicao),
+    nunca gravada aqui. Sem campo de Ata: a Ata de encerramento de um
+    Discente vive em MatriculaTurma.ata_encerramento, não aqui.
+    """
     pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='atribuicoes')
     funcao = models.ForeignKey(Funcao, on_delete=models.PROTECT, related_name='atribuicoes')
-    situacao = models.CharField(max_length=30)
+    situacao = models.CharField(max_length=10, choices=SituacaoAtribuicao.choices, default=SituacaoAtribuicao.ATIVO)
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
-    ativo = models.BooleanField(default=True)
     requisito_contratacao = models.CharField(
         max_length=30, choices=RequisitoContratacao.choices, blank=True,
         help_text="Aplicável a Docente e Gestão (RBAC 141) — não relevante para Discente."

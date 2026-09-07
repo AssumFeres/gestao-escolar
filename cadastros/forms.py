@@ -109,7 +109,12 @@ class CadastrarPessoaForm(forms.Form):
     data_inicio = forms.DateField(
         label="Data de inicio", widget=forms.DateInput(attrs={'type': 'date'})
     )
-    situacao = forms.CharField(max_length=30, initial="ATIVO", label="Situacao")
+    situacao = forms.ChoiceField(
+        choices=[('ATIVO', 'Ativo'), ('INATIVO', 'Inativo')],
+        initial="ATIVO", label="Situacao",
+        help_text="Sempre Ativo no cadastro inicial — o campo existe aqui só para "
+                   "compatibilidade com AtribuicaoFuncao.situacao (docs/37)."
+    )
 
     # --- AtribuicaoFuncao: Requisitos de Contratação (RBAC 141), todos exceto
     # Discente. Coletados já no cadastro inicial (decisão de 02/09/2026).
