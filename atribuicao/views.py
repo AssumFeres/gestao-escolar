@@ -20,10 +20,13 @@ from cadastros.views import ModalCrudMixin
 
 from .forms import (
     AdicionarMatriculaTurmaForm, EditarMatriculaTurmaForm, FinalizarPlanejamentoForm,
-    EditarStatusMatriculaForm,
+    EditarStatusMatriculaForm, RevisarAprovacaoForm, EncerrarTurmaForm,
 )
 from .models import MatriculaTurma, StatusMatriculaTurma
-from .services import FinalizarPlanejamentoService, AlterarStatusMatriculaService
+from .services import (
+    FinalizarPlanejamentoService, AlterarStatusMatriculaService,
+    PromoverAprovadosService, EncerrarTurmaService,
+)
 
 
 class GerenciarTurmaView(DetailView):
@@ -44,6 +47,7 @@ class GerenciarTurmaView(DetailView):
         else:
             matriculas = matriculas.order_by('numero_na_turma')
         context['matriculas'] = matriculas
+        context['ha_cursando'] = self.object.matriculas.filter(status=StatusMatriculaTurma.CURSANDO).exists()
         return context
 
 
@@ -180,3 +184,57 @@ class EditarStatusMatriculaView(View):
                 return JsonResponse({'sucesso': True})
             return redirect('gerenciar-turma', pk=matricula.turma_id)
         return render(request, self._template(request), {'form': form, 'matricula': matricula})
+
+
+class RevisarAprovacaoView(View):
+    """1º clique de "Encerrar Turma" (docs/37, seção 4.4/8-A) — lista de revisão com checkbox por aluno Cursando."""
+
+    def _template(self, request):
+        return 'atribuicao/_form_revisar_aprovacao_fragment.html' if request.GET.get('parcial') == '1' \
+            else 'atribuicao/form_revisar_aprovacao.html'
+
+    def get(self, request, pk):
+        turma = get_object_or_404(Turma, pk=pk)
+        form = RevisarAprovacaoForm(turma=turma)
+        return render(request, self._template(request), {'form': form, 'turma': turma})
+
+    def post(self, request, pk):
+        turma = get_object_or_404(Turma, pk=pk)
+        form = RevisarAprovacaoForm(request.POST, turma=turma)
+        if form.is_valid():
+            PromoverAprovadosService().executar(turma, form.matriculas_aprovadas_ids())
+            if request.GET.get('parcial') == '1':
+                return JsonResponse({'sucesso': True})
+            return redirect('gerenciar-turma', pk=turma.pk)
+        return render(request, self._template(request), {'form': form, 'turma': turma})
+
+
+class EncerrarTurmaView(View):
+    """2º clique de "Encerrar Turma" — só acessível quando não sobra ninguém Cursando."""
+
+    def _template(self, request):
+        return 'atribuicao/_form_encerrar_turma_fragment.html' if request.GET.get('parcial') == '1' \
+            else 'atribuicao/form_encerrar_turma.html'
+
+    def _turma_ou_bloqueio(self, pk):
+        turma = get_object_or_404(Turma, pk=pk)
+        if MatriculaTurma.objects.filter(turma=turma, status=StatusMatriculaTurma.CURSANDO).exists():
+            raise Http404("Ainda existem alunos Cursando — resolva individualmente (ou revise a aprovação em massa) antes de encerrar a Turma.")
+        return turma
+
+    def get(self, request, pk):
+        turma = self._turma_ou_bloqueio(pk)
+        form = EncerrarTurmaForm(turma=turma)
+        return render(request, self._template(request), {'form': form, 'turma': turma})
+
+    def post(self, request, pk):
+        turma = self._turma_ou_bloqueio(pk)
+        form = EncerrarTurmaForm(request.POST, turma=turma)
+        if form.is_valid():
+            EncerrarTurmaService().executar(
+                turma, form.cleaned_data['data_encerramento'], form.cleaned_data.get('ata_encerramento')
+            )
+            if request.GET.get('parcial') == '1':
+                return JsonResponse({'sucesso': True})
+            return redirect('gerenciar-turma', pk=turma.pk)
+        return render(request, self._template(request), {'form': form, 'turma': turma})

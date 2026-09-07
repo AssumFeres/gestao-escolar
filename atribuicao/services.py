@@ -6,12 +6,13 @@ Service exposto lá (IniciarTurmaService, EncerrarVinculoService,
 ObterOuCriarAtribuicaoDiscenteService) — ver docs/37, seção 1.
 """
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from django.db.models import Max
 from django.utils import timezone
 
-from cadastros.services import IniciarTurmaService, EncerrarVinculoService
+from cadastros.services import IniciarTurmaService, EncerrarVinculoService, ConcluirTurmaService
 from .models import MatriculaTurma, StatusMatriculaTurma
 
 
@@ -110,3 +111,74 @@ class AlterarStatusMatriculaService:
                 EncerrarVinculoService().executar(matricula.atribuicao_funcao, data_fim)
 
         return matricula
+
+
+class PromoverAprovadosService:
+    """
+    1º clique de "Encerrar Turma" (docs/37, seção 4.4/8-A, fechada em
+    07/09/2026) — recebe só os IDs marcados "Aprovar" na tela de revisão
+    (checkbox por aluno, desmarcável). Quem não foi marcado continua
+    CURSANDO, bloqueando o 2º clique até ser resolvido individualmente
+    (Editar Status).
+    """
+
+    def executar(self, turma, matricula_ids_aprovar):
+        with transaction.atomic():
+            MatriculaTurma.objects.filter(
+                turma=turma, id__in=matricula_ids_aprovar, status=StatusMatriculaTurma.CURSANDO
+            ).update(status=StatusMatriculaTurma.APROVADO)
+        return turma
+
+
+class EncerrarTurmaService:
+    """
+    2º clique de "Encerrar Turma" (docs/37, seção 4.4) — só chamado quando
+    não sobra ninguém CURSANDO (validado pela View antes de chamar).
+
+    Regra por categoria do Módulo (docs/37, seções 4.4 e 8-B):
+    - BASICO: nunca fecha o vínculo — só grava data_fim em cada
+      MatriculaTurma APROVADO. Aluno fica "Aguardando Turma" (calculado).
+    - ESPECIALIZADO: sempre fecha o vínculo de cada APROVADO (Ata em massa
+      + EncerrarVinculoService).
+    - EXTRACURRICULAR: fecha o vínculo de cada APROVADO, EXCETO se a mesma
+      AtribuicaoFuncao ainda tiver outra MatriculaTurma CURSANDO numa Turma
+      NÃO-Extracurricular (regular acumulada) — resolve a pendência da
+      seção 7 do docs/37 com a checagem que já estava esboçada lá.
+    """
+
+    def executar(self, turma, data_encerramento, ata_encerramento=None):
+        from cadastros.models import CategoriaModulo
+
+        if MatriculaTurma.objects.filter(turma=turma, status=StatusMatriculaTurma.CURSANDO).exists():
+            raise ValidationError("Ainda existem alunos Cursando — resolva individualmente antes de encerrar a Turma.")
+
+        categoria = turma.oferta_modulo.modulo.categoria
+
+        with transaction.atomic():
+            aprovados = MatriculaTurma.objects.filter(
+                turma=turma, status=StatusMatriculaTurma.APROVADO
+            ).select_related('atribuicao_funcao')
+
+            for matricula in aprovados:
+                matricula.data_fim = data_encerramento
+
+                fecha_vinculo = False
+                if categoria == CategoriaModulo.ESPECIALIZADO:
+                    fecha_vinculo = True
+                elif categoria == CategoriaModulo.EXTRACURRICULAR:
+                    tem_regular_ativa = matricula.atribuicao_funcao.matriculas_turma.filter(
+                        status=StatusMatriculaTurma.CURSANDO
+                    ).exclude(
+                        turma__oferta_modulo__modulo__categoria=CategoriaModulo.EXTRACURRICULAR
+                    ).exists()
+                    fecha_vinculo = not tem_regular_ativa
+
+                if fecha_vinculo:
+                    matricula.ata_encerramento = ata_encerramento
+                    EncerrarVinculoService().executar(matricula.atribuicao_funcao, data_encerramento)
+
+                matricula.save()
+
+            ConcluirTurmaService().executar(turma, data_encerramento)
+
+        return turma

@@ -174,3 +174,58 @@ class EditarStatusMatriculaForm(forms.Form):
                 self.add_error('ata_encerramento', "Obrigatório.")
 
         return cleaned_data
+
+
+class RevisarAprovacaoForm(forms.Form):
+    """
+    1º clique de "Encerrar Turma" (docs/37, seção 8-A, fechada em 07/09/2026)
+    — um campo BooleanField por aluno ainda CURSANDO, marcado por padrão
+    (self.matriculas_cursando guarda a lista, na mesma ordem usada para criar
+    os campos — usado pelo template via form.linhas para parear cada
+    matrícula com seu checkbox correspondente).
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.turma = kwargs.pop('turma')
+        super().__init__(*args, **kwargs)
+        self.matriculas_cursando = list(
+            MatriculaTurma.objects.filter(turma=self.turma, status=StatusMatriculaTurma.CURSANDO)
+            .select_related('atribuicao_funcao__pessoa')
+            .order_by('numero_na_turma')
+        )
+        for matricula in self.matriculas_cursando:
+            self.fields[f'aprovar_{matricula.pk}'] = forms.BooleanField(
+                required=False, initial=True, label=matricula.atribuicao_funcao.pessoa.nome_completo,
+            )
+
+    def linhas(self):
+        for matricula in self.matriculas_cursando:
+            yield matricula, self[f'aprovar_{matricula.pk}']
+
+    def matriculas_aprovadas_ids(self):
+        return [m.pk for m in self.matriculas_cursando if self.cleaned_data.get(f'aprovar_{m.pk}')]
+
+
+class EncerrarTurmaForm(forms.Form):
+    """
+    2º clique de "Encerrar Turma" (docs/37, seção 4.4). 'ata_encerramento'
+    fica escondida para Turma de Módulo Básico (nunca fecha vínculo) — para
+    Especializado/Extracurricular, é exigida (mesmo que, no caso do
+    Extracurricular, acabe não sendo usada para quem está acumulando com uma
+    Turma regular — simplificação aceita por ora, ver docs/37 seção 7).
+    """
+    data_encerramento = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}), label="Data de Encerramento"
+    )
+    ata_encerramento = forms.ModelChoiceField(
+        queryset=Ata.objects.filter(finalidade=FinalidadeAta.TERMINO_VINCULO).order_by('-data'),
+        required=False, label="Ata de Término de Vínculo",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.turma = kwargs.pop('turma')
+        super().__init__(*args, **kwargs)
+        if self.turma.oferta_modulo.modulo.categoria == CategoriaModulo.BASICO:
+            self.fields['ata_encerramento'].widget = forms.HiddenInput()
+        else:
+            self.fields['ata_encerramento'].required = True

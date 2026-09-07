@@ -210,6 +210,24 @@ class IniciarTurmaService:
         return turma
 
 
+class ConcluirTurmaService:
+    """
+    EM_ANDAMENTO -> ENCERRADA. Chamado pelo módulo atribuicao no 2º clique de
+    "Encerrar Turma" (docs/37, seção 4.4), só depois que ninguém mais está
+    CURSANDO (validado do lado de atribuicao, antes de chamar este Service).
+    """
+
+    def executar(self, turma, data_encerramento):
+        from .models import SituacaoTurma
+
+        if turma.situacao != SituacaoTurma.EM_ANDAMENTO:
+            raise ValidationError("Só é possível encerrar uma Turma que está Em Andamento.")
+        turma.situacao = SituacaoTurma.ENCERRADA
+        turma.data_encerramento = data_encerramento
+        turma.save()
+        return turma
+
+
 class ObterOuCriarAtribuicaoDiscenteService:
     """
     Usado pelo módulo atribuicao ao matricular uma Pessoa numa Turma (regular

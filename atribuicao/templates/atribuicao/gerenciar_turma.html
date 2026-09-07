@@ -69,11 +69,27 @@
     Finalizar Planejamento
   </button>
   {% endif %}
+
+  {% if turma.situacao == 'EM_ANDAMENTO' %}
+    {% if ha_cursando %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'revisar-aprovacao' pk=turma.pk %}"
+            style="margin-left: 12px;">
+      Encerrar Turma
+    </button>
+    {% else %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'encerrar-turma' pk=turma.pk %}"
+            style="margin-left: 12px;">
+      Encerrar Turma
+    </button>
+    {% endif %}
+  {% endif %}
 </div>
 
-{% if turma.situacao == 'EM_ANDAMENTO' %}
-<p style="margin-top:1rem; color:#64748b; font-style:italic;">
-    "Encerrar Turma" ainda não está implementado nesta etapa (docs/37, perguntas 8-A/8-B).
+{% if turma.situacao == 'ENCERRADA' %}
+<p style="margin-top:1rem; color:#64748b;">
+    Turma encerrada em {{ turma.data_encerramento|date:"d/m/Y" }}.
 </p>
 {% endif %}
 

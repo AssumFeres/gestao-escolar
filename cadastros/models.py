@@ -1,7 +1,7 @@
 """
-pessoas/models.py
+cadastros/models.py
 
-Módulo de domínio: Gestão de Pessoas.
+Módulo de domínio: Gestão de Cadastros.
 
 Classes:
     Pessoa                  — dados cadastrais da pessoa física, com Endereco como VO embutido;
@@ -428,6 +428,10 @@ class Turma(models.Model):
     sigla = models.CharField(max_length=10)
     periodo = models.CharField(max_length=20, choices=PeriodoTurma.choices)
     situacao = models.CharField(max_length=20, choices=SituacaoTurma.choices, default=SituacaoTurma.PLANEJADA)
+    # Preenchida só no 2º clique de "Encerrar Turma" (docs/37, seção 4.4) —
+    # gap identificado em 07/09/2026: a spec da secretaria pede essa data,
+    # mas o campo nunca tinha sido criado.
+    data_encerramento = models.DateField(null=True, blank=True)
     observacao = models.TextField(blank=True)
 
     class Meta:

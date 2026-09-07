@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     GerenciarTurmaView, AdicionarMatriculaTurmaView, EditarMatriculaTurmaView,
     ExcluirMatriculaTurmaView, FinalizarPlanejamentoView, EditarStatusMatriculaView,
+    RevisarAprovacaoView, EncerrarTurmaView,
 )
 
 urlpatterns = [
@@ -11,4 +12,6 @@ urlpatterns = [
     path('matriculas/<int:pk>/excluir/', ExcluirMatriculaTurmaView.as_view(), name='excluir-matricula-turma'),
     path('matriculas/<int:pk>/editar-status/', EditarStatusMatriculaView.as_view(), name='editar-status-matricula'),
     path('turmas/<int:pk>/finalizar-planejamento/', FinalizarPlanejamentoView.as_view(), name='finalizar-planejamento'),
+    path('turmas/<int:pk>/revisar-aprovacao/', RevisarAprovacaoView.as_view(), name='revisar-aprovacao'),
+    path('turmas/<int:pk>/encerrar/', EncerrarTurmaView.as_view(), name='encerrar-turma'),
 ]
