@@ -8,7 +8,10 @@ ObterOuCriarAtribuicaoDiscenteService) — ver docs/37, seção 1.
 
 from django.db import transaction
 
-from cadastros.services import IniciarTurmaService
+from django.db.models import Max
+from django.utils import timezone
+
+from cadastros.services import IniciarTurmaService, EncerrarVinculoService
 from .models import MatriculaTurma, StatusMatriculaTurma
 
 
@@ -61,3 +64,49 @@ class FinalizarPlanejamentoService:
             IniciarTurmaService().executar(turma)
 
         return turma
+
+
+class AlterarStatusMatriculaService:
+    """
+    Botão "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3).
+    Só chamado quando matricula.status ainda é CURSANDO (imposto pela View).
+
+    RELOCADO: fecha esta linha (data_fim=hoje) e CRIA uma MatriculaTurma nova
+    na Turma destino (CURSANDO, numero_na_turma=MAX+1 de lá). NÃO mexe em
+    AtribuicaoFuncao — o vínculo institucional continua ATIVO, sem Ata.
+
+    REPROVADO/TRANSFERIDO/MATRICULA_EXCLUIDA: sempre fim de ciclo na EMCA,
+    independente do Módulo (docs/37, seção 8-B, fechada em 07/09/2026) —
+    atualiza esta mesma linha (data_fim + ata_encerramento) e chama
+    EncerrarVinculoService (cadastros) sobre a AtribuicaoFuncao.
+    """
+
+    def executar(self, matricula, status, *, turma_destino=None, motivo_saida='',
+                 data_fim=None, ata_encerramento=None):
+        with transaction.atomic():
+            if status == StatusMatriculaTurma.RELOCADO:
+                hoje = timezone.now().date()
+                matricula.status = StatusMatriculaTurma.RELOCADO
+                matricula.data_fim = hoje
+                matricula.save()
+
+                proximo_numero = (
+                    MatriculaTurma.objects.filter(turma=turma_destino)
+                    .aggregate(Max('numero_na_turma'))['numero_na_turma__max'] or 0
+                ) + 1
+                MatriculaTurma.objects.create(
+                    atribuicao_funcao=matricula.atribuicao_funcao,
+                    turma=turma_destino,
+                    status=StatusMatriculaTurma.CURSANDO,
+                    numero_na_turma=proximo_numero,
+                    data_inicio=hoje,
+                )
+            else:
+                matricula.status = status
+                matricula.motivo_saida = motivo_saida
+                matricula.data_fim = data_fim
+                matricula.ata_encerramento = ata_encerramento
+                matricula.save()
+                EncerrarVinculoService().executar(matricula.atribuicao_funcao, data_fim)
+
+        return matricula

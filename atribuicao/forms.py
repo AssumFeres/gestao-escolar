@@ -4,9 +4,9 @@ atribuicao/forms.py
 
 from django import forms
 
-from cadastros.models import Pessoa, Ata, FinalidadeAta, CategoriaModulo
+from cadastros.models import Pessoa, Ata, FinalidadeAta, CategoriaModulo, Turma, SituacaoTurma
 from cadastros.services import ObterOuCriarAtribuicaoDiscenteService
-from .models import MatriculaTurma
+from .models import MatriculaTurma, StatusMatriculaTurma, MotivoSaida
 from .services import atribuicoes_elegiveis_para_turma_regular
 
 
@@ -47,6 +47,7 @@ class AdicionarMatriculaTurmaForm(forms.ModelForm):
         return pessoa
 
     def save(self, commit=True):
+        from django.db.models import Max
         from django.utils import timezone
 
         pessoa = self.cleaned_data['pessoa']
@@ -59,6 +60,17 @@ class AdicionarMatriculaTurmaForm(forms.ModelForm):
 
         self.instance.atribuicao_funcao = atribuicao
         self.instance.turma = self.turma
+
+        # Turma já EM_ANDAMENTO (aluno relocado entrando, ou Extracurricular novo):
+        # numero_na_turma = MAX+1 desta Turma, e ganha data_inicio na hora. Enquanto
+        # PLANEJADA, isso fica para "Finalizar Planejamento" (docs/37, seção 4.3).
+        if self.turma.situacao != SituacaoTurma.PLANEJADA:
+            max_atual = MatriculaTurma.objects.filter(turma=self.turma).aggregate(
+                Max('numero_na_turma')
+            )['numero_na_turma__max'] or 0
+            self.instance.numero_na_turma = max_atual + 1
+            self.instance.data_inicio = timezone.now().date()
+
         return super().save(commit=commit)
 
 
@@ -98,3 +110,67 @@ class FinalizarPlanejamentoForm(forms.Form):
         label="Ata de Início de Vínculo",
         help_text="A Ata precisa já existir — cadastre em /cadastros/atas/ antes, se necessário.",
     )
+
+
+
+class EditarStatusMatriculaForm(forms.Form):
+    """
+    Popup "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3)
+    — só chamado quando matricula.status ainda é CURSANDO. Campos exigidos
+    variam por 'status' escolhido, validados em clean() (sem JS condicional
+    nesta etapa — todos os campos aparecem sempre, com texto explicando
+    quando cada um se aplica).
+    """
+    status = forms.ChoiceField(
+        choices=[
+            (StatusMatriculaTurma.RELOCADO, 'Relocado'),
+            (StatusMatriculaTurma.REPROVADO, 'Reprovado'),
+            (StatusMatriculaTurma.TRANSFERIDO, 'Transferido'),
+            (StatusMatriculaTurma.MATRICULA_EXCLUIDA, 'Matrícula Excluída'),
+        ],
+        label="Novo Status",
+    )
+    turma_destino = forms.ModelChoiceField(
+        queryset=Turma.objects.none(), required=False,
+        label="Turma de destino", help_text="Obrigatório só para Relocado.",
+    )
+    motivo_saida = forms.ChoiceField(
+        choices=[('', '---------')] + list(MotivoSaida.choices), required=False,
+        label="Motivo da saída", help_text="Obrigatório só para Transferido.",
+    )
+    data_fim = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}), required=False,
+        label="Data de Fim", help_text="Obrigatório para Reprovado/Transferido/Matrícula Excluída.",
+    )
+    ata_encerramento = forms.ModelChoiceField(
+        queryset=Ata.objects.filter(finalidade=FinalidadeAta.TERMINO_VINCULO).order_by('-data'),
+        required=False, label="Ata de Término de Vínculo",
+        help_text="Obrigatório para Reprovado/Transferido/Matrícula Excluída — a Ata precisa já existir.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.matricula = kwargs.pop('matricula')
+        super().__init__(*args, **kwargs)
+        self.fields['turma_destino'].queryset = Turma.objects.exclude(pk=self.matricula.turma_id).order_by('nome')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+
+        if status == StatusMatriculaTurma.RELOCADO:
+            if not cleaned_data.get('turma_destino'):
+                self.add_error('turma_destino', "Obrigatório para Relocado.")
+        elif status == StatusMatriculaTurma.TRANSFERIDO:
+            if not cleaned_data.get('motivo_saida'):
+                self.add_error('motivo_saida', "Obrigatório para Transferido.")
+            if not cleaned_data.get('data_fim'):
+                self.add_error('data_fim', "Obrigatório.")
+            if not cleaned_data.get('ata_encerramento'):
+                self.add_error('ata_encerramento', "Obrigatório.")
+        elif status in (StatusMatriculaTurma.REPROVADO, StatusMatriculaTurma.MATRICULA_EXCLUIDA):
+            if not cleaned_data.get('data_fim'):
+                self.add_error('data_fim', "Obrigatório.")
+            if not cleaned_data.get('ata_encerramento'):
+                self.add_error('ata_encerramento', "Obrigatório.")
+
+        return cleaned_data

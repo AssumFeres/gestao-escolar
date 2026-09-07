@@ -18,9 +18,12 @@ from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
 from cadastros.models import Turma, SituacaoTurma
 from cadastros.views import ModalCrudMixin
 
-from .forms import AdicionarMatriculaTurmaForm, EditarMatriculaTurmaForm, FinalizarPlanejamentoForm
-from .models import MatriculaTurma
-from .services import FinalizarPlanejamentoService
+from .forms import (
+    AdicionarMatriculaTurmaForm, EditarMatriculaTurmaForm, FinalizarPlanejamentoForm,
+    EditarStatusMatriculaForm,
+)
+from .models import MatriculaTurma, StatusMatriculaTurma
+from .services import FinalizarPlanejamentoService, AlterarStatusMatriculaService
 
 
 class GerenciarTurmaView(DetailView):
@@ -52,6 +55,8 @@ class AdicionarMatriculaTurmaView(ModalCrudMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.turma = get_object_or_404(Turma, pk=kwargs['pk'])
+        if self.turma.situacao == SituacaoTurma.ENCERRADA:
+            raise Http404("Não é possível adicionar aluno a uma Turma já Encerrada.")
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -133,3 +138,45 @@ class FinalizarPlanejamentoView(View):
                 return JsonResponse({'sucesso': True})
             return redirect('gerenciar-turma', pk=turma.pk)
         return render(request, self._template(request), {'form': form, 'turma': turma})
+
+
+
+class EditarStatusMatriculaView(View):
+    """
+    Botão "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3)
+    — muda o status de CURSANDO para Relocado/Reprovado/Transferido/Matrícula
+    Excluída. Não usa ModalCrudMixin/UpdateView (o Form não é um ModelForm —
+    os campos variam por status escolhido, resolvidos via
+    AlterarStatusMatriculaService, não um form.save() direto).
+    """
+
+    def _template(self, request):
+        return 'atribuicao/_form_status_matricula_fragment.html' if request.GET.get('parcial') == '1' \
+            else 'atribuicao/form_status_matricula.html'
+
+    def _matricula_ou_404(self, pk):
+        matricula = get_object_or_404(MatriculaTurma, pk=pk)
+        if matricula.status != StatusMatriculaTurma.CURSANDO:
+            raise Http404("Só é possível alterar o status de uma matrícula ainda Cursando.")
+        return matricula
+
+    def get(self, request, pk):
+        matricula = self._matricula_ou_404(pk)
+        form = EditarStatusMatriculaForm(matricula=matricula)
+        return render(request, self._template(request), {'form': form, 'matricula': matricula})
+
+    def post(self, request, pk):
+        matricula = self._matricula_ou_404(pk)
+        form = EditarStatusMatriculaForm(request.POST, matricula=matricula)
+        if form.is_valid():
+            AlterarStatusMatriculaService().executar(
+                matricula, form.cleaned_data['status'],
+                turma_destino=form.cleaned_data.get('turma_destino'),
+                motivo_saida=form.cleaned_data.get('motivo_saida', ''),
+                data_fim=form.cleaned_data.get('data_fim'),
+                ata_encerramento=form.cleaned_data.get('ata_encerramento'),
+            )
+            if request.GET.get('parcial') == '1':
+                return JsonResponse({'sucesso': True})
+            return redirect('gerenciar-turma', pk=matricula.turma_id)
+        return render(request, self._template(request), {'form': form, 'matricula': matricula})
