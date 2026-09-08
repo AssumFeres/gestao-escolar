@@ -246,8 +246,8 @@ fieldset fieldset legend {
 /* Substitui os `style="display:grid..."` inline por uma classe reutilizável */
 .grid-2-colunas {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
   width: 100%;
 }
 
@@ -259,10 +259,26 @@ fieldset fieldset legend {
   width: 100%;
 }
 
+/* Para formulários largos apresentados em popup */
+.grid-4-colunas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Responsividade dos formulários */
+@media (max-width: 1200px) {
+  .grid-4-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 700px) {
   .grid-2-colunas,
-  .grid-3-colunas {
-    grid-template-columns: 1fr; /* empilha em telas estreitas, ex: celular */
+  .grid-3-colunas,
+  .grid-4-colunas {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -458,4 +474,237 @@ button[type="submit"] {
    grupos fechados, comportamento de accordion. */
 .sidebar.js-ativo .sidebar-grupo:not(.aberto) .sidebar-submenu {
   display: none;
+}
+
+/* ----------------------------------------------------------
+   11. POPUPS / MODAIS
+   ---------------------------------------------------------- */
+
+/* Conteúdo interno do popup de edição de pessoa.
+   A largura fica limitada ao modal externo; o conteúdo não cria uma
+   segunda caixa maior que o popup. */
+.popup-pessoa-editar {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Evita que os campos ultrapassem a largura de cada coluna */
+.popup-pessoa-editar input,
+.popup-pessoa-editar select,
+.popup-pessoa-editar textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Garante que cada coluna possa encolher corretamente dentro do grid */
+.popup-pessoa-editar .coluna-formulario {
+  min-width: 0;
+}
+
+/* Título de cada grupo */
+.popup-pessoa-editar .coluna-formulario h4 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--cor-primaria);
+}
+
+/* Área do botão */
+.popup-pessoa-editar .acoes-formulario {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* ==========================================================
+   12. MODAL CRUD GENÉRICO
+   ========================================================== */
+
+
+/* Fundo escurecido */
+#modal-crud-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  background-color: rgba(0, 0, 0, 0.45);
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  z-index: 9999;
+}
+
+
+/* ==========================================================
+   CAIXA EXTERNA DO MODAL
+   ========================================================== */
+
+/*
+   Usa > * em vez de > div.
+   Assim pega o filho direto do overlay independentemente
+   de ele ser div, section, article etc.
+*/
+#modal-crud-overlay > * {
+  width: 90vw !important;
+  max-width: 1400px !important;
+
+  max-height: 90vh !important;
+
+  box-sizing: border-box !important;
+
+  background-color: var(--fundo-card);
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  position: relative;
+}
+
+
+/* ==========================================================
+   CORPO DO MODAL
+   ========================================================== */
+
+#modal-crud-corpo {
+  width: 100% !important;
+  max-width: none !important;
+
+  max-height: 85vh;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+
+  padding: 1.5rem;
+}
+
+
+/* ==========================================================
+   EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar {
+  width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  overflow: visible;
+}
+
+
+/* ==========================================================
+   GRID DE 4 COLUNAS
+   ========================================================== */
+
+.popup-pessoa-editar .grid-4-colunas {
+  display: grid;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 20px;
+
+  width: 100%;
+}
+
+
+/* Cada coluna pode encolher corretamente */
+.popup-pessoa-editar .coluna-formulario {
+  min-width: 0;
+}
+
+
+/* ==========================================================
+   CAMPOS
+   ========================================================== */
+
+.popup-pessoa-editar input,
+.popup-pessoa-editar select,
+.popup-pessoa-editar textarea {
+  width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   TÍTULOS DAS COLUNAS
+   ========================================================== */
+
+.popup-pessoa-editar .coluna-formulario h4 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+
+  padding-bottom: 0.3rem;
+
+  border-bottom: 2px solid var(--cor-primaria);
+}
+
+
+/* ==========================================================
+   ÁREA DOS BOTÕES
+   ========================================================== */
+
+.popup-pessoa-editar .acoes-formulario {
+  margin-top: 1rem;
+
+  padding-top: 0.8rem;
+
+  border-top: 1px solid var(--cor-borda);
+}
+
+
+/* ==========================================================
+   RESPONSIVIDADE
+   ========================================================== */
+
+/* Em telas intermediárias: 2 colunas */
+@media (max-width: 1000px) {
+
+  #modal-crud-overlay > * {
+    width: 95vw !important;
+  }
+
+  .popup-pessoa-editar .grid-4-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+/* Em telas pequenas: 1 coluna */
+@media (max-width: 700px) {
+
+  #modal-crud-overlay {
+    padding: 10px;
+  }
+
+  #modal-crud-overlay > * {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+  }
+
+  #modal-crud-corpo {
+    padding: 1rem;
+
+    max-height: calc(100vh - 40px);
+  }
+
+  .popup-pessoa-editar .grid-4-colunas {
+    grid-template-columns: 1fr;
+  }
+
 }
