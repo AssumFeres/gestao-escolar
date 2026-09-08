@@ -50,6 +50,13 @@ Resultado esperado: Salvar a edição e popup estar visível na tela.
 Resultado encontrado:
   01.a.1 Salvou as alterações do cadastro - manteve sem edição o nº do CPF
   01.a.2 Popup maior que o monitor - escondeu o botão salvar - Realizei ajuste no CSS  base.css e no _form_pessoa_fragment.html   (solicitar para te manter atualizado com os arquivos)
+  observação: 
+      git commit -m "feat: ajusta popup de edição de pessoa com 4 colunas e rolagem"
+      commit a5495014476cd2ec02c2955ee0197c1a1164552e (HEAD -> dev, origin/dev)
+      Author: AssumFeres <107887188+AssumFeres@users.noreply.github.com>
+      Date:   Tue Sep 8 20:16:19 2026 -0300
+
+    feat: ajusta popup de edição de pessoa com 4 colunas e rolagem
 
 
 **Teste 02 — Cadastrar aluno com CANAC preenchido e Código de Matrícula ANAC em branco**
