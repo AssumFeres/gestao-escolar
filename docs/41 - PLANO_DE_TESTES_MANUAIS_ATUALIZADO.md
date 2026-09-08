@@ -13,6 +13,15 @@
 - ⚠️ **Parcial:** parte do comportamento funcionou, mas ainda existe alguma inconsistência.
 - ⏳ **A confirmar:** regra ou comportamento ainda depende de definição/validação.
 
+### Classificação dos testes
+
+Nem todo comportamento diferente do "ideal futuro" deve ser tratado como bug. Neste plano:
+
+- **Regressão/bug:** comportamento que deveria funcionar segundo regra já definida/implementada e deixou de funcionar ou está incorreto.
+- **Recurso adiado:** melhoria já identificada, mas conscientemente ainda não implementada.
+- **Regra a definir:** necessidade plausível que ainda depende de decisão de negócio antes de virar critério de aceitação.
+- **Exploratório:** teste destinado a descobrir o comportamento atual e levantar lacunas, sem pressupor que já exista uma implementação homologada.
+
 ### Registro recomendado quando houver falha
 
 No campo **Resultado encontrado**, registrar preferencialmente:
@@ -238,14 +247,16 @@ Executar o teste em Pessoa, Disciplina, SubModulo, Módulo, Turma e Ata, conform
 Resultado esperado: o registro não deve ser salvo; os campos inválidos devem ser indicados de forma clara na própria interface, sem tela de debug.  
 Resultado encontrado —
 
-**Teste 44 — Cadastrar Nome/Sigla com espaços antes e depois do conteúdo**  
+**Teste 44 ⏳ — Cadastrar Nome/Sigla com espaços antes e depois do conteúdo — RECURSO ADIADO**  
 Exemplo: `  MAVIT  `.  
-Resultado esperado: os espaços excedentes no início e no fim devem ser removidos antes da gravação, evitando registros aparentemente diferentes por causa de espaços.  
+Situação atual: a normalização automática de espaços ainda não foi implementada por decisão de prioridade.  
+Resultado esperado hoje: **não classificar como bug caso o sistema preserve os espaços**. Este teste fica registrado para futura implementação da normalização.  
 Resultado encontrado —
 
-**Teste 45 — Testar diferença entre maiúsculas e minúsculas em Nome/Sigla**  
-Exemplo: cadastrar `mavit` e depois tentar cadastrar `MAVIT`, quando a regra de negócio exigir unicidade.  
-Resultado esperado: o sistema deve aplicar a padronização definida para Nome/Sigla e não permitir duplicidade apenas por diferença entre letras maiúsculas/minúsculas.  
+**Teste 45 ⏳ — Testar diferença entre maiúsculas e minúsculas em Nome/Sigla — RECURSO ADIADO**  
+Exemplo: cadastrar `mavit` e depois tentar cadastrar `MAVIT`.  
+Situação atual: a conversão automática para maiúsculas e a normalização de caixa ainda não foram implementadas por decisão de prioridade.  
+Resultado esperado hoje: **não classificar como bug caso o sistema ainda diferencie ou preserve a caixa digitada**. Este teste fica registrado para futura implementação.  
 Resultado encontrado —
 
 **Teste 46 ⭐ — Testar Código de Matrícula ANAC no formato real fornecido pelo S141**  
@@ -257,20 +268,29 @@ Resultado encontrado —
 
 ## Bloco 11 — Consistência de Datas
 
-**Teste 47 ⭐ — Informar Data de Encerramento anterior à Data de Início da Turma**  
-Resultado esperado: bloqueado, com mensagem clara informando a inconsistência das datas.  
+> **Observação:** os Testes 47, 48 e 49 representam regras de negócio ainda não decididas nem implementadas. Eles não devem ser tratados como falha/regressão até que a regra seja formalmente definida.
+
+**Teste 47 ⏳ — Data de Encerramento anterior à Data de Início da Turma — REGRA A DEFINIR**  
+Pergunta de negócio: o sistema deverá sempre bloquear uma Data de Encerramento anterior à Data de Início?  
+Situação atual: essa validação específica ainda não foi definida/implementada.  
+Resultado esperado hoje: **não classificar como bug**; registrar apenas o comportamento encontrado para futura decisão.  
 Resultado encontrado —
 
-**Teste 48 ⭐ — Informar Data de Relocação anterior ao início da participação do aluno na Turma de origem**  
-Resultado esperado: bloqueado; um evento de relocação não pode ocorrer antes do início do vínculo do aluno naquela Turma.  
+**Teste 48 ⏳ — Data de Relocação anterior ao início da participação do aluno na Turma de origem — REGRA A DEFINIR**  
+Pergunta de negócio: uma relocação retroativa anterior ao início do aluno deve ser sempre proibida ou pode existir alguma exceção administrativa?  
+Situação atual: a regra ainda não foi definida/implementada.  
+Resultado esperado hoje: **não classificar como bug**; registrar apenas o comportamento encontrado.  
 Resultado encontrado —
 
-**Teste 49 ⭐ — Informar Data de Aprovação/Reprovação anterior à entrada do aluno na Turma**  
-Resultado esperado: bloqueado, com mensagem clara.  
+**Teste 49 ⏳ — Data de Aprovação/Reprovação anterior à entrada do aluno na Turma — REGRA A DEFINIR**  
+Pergunta de negócio: o sistema deverá bloquear automaticamente qualquer data final anterior à entrada do aluno na Turma?  
+Situação atual: a validação ainda não foi definida/implementada.  
+Resultado esperado hoje: **não classificar como bug**; registrar apenas o comportamento encontrado.  
 Resultado encontrado —
 
-**Teste 50 — Informar data de evento diferente da data atual**  
+**Teste 50 🔴 — Informar data de evento diferente da data atual**  
 Resultado esperado: o Sumário Histórico deve registrar a data informada no formulário como data efetiva do evento, e não substituir automaticamente por `today()`/data do lançamento.  
+Observação: essa regra já foi identificada e corrigida no fluxo de Relocação; o teste serve para confirmar a regressão e verificar se o mesmo comportamento é respeitado nos demais status/eventos.  
 Resultado encontrado —
 
 ---
@@ -295,24 +315,27 @@ Resultado encontrado —
 
 ## Bloco 13 — Repetição de Ações / Duplo Clique
 
+> **Observação:** nos Testes 54 a 57, o principal risco esperado hoje não é necessariamente a criação de registros duplicados. As Services já possuem validações de estado, mas algumas Views podem não capturar o `ValidationError`, fazendo a segunda requisição resultar em tela de debug/erro técnico. Portanto, registrar separadamente: **duplicou dados?** e **a interface tratou a segunda ação de forma amigável?**
+
+
 **Teste 54 ⭐ — Dar duplo clique em "Finalizar Planejamento"**  
-Resultado esperado: a operação deve ocorrer apenas uma vez; não pode criar eventos, numerações ou alterações duplicadas.  
+Resultado esperado: a operação deve ocorrer apenas uma vez; não pode criar eventos, numerações ou alterações duplicadas. A segunda requisição, se rejeitada pela regra de negócio, deve ser tratada sem tela de debug.  
 Resultado encontrado —
 
 **Teste 55 ⭐ — Dar duplo clique em uma ação de Relocação**  
-Resultado esperado: deve existir apenas uma saída da Turma de origem e uma entrada na Turma de destino.  
+Resultado esperado: deve existir apenas uma saída da Turma de origem e uma entrada na Turma de destino. A segunda requisição não deve exibir erro técnico cru ao usuário.  
 Resultado encontrado —
 
 **Teste 56 ⭐ — Dar duplo clique em Aprovar/Reprovar/Transferir aluno**  
-Resultado esperado: deve ser gerado apenas um evento final para a operação escolhida.  
+Resultado esperado: deve ser gerado apenas um evento final para a operação escolhida. Se a segunda tentativa for rejeitada por estado inválido, a mensagem deve ser amigável.  
 Resultado encontrado —
 
 **Teste 57 ⭐ — Dar duplo clique em "Encerrar Turma"**  
-Resultado esperado: a Turma deve ser encerrada uma única vez, sem duplicar eventos, vínculos ou alterações de status.  
+Resultado esperado: a Turma deve ser encerrada uma única vez, sem duplicar eventos, vínculos ou alterações de status. A segunda requisição não deve resultar em tela de debug.  
 Resultado encontrado —
 
-**Teste 58 — Dar duplo clique ao criar uma Ata**  
-Resultado esperado: apenas uma Ata deve ser criada.  
+**Teste 58 ⭐ — Dar duplo clique ao criar uma Ata**  
+Resultado esperado: apenas uma Ata deve ser criada. Este caso merece atenção especial porque a numeração automática pode gerar uma segunda Ata válida se duas submissões forem processadas.  
 Resultado encontrado —
 
 ---
@@ -326,7 +349,9 @@ Resultado encontrado —
 
 ---
 
-## Bloco 15 — Acessibilidade
+## Bloco 15 — Acessibilidade — TESTES EXPLORATÓRIOS
+
+> **Observação:** este bloco representa a primeira avaliação sistemática de acessibilidade das telas. Eventuais falhas devem ser registradas como **lacunas de acessibilidade a tratar**, e não como regressões de uma funcionalidade anteriormente homologada.
 
 **Teste 60 — Navegar pelas telas principais utilizando apenas o teclado**  
 Utilizar `Tab`, `Shift + Tab`, `Enter` e, quando aplicável, `Esc`.  
@@ -351,7 +376,9 @@ Resultado encontrado —
 
 ---
 
-## Bloco 16 — Compatibilidade entre Navegadores
+## Bloco 16 — Compatibilidade entre Navegadores — TESTES EXPLORATÓRIOS
+
+> **Observação:** este bloco é exploratório. O sistema ainda não passou por uma rodada formal de testes cross-browser; diferenças encontradas devem ser registradas como compatibilidade a avaliar, não como regressão automática.
 
 **Teste 65 — Executar o fluxo principal no Microsoft Edge**  
 Testar principalmente JavaScript, menus, modais, autocomplete, API de CEP e campos de data.  
@@ -442,6 +469,25 @@ Passo sugerido:
 
 Resultado esperado: todo o fluxo deve funcionar sem telas de debug, sem duplicidades, sem perda de eventos anteriores e respeitando as regras de negócio de cada etapa.  
 Resultado encontrado —
+
+---
+
+## Guia de Execução — O que rodar agora
+
+| Bloco/Testes | Tratamento |
+|---|---|
+| Blocos 1 a 9 | Rodar normalmente |
+| Teste 43 | Rodar normalmente |
+| Testes 44 e 45 | ⏳ Recurso adiado — não classificar como bug |
+| Teste 46 | Rodar normalmente |
+| Testes 47 a 49 | ⏳ Regra de negócio a definir — não classificar como bug |
+| Teste 50 | Rodar como regressão/consistência |
+| Bloco 12 | Rodar normalmente |
+| Testes 54 a 57 | Rodar verificando tanto duplicidade quanto tratamento amigável da segunda requisição |
+| Teste 58 | Rodar normalmente, com atenção para possível criação de duas Atas |
+| Bloco 14 | Rodar normalmente |
+| Blocos 15 e 16 | Exploratórios — executar conforme disponibilidade |
+| Blocos 17 a 20 | Rodar normalmente |
 
 ---
 
