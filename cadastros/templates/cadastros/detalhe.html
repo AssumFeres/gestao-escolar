@@ -154,23 +154,25 @@ de Gestao Escolar{% endblock %} {% block content %}
 <table>
   <thead>
     <tr>
-      <th>Função</th>
+      <th>Data</th>
+      <th>Função/Vínculo</th>
       <th>Situação</th>
       <th>Ata</th>
-      <th>Data</th>
       <th>Turma</th>
       <th>Status na Turma</th>
+      <th>Evento</th>
     </tr>
   </thead>
   <tbody>
     {% for linha in sumario_historico_vinculos %}
     <tr>
+      <td>{{ linha.data|date:"d/m/Y"|default:"-----" }}</td>
       <td>{{ linha.funcao }}</td>
       <td>{{ linha.situacao }}</td>
       <td>{{ linha.ata|default:"-----" }}</td>
-      <td>{{ linha.data|date:"d/m/Y"|default:"-----" }}</td>
       <td>{{ linha.turma|default:"-----" }}</td>
       <td>{{ linha.status_turma|default:"-----" }}</td>
+      <td>{{ linha.evento|default:"-----" }}</td>
     </tr>
     {% endfor %}
   </tbody>

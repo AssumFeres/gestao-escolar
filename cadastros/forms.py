@@ -572,15 +572,38 @@ class TurmaModelForm(forms.ModelForm):
     """
     Criar/Editar Turma — 'oferta_modulo' resolvido pela URL (dispatch), nunca
     pelo formulário. CRU — nunca há Delete de Turma (decisão de 05/09/2026).
-    'situacao' é um campo comum, editável direto aqui — sem botão dedicado
-    (diferente do padrão Ativo/Inativo de Disciplina/SubModulo/Modulo).
+
+    'situacao' NUNCA aparece aqui (corrigido em 08/09/2026) — a transição de
+    estado (PLANEJADA→EM_ANDAMENTO→ENCERRADA) só pode acontecer através das
+    telas do módulo atribuicao (Finalizar Planejamento / Encerrar Turma), que
+    aplicam as regras de negócio (data/Ata obrigatórias, sem retrocesso).
+    Deixar 'situacao' editável livre aqui, como estava antes, permitia
+    contornar completamente essas regras — bug real encontrado em teste
+    manual (ver docs/39).
     """
     class Meta:
         model = Turma
-        fields = ['nome', 'sigla', 'periodo', 'situacao', 'observacao']
+        fields = ['nome', 'sigla', 'periodo', 'observacao']
         widgets = {
             'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
         }
+
+    def clean_sigla(self):
+        # 'oferta_modulo' nunca está em Meta.fields (é resolvido pela URL,
+        # não pelo usuário) — por isso o Django NUNCA valida a UniqueConstraint
+        # (oferta_modulo, sigla) sozinho, mesmo com a instância já preenchida
+        # (a exclusão é por "não é campo do form", não por "valor não setado
+        # a tempo"). Sem esta checagem manual, sigla duplicada só falhava na
+        # hora de salvar, com IntegrityError cru (tela de debug) em vez de
+        # mensagem amigável. Bug real de teste manual, corrigido em 08/09/2026
+        # (docs/39).
+        sigla = self.cleaned_data['sigla']
+        consulta = Turma.objects.filter(oferta_modulo=self.instance.oferta_modulo, sigla=sigla)
+        if self.instance.pk:
+            consulta = consulta.exclude(pk=self.instance.pk)
+        if consulta.exists():
+            raise forms.ValidationError("Já existe uma turma cadastrada com esta sigla, nesta Oferta de Módulo.")
+        return sigla
 
 
 class AtaModelForm(forms.ModelForm):

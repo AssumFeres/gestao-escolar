@@ -46,6 +46,20 @@ class AdicionarMatriculaTurmaForm(forms.ModelForm):
             raise forms.ValidationError("Esta Pessoa já está matriculada nesta Turma.")
         return pessoa
 
+    def clean_codigo_matricula_anac(self):
+        # DadosDiscente.codigo_matricula_anac é unique=True, mas como esse
+        # campo pertence a outro Model (não é campo de MatriculaTurma), o
+        # Django nunca valida essa duplicidade sozinho — sem essa checagem,
+        # um valor repetido só falhava na hora de salvar, com IntegrityError
+        # cru (tela de debug) em vez de mensagem amigável. Bug real de teste
+        # manual, corrigido em 08/09/2026 (docs/39).
+        from cadastros.models import DadosDiscente
+
+        canac = self.cleaned_data.get('codigo_matricula_anac')
+        if canac and DadosDiscente.objects.filter(codigo_matricula_anac=canac).exists():
+            raise forms.ValidationError(f"Código de Matrícula ANAC '{canac}' já está em uso.")
+        return canac
+
     def save(self, commit=True):
         from django.db.models import Max
         from django.utils import timezone
@@ -151,7 +165,9 @@ class EditarStatusMatriculaForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.matricula = kwargs.pop('matricula')
         super().__init__(*args, **kwargs)
-        self.fields['turma_destino'].queryset = Turma.objects.exclude(pk=self.matricula.turma_id).order_by('nome')
+        self.fields['turma_destino'].queryset = Turma.objects.filter(
+            situacao=SituacaoTurma.EM_ANDAMENTO
+        ).exclude(pk=self.matricula.turma_id).order_by('nome')
 
     def clean(self):
         cleaned_data = super().clean()

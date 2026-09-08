@@ -62,6 +62,12 @@ class MatriculaTurma(models.Model):
         'cadastros.Ata', on_delete=models.PROTECT, null=True, blank=True, related_name='+'
     )
 
+    # Marca a linha criada como destino de uma Relocação (AlterarStatusMatriculaService)
+    # — usado só para rotular o evento certo no Sumário Histórico de Vínculos
+    # ("Relocação - entrada" vs. "Início na turma"), sem depender de adivinhar
+    # por coincidência de data (frágil). Adicionado em 08/09/2026.
+    criada_por_relocacao = models.BooleanField(default=False)
+
     observacao = models.TextField(blank=True)
 
     class Meta:

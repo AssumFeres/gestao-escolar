@@ -72,9 +72,10 @@ class AlterarStatusMatriculaService:
     Botão "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3).
     Só chamado quando matricula.status ainda é CURSANDO (imposto pela View).
 
-    RELOCADO: fecha esta linha (data_fim=hoje) e CRIA uma MatriculaTurma nova
-    na Turma destino (CURSANDO, numero_na_turma=MAX+1 de lá). NÃO mexe em
-    AtribuicaoFuncao — o vínculo institucional continua ATIVO, sem Ata.
+    RELOCADO: fecha esta linha (data_fim = data informada no formulário, ou
+    hoje se deixada em branco) e CRIA uma MatriculaTurma nova na Turma destino
+    (CURSANDO, numero_na_turma=MAX+1 de lá). NÃO mexe em AtribuicaoFuncao —
+    o vínculo institucional continua ATIVO, sem Ata.
 
     REPROVADO/TRANSFERIDO/MATRICULA_EXCLUIDA: sempre fim de ciclo na EMCA,
     independente do Módulo (docs/37, seção 8-B, fechada em 07/09/2026) —
@@ -86,9 +87,13 @@ class AlterarStatusMatriculaService:
                  data_fim=None, ata_encerramento=None):
         with transaction.atomic():
             if status == StatusMatriculaTurma.RELOCADO:
-                hoje = timezone.now().date()
+                # Corrigido em 08/09/2026 (docs/39) — antes ignorava
+                # completamente a 'data_fim' do formulário, sempre usando
+                # timezone.now(). Agora respeita a data informada (relocação
+                # retroativa/atrasada), só cai para "hoje" se vier em branco.
+                data_relocacao = data_fim or timezone.now().date()
                 matricula.status = StatusMatriculaTurma.RELOCADO
-                matricula.data_fim = hoje
+                matricula.data_fim = data_relocacao
                 matricula.save()
 
                 proximo_numero = (
@@ -100,7 +105,8 @@ class AlterarStatusMatriculaService:
                     turma=turma_destino,
                     status=StatusMatriculaTurma.CURSANDO,
                     numero_na_turma=proximo_numero,
-                    data_inicio=hoje,
+                    data_inicio=data_relocacao,
+                    criada_por_relocacao=True,
                 )
             else:
                 matricula.status = status

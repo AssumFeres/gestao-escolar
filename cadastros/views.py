@@ -181,6 +181,14 @@ class DetalhePessoaView(DetailView):
         return linhas
 
     def _linhas_discente(self, atribuicao):
+        """
+        Reescrito em 08/09/2026 após teste manual real (docs/39): a versão
+        anterior colapsava cada MatriculaTurma numa linha só (só o status
+        final), perdendo o evento de entrada. Agora cada MatriculaTurma
+        resolvida vira ATÉ 2 eventos — entrada (sempre, se data_inicio
+        existir) e saída (só se status != CURSANDO) — cada um com sua
+        própria data/Ata, ordenados cronologicamente.
+        """
         canac = atribuicao.dados_discente.codigo_matricula_anac
         rotulo_funcao = f"{atribuicao.funcao.nome} (ANAC: {canac})" if canac else atribuicao.funcao.nome
 
@@ -190,28 +198,65 @@ class DetalhePessoaView(DetailView):
             ).order_by('id')
         )
 
-        if not matriculas:
-            return [{
-                'funcao': rotulo_funcao,
-                'situacao': atribuicao.get_situacao_display(),
-                'ata': None,
-                'data': atribuicao.data_inicio,
-                'turma': None,
-                'status_turma': 'Aguardando Atribuição',
-            }]
+        linha_aguardando = {
+            'funcao': rotulo_funcao,
+            'situacao': atribuicao.get_situacao_display(),
+            'ata': None,
+            'data': atribuicao.data_inicio,
+            'turma': None,
+            'status_turma': 'Aguardando Atribuição',
+            'evento': 'Aguardando Atribuição',
+        }
+
+        eventos = []
+        for matricula in matriculas:
+            if matricula.data_inicio:
+                eventos.append({
+                    'ata': str(matricula.ata_inicio) if matricula.ata_inicio else None,
+                    'data': matricula.data_inicio,
+                    'turma': matricula.turma.nome,
+                    'status_turma': 'Cursando',
+                    'evento': 'Relocação - entrada' if matricula.criada_por_relocacao else 'Início na turma',
+                })
+            # Comparação por string literal, não por enum — importar StatusMatriculaTurma
+            # de atribuicao.models violaria a fronteira entre os apps (cadastros nunca
+            # depende de atribuicao). 'CURSANDO'/'RELOCADO'/'APROVADO' são os choices
+            # de MatriculaTurma.status, ver atribuicao/models.py.
+            if matricula.status != 'CURSANDO':
+                if matricula.status == 'RELOCADO':
+                    descricao_evento = 'Relocação - saída'
+                elif matricula.status == 'APROVADO':
+                    descricao_evento = 'Conclusão da turma'
+                else:
+                    descricao_evento = f'Encerramento - {matricula.get_status_display()}'
+                eventos.append({
+                    'ata': str(matricula.ata_encerramento) if matricula.ata_encerramento else None,
+                    'data': matricula.data_fim,
+                    'turma': matricula.turma.nome,
+                    'status_turma': matricula.get_status_display(),
+                    'evento': descricao_evento,
+                })
+
+        # Se ainda não existe NENHUM evento concreto para mostrar — seja porque
+        # a AtribuicaoFuncao nunca teve MatriculaTurma, seja porque já tem uma
+        # (Turma ainda PLANEJADA, sem data_inicio) mas nada aconteceu de fato
+        # ainda — mostra "Aguardando Atribuição". Bug real de teste manual
+        # corrigido em 08/09/2026 (docs/39): a versão anterior checava só "existe
+        # MatriculaTurma?", fazendo essa linha sumir prematuramente assim que o
+        # aluno era adicionado a uma Turma ainda em planejamento.
+        if not eventos:
+            return [linha_aguardando]
+
+        eventos.sort(key=lambda e: e['data'] or atribuicao.data_inicio)
 
         linhas = []
-        ultimo_indice = len(matriculas) - 1
-        for indice, matricula in enumerate(matriculas):
-            eh_ultima = (indice == ultimo_indice)
-            ata = matricula.ata_encerramento or matricula.ata_inicio
+        ultimo_indice = len(eventos) - 1
+        for indice, evento in enumerate(eventos):
+            eh_ultimo = (indice == ultimo_indice)
             linhas.append({
                 'funcao': rotulo_funcao,
-                'situacao': atribuicao.get_situacao_display() if eh_ultima else 'Ativo',
-                'ata': str(ata) if ata else None,
-                'data': matricula.data_fim or matricula.data_inicio,
-                'turma': matricula.turma.nome,
-                'status_turma': matricula.get_status_display(),
+                'situacao': atribuicao.get_situacao_display() if eh_ultimo else 'Ativo',
+                **evento,
             })
         return linhas
 
@@ -223,6 +268,7 @@ class DetalhePessoaView(DetailView):
             'data': atribuicao.data_inicio,
             'turma': None,
             'status_turma': None,
+            'evento': 'Início de vínculo',
         }]
         if atribuicao.data_fim:
             linhas.append({
@@ -232,6 +278,7 @@ class DetalhePessoaView(DetailView):
                 'data': atribuicao.data_fim,
                 'turma': None,
                 'status_turma': None,
+                'evento': 'Encerramento de vínculo',
             })
         return linhas
 
@@ -1101,6 +1148,18 @@ class AdicionarTurmaView(ModalCrudMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         self.oferta_modulo = get_object_or_404(OfertaModulo, pk=kwargs['pk'])
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        # 'oferta_modulo' precisa estar na instância ANTES da validação rodar
+        # (não só em form_valid, que roda depois) — senão a UniqueConstraint
+        # (oferta_modulo, sigla) nunca é checada a tempo pelo Django, e uma
+        # sigla duplicada só falha na hora de salvar, com IntegrityError cru
+        # (tela de debug) em vez de mensagem amigável. Bug real de teste
+        # manual, corrigido em 08/09/2026 (docs/39).
+        kwargs = super().get_form_kwargs()
+        if kwargs.get('instance') is None:
+            kwargs['instance'] = Turma(oferta_modulo=self.oferta_modulo)
+        return kwargs
 
     def form_valid(self, form):
         form.instance.oferta_modulo = self.oferta_modulo

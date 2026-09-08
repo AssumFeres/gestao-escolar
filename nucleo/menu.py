@@ -100,7 +100,12 @@ MENU_NAVEGACAO = [
             {
                 "label": "Turma",
                 "url_name": "lista-turmas",
-                "url_names_ativos": ["lista-turmas", "adicionar-turma", "editar-turma"],
+                "url_names_ativos": [
+                    "lista-turmas", "adicionar-turma", "editar-turma",
+                    "gerenciar-turma", "adicionar-matricula-turma", "editar-matricula-turma",
+                    "excluir-matricula-turma", "editar-status-matricula",
+                    "finalizar-planejamento", "revisar-aprovacao", "encerrar-turma",
+                ],
             },
             {
                 "label": "Ata",
