@@ -19,9 +19,22 @@
 <form method="post" id="form-cadastro-pessoa">
     {% csrf_token %}
 
+    <fieldset>
+        <legend id="selecao-funcao">Função para ser cadastrada</legend>
+        <fieldset>
+            <legend>Função</legend>
+            <div class="grid-3-colunas">
+                <div class="campo">{{ form.funcao.label_tag }} {{ form.funcao }} {{ form.funcao.errors }}</div>
+                <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
+                <div class="campo">{{ form.situacao.label_tag }} {{ form.situacao }} {{ form.situacao.errors }}</div>
+            </div>
+        </fieldset>        
+    </fieldset>
+
     <fieldset id="bloco-dados-basicos">
         <legend>Dados da Pessoa</legend>
 
+        
         <fieldset>
             <legend>Dados Básicos</legend>
             <div class="grid-2-colunas">
@@ -52,9 +65,9 @@
         <fieldset>
             <legend>Identificadores</legend>
             <div class="grid-3-colunas">
+                <div class="campo">{{ form.codigo_anac.label_tag }} {{ form.codigo_anac }} {{ form.codigo_anac.errors }}</div>
                 <div class="campo">{{ form.registro_matricula.label_tag }} {{ form.registro_matricula }} {{ form.registro_matricula.errors }}</div>
                 <div class="campo">{{ form.registro_aluno.label_tag }} {{ form.registro_aluno }} {{ form.registro_aluno.errors }}</div>
-                <div class="campo">{{ form.codigo_anac.label_tag }} {{ form.codigo_anac }} {{ form.codigo_anac.errors }}</div>
             </div>
         </fieldset>
 
@@ -102,14 +115,7 @@
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Função</legend>
-            <div class="grid-3-colunas">
-                <div class="campo">{{ form.funcao.label_tag }} {{ form.funcao }} {{ form.funcao.errors }}</div>
-                <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
-                <div class="campo">{{ form.situacao.label_tag }} {{ form.situacao }} {{ form.situacao.errors }}</div>
-            </div>
-        </fieldset>
+        
     </fieldset>
 
     <fieldset id="bloco-discente" data-categoria="DISCENTE">
@@ -295,6 +301,8 @@
 
     <button type="submit">Salvar</button>
 </form>
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/form_pessoa.html</p>
 
 <script src="{% static 'cadastros/js/buscar-cep.js' %}"></script>
 <script src="{% static 'cadastros/js/form-dinamico.js' %}"></script>

@@ -39,25 +39,26 @@ No campo **Resultado encontrado**, registrar preferencialmente:
 
 **Teste 01 — Criar aluno novo, testar preenchimento automático de CPF e API de CEP**
 Resultado esperado: ao digitar um CPF já cadastrado, os campos da Pessoa devem se preencher sozinhos. Ao digitar um CEP válido, endereço/cidade/UF devem se preencher automaticamente via API.
-Resultado encontrado — 
-  1.1 CPF PREENCHIDO - CARREGOU AS INFORMAÇÕES 
-    1.1.1  Só funciona com o CPF - com 11 digitos - colocar máscara de entrada de dados ###.###.###-##
-  1.2 CEP via API - funcionou 
-     1.2.1 - A entrada deve ser somente números - colocar máscara de entrada de dados ##.###-###
+Resultado encontrado —
+1.1 CPF PREENCHIDO - CARREGOU AS INFORMAÇÕES
+1.1.1 Só funciona com o CPF - com 11 digitos - colocar máscara de entrada de dados ###.###.###-##
+1.2 CEP via API - funcionou
+1.2.1 - A entrada deve ser somente números - colocar máscara de entrada de dados ##.###-###
+Observação:
+Alteração realizado no form_pessoa.html - trazendo o campo Função como sendo primeiro a ser preenchido de forma a configurar o form para aquela função
 
 **Teste 01.a - editar pessoa cadastrada**
-Resultado esperado: Salvar a edição e popup estar visível na tela. 
+Resultado esperado: Salvar a edição e popup estar visível na tela.
 Resultado encontrado:
-  01.a.1 Salvou as alterações do cadastro - manteve sem edição o nº do CPF
-  01.a.2 Popup maior que o monitor - escondeu o botão salvar - Realizei ajuste no CSS  base.css e no _form_pessoa_fragment.html   (solicitar para te manter atualizado com os arquivos)
-  observação: 
-      git commit -m "feat: ajusta popup de edição de pessoa com 4 colunas e rolagem"
-      commit a5495014476cd2ec02c2955ee0197c1a1164552e (HEAD -> dev, origin/dev)
-      Author: AssumFeres <107887188+AssumFeres@users.noreply.github.com>
-      Date:   Tue Sep 8 20:16:19 2026 -0300
+01.a.1 Salvou as alterações do cadastro - manteve sem edição o nº do CPF
+01.a.2 Popup maior que o monitor - escondeu o botão salvar - Realizei ajuste no CSS base.css e no \_form_pessoa_fragment.html (solicitar para te manter atualizado com os arquivos)
+observação:
+git commit -m "feat: ajusta popup de edição de pessoa com 4 colunas e rolagem"
+commit a5495014476cd2ec02c2955ee0197c1a1164552e (HEAD -> dev, origin/dev)
+Author: AssumFeres <107887188+AssumFeres@users.noreply.github.com>
+Date: Tue Sep 8 20:16:19 2026 -0300
 
     feat: ajusta popup de edição de pessoa com 4 colunas e rolagem
-
 
 **Teste 02 — Cadastrar aluno com CANAC preenchido e Código de Matrícula ANAC em branco**
 Resultado esperado: o campo Código de Matrícula ANAC deve continuar vazio — não deve receber automaticamente o valor do CANAC.
@@ -255,7 +256,6 @@ Resultado encontrado —
 Resultado esperado: **a confirmar** — este teste já falhou uma vez sem detalhe do erro. Ao repetir, anotar qualquer mensagem de erro que aparecer no Console, e se a falha é sempre ou só às vezes.
 Resultado encontrado —
 
-
 ---
 
 ## Bloco 10 — Validação e Normalização de Dados
@@ -334,7 +334,6 @@ Resultado encontrado —
 ## Bloco 13 — Repetição de Ações / Duplo Clique
 
 > **Observação:** nos Testes 54 a 57, o principal risco esperado hoje não é necessariamente a criação de registros duplicados. As Services já possuem validações de estado, mas algumas Views podem não capturar o `ValidationError`, fazendo a segunda requisição resultar em tela de debug/erro técnico. Portanto, registrar separadamente: **duplicou dados?** e **a interface tratou a segunda ação de forma amigável?**
-
 
 **Teste 54 ⭐ — Dar duplo clique em "Finalizar Planejamento"**  
 Resultado esperado: a operação deve ocorrer apenas uma vez; não pode criar eventos, numerações ou alterações duplicadas. A segunda requisição, se rejeitada pela regra de negócio, deve ser tratada sem tela de debug.  
@@ -463,7 +462,7 @@ Resultado encontrado —
 
 ## Bloco 20 — Cenário Completo de Aceitação
 
-**Teste 76 ⭐ — Executar o ciclo completo de um aluno do cadastro à conclusão**  
+**Teste 76 ⭐ — Executar o ciclo completo de um aluno do cadastro à conclusão**
 
 Passo sugerido:
 
@@ -492,20 +491,20 @@ Resultado encontrado —
 
 ## Guia de Execução — O que rodar agora
 
-| Bloco/Testes | Tratamento |
-|---|---|
-| Blocos 1 a 9 | Rodar normalmente |
-| Teste 43 | Rodar normalmente |
-| Testes 44 e 45 | ⏳ Recurso adiado — não classificar como bug |
-| Teste 46 | Rodar normalmente |
-| Testes 47 a 49 | ⏳ Regra de negócio a definir — não classificar como bug |
-| Teste 50 | Rodar como regressão/consistência |
-| Bloco 12 | Rodar normalmente |
+| Bloco/Testes   | Tratamento                                                                           |
+| -------------- | ------------------------------------------------------------------------------------ |
+| Blocos 1 a 9   | Rodar normalmente                                                                    |
+| Teste 43       | Rodar normalmente                                                                    |
+| Testes 44 e 45 | ⏳ Recurso adiado — não classificar como bug                                         |
+| Teste 46       | Rodar normalmente                                                                    |
+| Testes 47 a 49 | ⏳ Regra de negócio a definir — não classificar como bug                             |
+| Teste 50       | Rodar como regressão/consistência                                                    |
+| Bloco 12       | Rodar normalmente                                                                    |
 | Testes 54 a 57 | Rodar verificando tanto duplicidade quanto tratamento amigável da segunda requisição |
-| Teste 58 | Rodar normalmente, com atenção para possível criação de duas Atas |
-| Bloco 14 | Rodar normalmente |
-| Blocos 15 e 16 | Exploratórios — executar conforme disponibilidade |
-| Blocos 17 a 20 | Rodar normalmente |
+| Teste 58       | Rodar normalmente, com atenção para possível criação de duas Atas                    |
+| Bloco 14       | Rodar normalmente                                                                    |
+| Blocos 15 e 16 | Exploratórios — executar conforme disponibilidade                                    |
+| Blocos 17 a 20 | Rodar normalmente                                                                    |
 
 ---
 
