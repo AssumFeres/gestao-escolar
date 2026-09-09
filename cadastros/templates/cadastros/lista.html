@@ -1,14 +1,137 @@
 ﻿{% extends 'base.html' %}
 
-{% block title %}Pessoas - Sistema de Gestao Escolar{% endblock %}
+{% block title %}Pessoas - Sistema de Gestão Escolar{% endblock %}
 
 {% block content %}
+
 <h2>Pessoas cadastradas</h2>
-<p><a href="/cadastros/novo/" class="botao-link">+ Cadastrar nova pessoa</a></p>
+
+<p>
+    <a href="/cadastros/novo/" class="botao-link">
+        + Cadastrar nova pessoa
+    </a>
+</p>
+
+
+<!-- ======================================================
+     FILTROS
+     ====================================================== -->
+
+<form method="get" style="
+    display: flex;
+    align-items: end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 1rem 0 1.5rem 0;
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+">
+
+    <!-- BUSCA POR NOME -->
+    <div style="display: flex; flex-direction: column;">
+        <label for="nome">
+            Nome
+        </label>
+
+        <input
+            type="text"
+            id="nome"
+            name="nome"
+            value="{{ filtro_nome }}"
+            placeholder="Digite o nome"
+            style="min-width: 260px;"
+        >
+    </div>
+
+
+    <!-- ATIVO / INATIVO -->
+    <div style="display: flex; flex-direction: column;">
+        <label for="ativo">
+            Situação
+        </label>
+
+        <select id="ativo" name="ativo">
+
+            <option value=""
+                {% if filtro_ativo == '' %}selected{% endif %}>
+                Todos
+            </option>
+
+            <option value="1"
+                {% if filtro_ativo == '1' %}selected{% endif %}>
+                Ativos
+            </option>
+
+            <option value="0"
+                {% if filtro_ativo == '0' %}selected{% endif %}>
+                Inativos
+            </option>
+
+        </select>
+    </div>
+
+
+    <!-- CATEGORIA DA FUNÇÃO -->
+    <div style="display: flex; flex-direction: column;">
+        <label for="categoria">
+            Categoria
+        </label>
+
+        <select id="categoria" name="categoria">
+
+            <option value="">
+                Todas
+            </option>
+
+            {% for valor, descricao in categorias_funcao %}
+
+                <option
+                    value="{{ valor }}"
+                    {% if filtro_categoria == valor %}selected{% endif %}
+                >
+                    {{ descricao }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+    </div>
+
+
+    <!-- BOTÃO PESQUISAR -->
+    <div>
+        <button type="submit">
+            🔎 Filtrar
+        </button>
+    </div>
+
+
+    <!-- LIMPAR FILTROS -->
+    <div>
+        <a
+            href="."
+            class="botao-link"
+            style="background-color: #002060;"
+        >
+            🧹 Limpar
+        </a>
+    </div>
+
+</form>
+
+
+<!-- ======================================================
+     LISTA
+     ====================================================== -->
 
 {% if pessoas %}
+
 <table>
+
     <thead>
+
         <tr>
             <th>Nome</th>
             <th>CPF</th>
@@ -16,21 +139,72 @@
             <th>Função</th>
             <th>Cidade/UF</th>
         </tr>
-    </thead>
-    <tbody>
-        {% for pessoa in pessoas %}
-        <tr>
-            <td><a href="/cadastros/{{ pessoa.id }}/">{{ pessoa.nome_completo }}</a></td>
-            <td>{{ pessoa.cpf }}</td>
-            <td>{{ pessoa.email }}</td>
-            <td>{{ funcao.categoria }}</td>
-            <td>{{ pessoa.endereco_cidade }}/{{ pessoa.endereco_uf }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>Nenhuma pessoa cadastrada ainda.</p>
-{% endif %}
-{% endblock %}
 
+    </thead>
+
+    <tbody>
+
+        {% for pessoa in pessoas %}
+
+        <tr>
+
+            <!-- NOME -->
+            <td>
+                <a href="/cadastros/{{ pessoa.id }}/">
+                    {{ pessoa.nome_completo }}
+                </a>
+            </td>
+
+
+            <!-- CPF -->
+            <td>
+                {{ pessoa.cpf }}
+            </td>
+
+
+            <!-- E-MAIL -->
+            <td>
+                {{ pessoa.email }}
+            </td>
+
+
+            <!-- FUNÇÕES -->
+            
+            <td>
+                 {% for atribuicao in pessoa.atribuicoes.all %}
+                    {{ atribuicao.funcao.nome }}
+
+                {% if not forloop.last %}
+                    <br>
+                {% endif %}
+
+                {% empty %}
+
+                     —
+
+                {% endfor %}
+            </td>
+
+
+            <!-- CIDADE / UF -->
+            <td>
+                {{ pessoa.endereco_cidade }}/{{ pessoa.endereco_uf }}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% else %}
+
+<p>
+    Nenhuma pessoa encontrada com os filtros informados.
+</p>
+
+{% endif %}
+
+{% endblock %}

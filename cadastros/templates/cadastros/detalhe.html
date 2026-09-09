@@ -13,143 +13,355 @@ de Gestao Escolar{% endblock %} {% block content %}
   </button>
 </h2>
 
-<table>
-  <tr>
-    <th>CPF</th>
-    <td>{{ pessoa.cpf }}</td>
-    <th>RM</th>
-    <td>{{ pessoa.registro_matricula|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Data de nascimento</th>
-    <td>{{ pessoa.data_nascimento|date:"d/m/Y" }}</td>
-    <th>RA</th>
-    <td>{{ pessoa.registro_aluno|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>E-mail</th>
-    <td>{{ pessoa.email }}</td>
-    <th>CANAC</th>
-    <td>{{ pessoa.codigo_anac|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Telefone</th>
-    <td>{{ pessoa.telefone }}</td>
-    <th>Sexo</th>
-    <td>{{ pessoa.get_sexo_display|default:"-----" }}</td>
-    <td> </td>
-  </tr>
-  <tr>
-    <th>Endereco</th>
-    <td colspan="3">{{ pessoa.endereco }}</td>
-  </tr>
-  <tr>
-    <th>CEP</th>
-    <td colspan="3">{{ pessoa.endereco_cep }}</td>
-  </tr>
-  <tr>
-    <th>Identidade</th>
-    <td>{{ pessoa.identidade|default:"-----" }}</td>
-    <th>Órgão expedidor</th>
-    <td>{{ pessoa.orgao_expedidor_identidade|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Data de emissão</th>
-    <td>{{ pessoa.data_emissao_identidade|date:"d/m/Y"|default:"-----" }}</td>
-    <th>Naturalidade</th>
-    <td>{{ pessoa.naturalidade|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>UF de naturalidade</th>
-    <td>{{ pessoa.uf_naturalidade|default:"-----" }}</td>
-    <th>Nacionalidade</th>
-    <td>{{ pessoa.nacionalidade|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Filiação 1</th>
-    <td>{{ pessoa.filiacao_1|default:"-----" }}</td>
-    <th>Filiação 2</th>
-    <td>{{ pessoa.filiacao_2|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Nível de instrução</th>
-    <td>{{ pessoa.nivel_instrucao|default:"-----" }}</td>
-    <th>Estado civil</th>
-    <td>{{ pessoa.get_estado_civil_display|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Raça/Cor</th>
-    <td>{{ pessoa.get_raca_cor_display|default:"-----" }}</td>
-    <th>E-mail 2</th>
-    <td>{{ pessoa.email_2|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Telefone 2 / Celular</th>
-    <td>{{ pessoa.telefone_2|default:"-----" }}</td>
-    <th>Título de Eleitor</th>
-    <td>{{ pessoa.titulo_eleitor|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Zona Eleitoral</th>
-    <td>{{ pessoa.zona_eleitoral|default:"-----" }}</td>
-    <th>Seção Eleitoral</th>
-    <td>{{ pessoa.secao_eleitoral|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Passaporte</th>
-    <td>{{ pessoa.passaporte|default:"-----" }}</td>
-    <th>Autorização de Permanência</th>
-    <td>{{ pessoa.autorizacao_permanencia|default:"-----" }}</td>
-  </tr>
-</table>
+<h3>Dados Cadastrais</h3>
+
+<fieldset class="detalhe-fieldset">
+  <legend>Dados Pessoais</legend>
+
+  <div class="grid-detalhes-4">
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">CPF</span>
+      <span class="dado-valor">{{ pessoa.cpf }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Data de nascimento</span>
+      <span class="dado-valor">{{ pessoa.data_nascimento|date:"d/m/Y" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Sexo</span>
+      <span class="dado-valor">{{ pessoa.get_sexo_display|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Estado civil</span>
+      <span class="dado-valor">{{ pessoa.get_estado_civil_display|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Raça/Cor</span>
+      <span class="dado-valor">{{ pessoa.get_raca_cor_display|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Nível de instrução</span>
+      <span class="dado-valor">{{ pessoa.nivel_instrucao|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Nacionalidade</span>
+      <span class="dado-valor">{{ pessoa.nacionalidade|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Naturalidade</span>
+      <span class="dado-valor">{{ pessoa.naturalidade|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+    <span class="dado-rotulo">UF de naturalidade</span>
+    <span class="dado-valor">
+        {{ pessoa.uf_naturalidade|default:"-----" }}
+    </span>
+    </div>
+
+    <div class="dado-detalhe">
+        <span class="dado-rotulo">Filiação 1</span>
+        <span class="dado-valor">
+            {{ pessoa.filiacao_1|default:"-----" }}
+        </span>
+    </div>
+
+    <div class="dado-detalhe">
+        <span class="dado-rotulo">Filiação 2</span>
+        <span class="dado-valor">
+            {{ pessoa.filiacao_2|default:"-----" }}
+        </span>
+    </div>
+</fieldset>
+
+
+<fieldset class="detalhe-fieldset">
+  <legend>Documentos</legend>
+
+  <div class="grid-detalhes-4">
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Identidade</span>
+      <span class="dado-valor">{{ pessoa.identidade|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Órgão expedidor</span>
+      <span class="dado-valor">{{ pessoa.orgao_expedidor_identidade|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Data de emissão</span>
+      <span class="dado-valor">{{ pessoa.data_emissao_identidade|date:"d/m/Y"|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Título de Eleitor</span>
+      <span class="dado-valor">{{ pessoa.titulo_eleitor|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Zona Eleitoral</span>
+      <span class="dado-valor">{{ pessoa.zona_eleitoral|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Seção Eleitoral</span>
+      <span class="dado-valor">{{ pessoa.secao_eleitoral|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Passaporte</span>
+      <span class="dado-valor">{{ pessoa.passaporte|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Autorização de Permanência</span>
+      <span class="dado-valor">{{ pessoa.autorizacao_permanencia|default:"-----" }}</span>
+    </div>
+  </div>
+</fieldset>
+
+
+<fieldset class="detalhe-fieldset">
+  <legend>Contato / Identificadores</legend>
+
+  <div class="grid-detalhes-4">
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">E-mail</span>
+      <span class="dado-valor">{{ pessoa.email }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">E-mail 2</span>
+      <span class="dado-valor">{{ pessoa.email_2|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Telefone</span>
+      <span class="dado-valor">{{ pessoa.telefone }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">Telefone 2 / Celular</span>
+      <span class="dado-valor">{{ pessoa.telefone_2|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">RM</span>
+      <span class="dado-valor">{{ pessoa.registro_matricula|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">RA</span>
+      <span class="dado-valor">{{ pessoa.registro_aluno|default:"-----" }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">CANAC</span>
+      <span class="dado-valor">{{ pessoa.codigo_anac|default:"-----" }}</span>
+    </div>
+  </div>
+</fieldset>
+
+
+<fieldset class="detalhe-fieldset">
+  <legend>Endereço</legend>
+
+  <div class="grid-detalhes-4">
+    <div class="dado-detalhe dado-col-span-3">
+      <span class="dado-rotulo">Endereço</span>
+      <span class="dado-valor">{{ pessoa.endereco }}</span>
+    </div>
+
+    <div class="dado-detalhe">
+      <span class="dado-rotulo">CEP</span>
+      <span class="dado-valor">{{ pessoa.endereco_cep }}</span>
+    </div>
+  </div>
+</fieldset>
 
 {% for atribuicao in pessoa.atribuicoes.all %}
-{% with dd=atribuicao.dados_discente %}
-{% if dd %}
-<h3>Dados do Discente — {{ atribuicao.funcao.nome }}</h3>
-<table>
-  <tr>
-    <th>Código de Matrícula ANAC</th>
-    <td colspan="3">{{ dd.codigo_matricula_anac|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Contato Emergência - Nome</th>
-    <td>{{ dd.contato_emergencia_nome|default:"-----" }}</td>
-    <th>Parentesco</th>
-    <td>{{ dd.contato_emergencia_parentesco|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Contato Emergência - Telefone</th>
-    <td>{{ dd.contato_emergencia_telefone|default:"-----" }}</td>
-    <th>Endereço</th>
-    <td>{{ dd.contato_emergencia_endereco|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Responsável - Nome</th>
-    <td>{{ dd.responsavel_nome|default:"-----" }}</td>
-    <th>Qualificação</th>
-    <td>{{ dd.responsavel_qualificacao|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Responsável - Endereço</th>
-    <td colspan="3">{{ dd.responsavel_endereco|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Responsável - Identidade</th>
-    <td>{{ dd.responsavel_identidade|default:"-----" }}</td>
-    <th>Órgão Expedidor</th>
-    <td>{{ dd.responsavel_orgao_expedidor|default:"-----" }}</td>
-  </tr>
-  <tr>
-    <th>Responsável - Data de Emissão</th>
-    <td colspan="3">{{ dd.responsavel_data_emissao|date:"d/m/Y"|default:"-----" }}</td>
-  </tr>
-</table>
-{% endif %}
-{% endwith %}
+    {% with dd=atribuicao.dados_discente %}
+        {% if dd %}
+
+        <h3>Dados do Discente</h3>
+
+        <fieldset class="detalhe-fieldset">
+
+            <legend>{{ atribuicao.funcao.nome }}</legend>
+
+            <!-- =====================================================
+                 DADOS GERAIS DO DISCENTE
+                 ===================================================== -->
+
+            <div class="grid-detalhes-4">
+
+                <div class="dado-detalhe">
+                    <span class="dado-rotulo">
+                        Código de Matrícula ANAC
+                    </span>
+
+                    <span class="dado-valor">
+                        {{ dd.codigo_matricula_anac|default:"-----" }}
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 CONTATOS DE EMERGÊNCIA
+                 ===================================================== -->
+
+            <fieldset>
+
+                <legend>Contatos de Emergência</legend>
+
+                <div class="grid-detalhes-4">
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Nome
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.contato_emergencia_nome|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Parentesco
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.contato_emergencia_parentesco|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Telefone
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.contato_emergencia_telefone|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Endereço
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.contato_emergencia_endereco|default:"-----" }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </fieldset>
+
+
+            <!-- =====================================================
+                 RESPONSÁVEL
+                 ===================================================== -->
+
+            <fieldset>
+
+                <legend>Responsável</legend>
+
+                <div class="grid-detalhes-4">
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Nome
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_nome|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Qualificação
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_qualificacao|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe dado-col-span-2">
+                        <span class="dado-rotulo">
+                            Endereço
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_endereco|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Identidade
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_identidade|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Órgão Expedidor
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_orgao_expedidor|default:"-----" }}
+                        </span>
+                    </div>
+
+
+                    <div class="dado-detalhe">
+                        <span class="dado-rotulo">
+                            Data de Emissão
+                        </span>
+
+                        <span class="dado-valor">
+                            {{ dd.responsavel_data_emissao|date:"d/m/Y"|default:"-----" }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </fieldset>
+
+        </fieldset>
+
+        {% endif %}
+    {% endwith %}
 {% endfor %}
 
 <h3>Sumário Histórico de Vínculos</h3>
+<fieldset class="detalhe-fieldset">
+  <legend>Histórico consolidado</legend>
 {% if sumario_historico_vinculos %}
 <table>
   <thead>
@@ -180,22 +392,24 @@ de Gestao Escolar{% endblock %} {% block content %}
 {% else %}
 <p>Nenhum vínculo cadastrado.</p>
 {% endif %}
+</fieldset>
 
 <h3>Requisitos de Contratação</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria != 'DISCENTE' %}
-  <fieldset>
+  <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
-    <table>
-      <tr>
-        <th>Critério</th>
-        <td>{{ atribuicao.get_requisito_contratacao_display|default:"-----" }}</td>
-      </tr>
-      <tr>
-        <th>Documento comprobatório</th>
-        <td>{{ atribuicao.documento_comprobatorio|default:"-----" }}</td>
-      </tr>
-    </table>
+    <div class="grid-detalhes-4">
+      <div class="dado-detalhe dado-col-span-2">
+        <span class="dado-rotulo">Critério</span>
+        <span class="dado-valor">{{ atribuicao.get_requisito_contratacao_display|default:"-----" }}</span>
+      </div>
+
+      <div class="dado-detalhe dado-col-span-2">
+        <span class="dado-rotulo">Documento comprobatório</span>
+        <span class="dado-valor">{{ atribuicao.documento_comprobatorio|default:"-----" }}</span>
+      </div>
+    </div>
     <button type="button" class="btn-abrir-modal-crud btn-crud"
             data-url="{% url 'editar-requisito-contratacao' pk=atribuicao.id %}">
       Editar Requisitos
@@ -206,7 +420,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 
 <h3>Pendências de Documentação</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
-  <fieldset>
+  <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.pendencias.all %}
     <table>
@@ -251,7 +465,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 <h3>Formação (Graduação / Formação Profissional / Aperfeiçoamento)</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria == 'DOCENTE' %}
-  <fieldset>
+  <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.dados_docente.formacoes.all %}
     <table>
@@ -298,7 +512,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   {% endif %}
 {% endfor %}
 
-<fieldset>
+<fieldset class="detalhe-fieldset">
   <legend>Disciplinas Habilitadas (Capacidade)</legend>
   <table>
     <thead>
@@ -327,7 +541,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 <h3>Experiência Profissional</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria == 'GESTAO' %}
-  <fieldset>
+  <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.experiencias_profissionais.all %}
     <table>
@@ -375,7 +589,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 <h3>Histórico de Vínculo Formal</h3>
 {% for atribuicao in pessoa.atribuicoes.all %}
   {% if atribuicao.funcao.categoria != 'DISCENTE' %}
-  <fieldset>
+  <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.historico_vinculo_formal.all %}
     <table>

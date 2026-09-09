@@ -1,4 +1,4 @@
-"""
+﻿"""
 cadastros/views.py
 
 Views (API e Template): traduzem HTTP <-> Service. Não contêm regra de negócio.
@@ -13,6 +13,8 @@ from django.views.generic import ListView, DetailView, View, CreateView, UpdateV
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from django.db.models.functions import Lower #Acréscimo da função de busca na página detalhe.html
 
 from .models import (
     Pessoa, Funcao, CategoriaFuncao, DadosDocente, FormacaoDocente,
@@ -139,13 +141,77 @@ class CadastrarPessoaView(APIView):
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ListaPessoasView(ListView):
+class ListaPessoasView(ListView): #Acréscimo da função de busca na página detalhe.html
     """
-    Template View: renderiza HTML no servidor, sem passar por Serializer/JSON.
+    Lista de pessoas com:
+    - busca por nome;
+    - filtro por ativo/inativo;
+    - filtro por categoria da função;
+    - ordenação alfabética por nome.
     """
+
     model = Pessoa
     template_name = 'cadastros/lista.html'
     context_object_name = 'pessoas'
+
+    def get_queryset(self):
+        queryset = (
+            Pessoa.objects
+            .prefetch_related('atribuicoes__funcao')
+            .order_by(Lower('nome_completo'))
+        )
+
+        # ------------------------------------------
+        # FILTRO POR NOME
+        # ------------------------------------------
+        nome = self.request.GET.get('nome', '').strip()
+
+        if nome:
+            queryset = queryset.filter(
+                nome_completo__icontains=nome
+            )
+
+        # ------------------------------------------
+        # FILTRO ATIVO / INATIVO
+        # ------------------------------------------
+        ativo = self.request.GET.get('ativo', '')
+
+        if ativo == '1':
+            queryset = queryset.filter(ativo=True)
+
+        elif ativo == '0':
+            queryset = queryset.filter(ativo=False)
+
+        # ------------------------------------------
+        # FILTRO POR CATEGORIA
+        # DISCENTE / DOCENTE / GESTAO
+        # ------------------------------------------
+        categoria = self.request.GET.get('categoria', '')
+
+        categorias_validas = {
+            CategoriaFuncao.DISCENTE,
+            CategoriaFuncao.DOCENTE,
+            CategoriaFuncao.GESTAO,
+        }
+
+        if categoria in categorias_validas:
+            queryset = queryset.filter(
+                atribuicoes__funcao__categoria=categoria
+            ).distinct()
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Mantém os valores selecionados depois da pesquisa.
+        context['filtro_nome'] = self.request.GET.get('nome', '')
+        context['filtro_ativo'] = self.request.GET.get('ativo', '')
+        context['filtro_categoria'] = self.request.GET.get('categoria', '')
+
+        context['categorias_funcao'] = CategoriaFuncao.choices
+
+        return context
 
 
 class DetalhePessoaView(DetailView):
@@ -466,7 +532,7 @@ class NovoCadastroPessoaView(View):
                 pendencias=pendencias,
             )
         except ValidationError as e:
-            form.add_error(None, str(e))
+            form.add_error(None, e)
             return render(request, self.template_name, {
                 'form': form,
                 'formacao_formset': formacao_fs,

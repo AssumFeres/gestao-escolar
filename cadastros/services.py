@@ -25,9 +25,14 @@ class CadastrarPessoaComFuncaoService:
     para o usuário só editar o que precisa corrigir, nunca reenviar o formulário em
     branco por cima de um cadastro já preenchido.
 
-    Regra de negócio: uma Pessoa com Função de Discente (identificada pela existência de
-    DadosDiscente associado a alguma AtribuicaoFuncao dela, nunca pelo texto de Funcao.nome
-    — nome é editável, estrutura não) não pode acumular outra Função.
+    Regra de negócio — exclusividade da categoria Discente:
+
+    - Pessoa com Discente ATIVO não pode acumular outra Função.
+    - Pessoa com Docente ou Gestão ATIVO não pode receber uma Função Discente.
+    - Docente e Gestão podem coexistir.
+    - Atribuições INATIVAS não impedem uma nova atribuição.
+    - Um ex-aluno pode retornar futuramente como Discente em uma nova
+      AtribuicaoFuncao, desde que a anterior esteja encerrada.
 
     PendenciaCadastro (documentação física pendente) é universal — não depende da
     categoria da Função, diferente de Formação/Experiência/Histórico de Vínculo Formal.
@@ -45,96 +50,288 @@ class CadastrarPessoaComFuncaoService:
         pendencias: list = None,
     ):
         from .models import (
-            Pessoa, AtribuicaoFuncao, CategoriaFuncao,
-            DadosDiscente, DadosDocente, FormacaoDocente,
-            ExperienciaProfissional, HistoricoVinculoFormal, PendenciaCadastro,
+            Pessoa,
+            AtribuicaoFuncao,
+            CategoriaFuncao,
+            SituacaoAtribuicao,
+            DadosDiscente,
+            DadosDocente,
+            FormacaoDocente,
+            ExperienciaProfissional,
+            HistoricoVinculoFormal,
+            PendenciaCadastro,
         )
 
         with transaction.atomic():
-            pessoa_existente = Pessoa.objects.filter(cpf=dados_pessoa['cpf']).first()
 
-            # Duplicidade de RM/RA/CANAC — exclui a própria Pessoa existente
-            # da checagem (senão o valor dela mesma "colidiria" com ela).
+            pessoa_existente = Pessoa.objects.filter(
+                cpf=dados_pessoa['cpf']
+            ).first()
+
+            # ---------------------------------------------------------
+            # DUPLICIDADE DE RM / RA / CANAC
+            # ---------------------------------------------------------
+            #
+            # Exclui a própria Pessoa existente da verificação.
+            # Isso evita que um valor que já pertence à própria pessoa
+            # seja identificado incorretamente como duplicado.
+            # ---------------------------------------------------------
+
             campos_unicos = [
                 ('registro_matricula', 'RM'),
                 ('registro_aluno', 'RA'),
                 ('codigo_anac', 'CANAC'),
             ]
+
             for campo, rotulo in campos_unicos:
+
                 valor = dados_pessoa.get(campo)
+
                 if not valor:
                     continue
-                consulta = Pessoa.objects.filter(**{campo: valor})
+
+                consulta = Pessoa.objects.filter(
+                    **{campo: valor}
+                )
+
                 if pessoa_existente:
-                    consulta = consulta.exclude(pk=pessoa_existente.pk)
+                    consulta = consulta.exclude(
+                        pk=pessoa_existente.pk
+                    )
+
                 if consulta.exists():
                     raise ValidationError(
                         f"{rotulo} '{valor}' já está em uso por outra pessoa."
                     )
 
+
+            # ---------------------------------------------------------
+            # DUPLICIDADE DO CÓDIGO DE MATRÍCULA ANAC
+            # ---------------------------------------------------------
+
             if funcao.categoria == CategoriaFuncao.DISCENTE:
-                codigo_cma = (dados_extensao or {}).get('codigo_matricula_anac')
-                if codigo_cma and DadosDiscente.objects.filter(codigo_matricula_anac=codigo_cma).exists():
+
+                codigo_cma = (
+                    dados_extensao or {}
+                ).get('codigo_matricula_anac')
+
+                if (
+                    codigo_cma
+                    and DadosDiscente.objects.filter(
+                        codigo_matricula_anac=codigo_cma
+                    ).exists()
+                ):
                     raise ValidationError(
-                        f"Código de Matrícula ANAC '{codigo_cma}' já está em uso."
+                        f"Código de Matrícula ANAC "
+                        f"'{codigo_cma}' já está em uso."
                     )
+
+
+            # ---------------------------------------------------------
+            # BUSCA OU CRIA A PESSOA
+            # ---------------------------------------------------------
 
             pessoa, criada = Pessoa.objects.get_or_create(
                 cpf=dados_pessoa['cpf'],
                 defaults=dados_pessoa,
             )
 
+
+            # ---------------------------------------------------------
+            # PESSOA JÁ EXISTENTE
+            # ---------------------------------------------------------
+
             if not criada:
-                # Atualiza de verdade os campos da Pessoa existente com o
-                # que veio do formulário — exceto 'cpf', que nunca muda.
+
+                # Atualiza os dados cadastrais da Pessoa existente.
+                # O CPF nunca é alterado.
+
                 for campo, valor in dados_pessoa.items():
+
                     if campo != 'cpf':
-                        setattr(pessoa, campo, valor)
+                        setattr(
+                            pessoa,
+                            campo,
+                            valor
+                        )
+
                 pessoa.save()
 
-                # Corrigido em 07/09/2026 (docs/37, Etapa 0): antes checava só a
-                # EXISTÊNCIA de uma AtribuicaoFuncao Discente, bloqueando até quem já
-                # teve o vínculo encerrado há anos. Agora só bloqueia se houver uma
-                # ATIVA — cada passagem da Pessoa pela EMCA como Discente é sua
-                # própria AtribuicaoFuncao; um ex-aluno pode voltar como Discente
-                # novo (nova AtribuicaoFuncao), sem reabrir a antiga.
-                ja_e_discente_ativo = pessoa.atribuicoes.filter(
-                    dados_discente__isnull=False, situacao='ATIVO'
-                ).exists()
-                if ja_e_discente_ativo:
+
+                # -----------------------------------------------------
+                # REGRA DE EXCLUSIVIDADE DA CATEGORIA DISCENTE
+                # -----------------------------------------------------
+                #
+                # Obtém todas as categorias das atribuições atualmente
+                # ATIVAS da Pessoa.
+                #
+                # Exemplos possíveis:
+                #
+                # {'DOCENTE'}
+                #
+                # {'GESTAO'}
+                #
+                # {'DOCENTE', 'GESTAO'}
+                #
+                # {'DISCENTE'}
+                #
+                # Atribuições INATIVAS não entram nessa consulta.
+                # -----------------------------------------------------
+
+                categorias_ativas = set(
+                    pessoa.atribuicoes
+                    .filter(
+                        situacao=SituacaoAtribuicao.ATIVO
+                    )
+                    .values_list(
+                        'funcao__categoria',
+                        flat=True
+                    )
+                )
+
+
+                # -----------------------------------------------------
+                # CASO 1
+                #
+                # A Pessoa já possui Discente ATIVO.
+                #
+                # Enquanto esse vínculo estiver ativo, nenhuma nova
+                # Função poderá ser atribuída.
+                # -----------------------------------------------------
+
+                if CategoriaFuncao.DISCENTE in categorias_ativas:
+
                     raise ValidationError(
-                        "Esta pessoa já possui a Função Discente ativa e não pode acumular outra Função."
+                        "Esta pessoa já possui a Função Discente ativa "
+                        "e não pode acumular outra Função."
                     )
 
+
+                # -----------------------------------------------------
+                # CASO 2
+                #
+                # A nova Função é Discente.
+                #
+                # Se a Pessoa já possui qualquer outra categoria ativa
+                # (Docente ou Gestão), a nova atribuição é bloqueada.
+                #
+                # Docente + Gestão continua permitido porque esta regra
+                # somente é executada quando a NOVA função é Discente.
+                # -----------------------------------------------------
+
+                if (
+                    funcao.categoria == CategoriaFuncao.DISCENTE
+                    and categorias_ativas
+                ):
+
+                    raise ValidationError(
+                        "Esta pessoa já possui uma Função ativa de "
+                        "Docente ou Gestão e não pode ser cadastrada "
+                        "como Discente enquanto esse vínculo estiver ativo."
+                    )
+
+
+            # ---------------------------------------------------------
+            # CRIA A ATRIBUIÇÃO DA FUNÇÃO
+            # ---------------------------------------------------------
+
             atribuicao = AtribuicaoFuncao.objects.create(
-                pessoa=pessoa, funcao=funcao, **dados_atribuicao
+                pessoa=pessoa,
+                funcao=funcao,
+                **dados_atribuicao
             )
+
 
             dados_docente = None
 
+
+            # ---------------------------------------------------------
+            # EXTENSÃO DISCENTE
+            # ---------------------------------------------------------
+
             if funcao.categoria == CategoriaFuncao.DISCENTE:
-                DadosDiscente.objects.create(atribuicao=atribuicao, **(dados_extensao or {}))
+
+                DadosDiscente.objects.create(
+                    atribuicao=atribuicao,
+                    **(dados_extensao or {})
+                )
+
+
+            # ---------------------------------------------------------
+            # EXTENSÃO DOCENTE
+            # ---------------------------------------------------------
 
             elif funcao.categoria == CategoriaFuncao.DOCENTE:
-                dados_docente = DadosDocente.objects.create(atribuicao=atribuicao, **(dados_extensao or {}))
+
+                dados_docente = DadosDocente.objects.create(
+                    atribuicao=atribuicao,
+                    **(dados_extensao or {})
+                )
+
                 for formacao in (formacoes or []):
-                    FormacaoDocente.objects.create(dados_docente=dados_docente, **formacao)
+
+                    FormacaoDocente.objects.create(
+                        dados_docente=dados_docente,
+                        **formacao
+                    )
+
+
+            # ---------------------------------------------------------
+            # EXTENSÃO GESTÃO
+            # ---------------------------------------------------------
 
             elif funcao.categoria == CategoriaFuncao.GESTAO:
+
                 for experiencia in (experiencias or []):
-                    ExperienciaProfissional.objects.create(atribuicao=atribuicao, **experiencia)
 
-            # Comum a Docente e Gestão, nunca Discente
-            if funcao.categoria in (CategoriaFuncao.DOCENTE, CategoriaFuncao.GESTAO):
-                for historico in (historico_vinculo_formal or []):
-                    HistoricoVinculoFormal.objects.create(atribuicao=atribuicao, **historico)
+                    ExperienciaProfissional.objects.create(
+                        atribuicao=atribuicao,
+                        **experiencia
+                    )
 
-            # Universal — qualquer categoria, sem condicional
+
+            # ---------------------------------------------------------
+            # HISTÓRICO DE VÍNCULO FORMAL
+            #
+            # Comum a Docente e Gestão.
+            # Nunca aplicado a Discente.
+            # ---------------------------------------------------------
+
+            if funcao.categoria in (
+                CategoriaFuncao.DOCENTE,
+                CategoriaFuncao.GESTAO
+            ):
+
+                for historico in (
+                    historico_vinculo_formal or []
+                ):
+
+                    HistoricoVinculoFormal.objects.create(
+                        atribuicao=atribuicao,
+                        **historico
+                    )
+
+
+            # ---------------------------------------------------------
+            # PENDÊNCIAS
+            #
+            # Universal — aplicável a qualquer categoria.
+            # ---------------------------------------------------------
+
             for pendencia in (pendencias or []):
-                PendenciaCadastro.objects.create(atribuicao=atribuicao, **pendencia)
+
+                PendenciaCadastro.objects.create(
+                    atribuicao=atribuicao,
+                    **pendencia
+                )
+
 
         return pessoa, atribuicao, dados_docente
 
+
+# =============================================================
+# DOCENTE — CAPACIDADES / DISCIPLINAS
+# =============================================================
 
 class PreencherRequisitosEDisciplinasDocenteService:
     """
@@ -154,25 +351,53 @@ class PreencherRequisitosEDisciplinasDocenteService:
     até essa limpeza acontecer.
     """
 
-    def executar(self, dados_docente, dados_requisitos: dict, capacidades: list):
+    def executar(
+        self,
+        dados_docente,
+        dados_requisitos: dict,
+        capacidades: list
+    ):
+
         from .models import Capacidade
 
         with transaction.atomic():
+
             for capacidade in (capacidades or []):
-                Capacidade.objects.create(dados_docente=dados_docente, **capacidade)
+
+                Capacidade.objects.create(
+                    dados_docente=dados_docente,
+                    **capacidade
+                )
 
         return dados_docente
 
 
+# =============================================================
+# CEP
+# =============================================================
+
 class BuscarEnderecoPorCepService:
-    """DIP: depende da abstração (porta), não da implementação concreta (ViaCEP)."""
+    """
+    DIP: depende da abstração (porta),
+    não da implementação concreta (ViaCEP).
+    """
 
     def __init__(self, cliente_cep=None):
-        self.cliente_cep = cliente_cep or ViaCepClient()
+
+        self.cliente_cep = (
+            cliente_cep or ViaCepClient()
+        )
 
     def executar(self, cep: str):
-        return self.cliente_cep.buscar_endereco(cep)
 
+        return self.cliente_cep.buscar_endereco(
+            cep
+        )
+
+
+# =============================================================
+# ENCERRAMENTO DE VÍNCULO
+# =============================================================
 
 class EncerrarVinculoService:
     """
@@ -184,14 +409,28 @@ class EncerrarVinculoService:
     módulo atribuicao (encerramento individual ou em lote ao fechar Turma).
     """
 
-    def executar(self, atribuicao_funcao, data_fim):
+    def executar(
+        self,
+        atribuicao_funcao,
+        data_fim
+    ):
+
         from .models import SituacaoAtribuicao
 
-        atribuicao_funcao.situacao = SituacaoAtribuicao.INATIVO
+        atribuicao_funcao.situacao = (
+            SituacaoAtribuicao.INATIVO
+        )
+
         atribuicao_funcao.data_fim = data_fim
+
         atribuicao_funcao.save()
+
         return atribuicao_funcao
 
+
+# =============================================================
+# INICIAR TURMA
+# =============================================================
 
 class IniciarTurmaService:
     """
@@ -200,15 +439,29 @@ class IniciarTurmaService:
     retrocede (exceto via Admin, fora deste Service).
     """
 
-    def executar(self, turma):
+    def executar(
+        self,
+        turma
+    ):
+
         from .models import SituacaoTurma
 
         if turma.situacao != SituacaoTurma.PLANEJADA:
-            raise ValidationError("Só é possível iniciar uma Turma que está Planejada.")
+
+            raise ValidationError(
+                "Só é possível iniciar uma Turma que está Planejada."
+            )
+
         turma.situacao = SituacaoTurma.EM_ANDAMENTO
+
         turma.save()
+
         return turma
 
+
+# =============================================================
+# CONCLUIR TURMA
+# =============================================================
 
 class ConcluirTurmaService:
     """
@@ -217,43 +470,153 @@ class ConcluirTurmaService:
     CURSANDO (validado do lado de atribuicao, antes de chamar este Service).
     """
 
-    def executar(self, turma, data_encerramento):
+    def executar(
+        self,
+        turma,
+        data_encerramento
+    ):
+
         from .models import SituacaoTurma
 
         if turma.situacao != SituacaoTurma.EM_ANDAMENTO:
-            raise ValidationError("Só é possível encerrar uma Turma que está Em Andamento.")
+
+            raise ValidationError(
+                "Só é possível encerrar uma Turma que está Em Andamento."
+            )
+
         turma.situacao = SituacaoTurma.ENCERRADA
+
         turma.data_encerramento = data_encerramento
+
         turma.save()
+
         return turma
 
 
+# =============================================================
+# OBTER OU CRIAR ATRIBUIÇÃO DISCENTE
+# =============================================================
+
 class ObterOuCriarAtribuicaoDiscenteService:
     """
-    Usado pelo módulo atribuicao ao matricular uma Pessoa numa Turma (regular
-    ou extracurricular, docs/37 seção 7). Reaproveita a AtribuicaoFuncao
-    Discente ATIVA existente, se houver — a mesma Pessoa pode acumular Turma
-    regular + Extracurricular na mesma AtribuicaoFuncao. Se não houver
-    nenhuma ativa (nunca foi Discente, ou só tem alguma já INATIVO no
-    passado), cria uma nova, mínima — sem código de matrícula ANAC, sem
-    nenhum requisito de aluno regular (já opcionais em DadosDiscente hoje).
-    Nunca reabre uma AtribuicaoFuncao já INATIVO.
+    Usado pelo módulo atribuicao ao matricular uma Pessoa numa Turma
+    regular ou extracurricular.
+
+    Reaproveita uma AtribuicaoFuncao Discente ATIVA, caso já exista.
+
+    Se não existir Discente ativo, poderá criar uma nova atribuição,
+    desde que a Pessoa NÃO possua função ativa de Docente ou Gestão.
+
+    Regra de exclusividade:
+
+    - Discente ativo não acumula Docente ou Gestão.
+    - Docente ou Gestão ativo não podem receber Discente.
+    - Docente + Gestão é permitido.
+    - Atribuições inativas não impedem uma nova atribuição Discente.
+    - Uma atribuição antiga nunca é reaberta.
     """
 
-    def executar(self, pessoa, data_inicio):
+    def executar(
+        self,
+        pessoa,
+        data_inicio
+    ):
+
         from django.utils import timezone
-        from .models import AtribuicaoFuncao, CategoriaFuncao, DadosDiscente, Funcao, SituacaoAtribuicao
 
-        ativa = pessoa.atribuicoes.filter(dados_discente__isnull=False, situacao=SituacaoAtribuicao.ATIVO).first()
-        if ativa:
-            return ativa
+        from .models import (
+            AtribuicaoFuncao,
+            CategoriaFuncao,
+            DadosDiscente,
+            Funcao,
+            SituacaoAtribuicao,
+        )
 
-        funcao_discente = Funcao.objects.get(categoria=CategoriaFuncao.DISCENTE)
+
+        # ---------------------------------------------------------
+        # VERIFICA SE JÁ EXISTE DISCENTE ATIVO
+        # ---------------------------------------------------------
+        #
+        # Se existir, reutiliza essa mesma AtribuicaoFuncao.
+        # Isso permite que o mesmo Discente participe de mais de
+        # uma Turma usando o mesmo vínculo institucional.
+        # ---------------------------------------------------------
+
+        discente_ativo = pessoa.atribuicoes.filter(
+            dados_discente__isnull=False,
+            situacao=SituacaoAtribuicao.ATIVO,
+        ).first()
+
+
+        if discente_ativo:
+
+            return discente_ativo
+
+
+        # ---------------------------------------------------------
+        # REGRA DE EXCLUSIVIDADE DO DISCENTE
+        # ---------------------------------------------------------
+        #
+        # Neste ponto sabemos que a Pessoa NÃO possui Discente ativo.
+        #
+        # Agora verificamos se existe qualquer outra função ativa.
+        #
+        # Se houver Docente ou Gestão ativo, não podemos criar uma
+        # nova atribuição Discente.
+        # ---------------------------------------------------------
+
+        possui_outra_funcao_ativa = (
+            pessoa.atribuicoes
+            .filter(
+                situacao=SituacaoAtribuicao.ATIVO
+            )
+            .exclude(
+                funcao__categoria=CategoriaFuncao.DISCENTE
+            )
+            .exists()
+        )
+
+
+        if possui_outra_funcao_ativa:
+
+            raise ValidationError(
+                "Esta pessoa já possui uma Função ativa de "
+                "Docente ou Gestão e não pode ser cadastrada "
+                "como Discente enquanto esse vínculo estiver ativo."
+            )
+
+
+        # ---------------------------------------------------------
+        # LOCALIZA A FUNÇÃO DISCENTE
+        # ---------------------------------------------------------
+
+        funcao_discente = Funcao.objects.get(
+            categoria=CategoriaFuncao.DISCENTE
+        )
+
+
+        # ---------------------------------------------------------
+        # CRIA NOVA ATRIBUIÇÃO DISCENTE
+        # ---------------------------------------------------------
+
         nova = AtribuicaoFuncao.objects.create(
             pessoa=pessoa,
             funcao=funcao_discente,
             situacao=SituacaoAtribuicao.ATIVO,
-            data_inicio=data_inicio or timezone.now().date(),
+            data_inicio=(
+                data_inicio
+                or timezone.now().date()
+            ),
         )
-        DadosDiscente.objects.create(atribuicao=nova)
+
+
+        # ---------------------------------------------------------
+        # CRIA A EXTENSÃO DADOS DISCENTE
+        # ---------------------------------------------------------
+
+        DadosDiscente.objects.create(
+            atribuicao=nova
+        )
+
+
         return nova

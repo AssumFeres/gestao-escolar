@@ -267,6 +267,22 @@ fieldset fieldset legend {
   width: 100%;
 }
 
+/* Grid de 5 colunas */
+.grid-5-colunas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Grid de 6 colunas */
+.grid-6-colunas {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
 /* Responsividade dos formulários */
 @media (max-width: 1200px) {
   .grid-4-colunas {
@@ -278,6 +294,20 @@ fieldset fieldset legend {
   .grid-2-colunas,
   .grid-3-colunas,
   .grid-4-colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .grid-5-colunas,
+  .grid-6-colunas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-5-colunas,
+  .grid-6-colunas {
     grid-template-columns: 1fr;
   }
 }
@@ -331,7 +361,7 @@ button[type="submit"] {
   color: white;
   text-decoration: none;
   border-radius: 4px;
-  padding: 0.5rem 1.2rem;
+  padding: 0.5rem 1.5rem;
   font-weight: 600;
 }
 
@@ -523,7 +553,6 @@ button[type="submit"] {
    12. MODAL CRUD GENÉRICO
    ========================================================== */
 
-
 /* Fundo escurecido */
 #modal-crud-overlay {
   position: fixed;
@@ -542,7 +571,6 @@ button[type="submit"] {
 
   z-index: 9999;
 }
-
 
 /* ==========================================================
    CAIXA EXTERNA DO MODAL
@@ -570,7 +598,6 @@ button[type="submit"] {
   position: relative;
 }
 
-
 /* ==========================================================
    CORPO DO MODAL
    ========================================================== */
@@ -589,7 +616,6 @@ button[type="submit"] {
   padding: 1.5rem;
 }
 
-
 /* ==========================================================
    EDITAR PESSOA
    ========================================================== */
@@ -602,7 +628,6 @@ button[type="submit"] {
 
   overflow: visible;
 }
-
 
 /* ==========================================================
    GRID DE 4 COLUNAS
@@ -618,12 +643,10 @@ button[type="submit"] {
   width: 100%;
 }
 
-
 /* Cada coluna pode encolher corretamente */
 .popup-pessoa-editar .coluna-formulario {
   min-width: 0;
 }
-
 
 /* ==========================================================
    CAMPOS
@@ -638,7 +661,6 @@ button[type="submit"] {
   box-sizing: border-box;
 }
 
-
 /* ==========================================================
    TÍTULOS DAS COLUNAS
    ========================================================== */
@@ -652,7 +674,6 @@ button[type="submit"] {
   border-bottom: 2px solid var(--cor-primaria);
 }
 
-
 /* ==========================================================
    ÁREA DOS BOTÕES
    ========================================================== */
@@ -665,14 +686,12 @@ button[type="submit"] {
   border-top: 1px solid var(--cor-borda);
 }
 
-
 /* ==========================================================
    RESPONSIVIDADE
    ========================================================== */
 
 /* Em telas intermediárias: 2 colunas */
 @media (max-width: 1000px) {
-
   #modal-crud-overlay > * {
     width: 95vw !important;
   }
@@ -680,13 +699,10 @@ button[type="submit"] {
   .popup-pessoa-editar .grid-4-colunas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
-
 
 /* Em telas pequenas: 1 coluna */
 @media (max-width: 700px) {
-
   #modal-crud-overlay {
     padding: 10px;
   }
@@ -706,5 +722,155 @@ button[type="submit"] {
   .popup-pessoa-editar .grid-4-colunas {
     grid-template-columns: 1fr;
   }
+}
 
+/* ==========================================================
+   MENSAGENS DE ERRO DOS FORMULÁRIOS
+   ========================================================== */
+
+.erro {
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  color: #a94442;
+
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+
+  border-radius: 4px;
+
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* O Django gera os erros dentro de uma <ul class="errorlist"> */
+.erro .errorlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.erro .errorlist li {
+  margin: 0;
+  padding: 0;
+}
+
+.erro {
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  color: #a94442;
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icone-erro {
+  font-size: 3rem;
+  line-height: 2;
+  flex-shrink: 0;
+}
+
+.erro .errorlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ==========================================================
+   DETALHE DA PESSOA - VISUALIZAÇÃO EM 4 COLUNAS
+   ========================================================== */
+
+.detalhe-fieldset {
+  margin-bottom: 1rem;
+}
+
+/* Grid principal dos dados */
+.grid-detalhes-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+/* Cada informação da ficha */
+.dado-detalhe {
+  background-color: var(--fundo-secao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 5px;
+
+  padding: 0.55rem 0.7rem;
+
+  min-width: 0;
+}
+
+/* Nome do campo */
+.dado-rotulo {
+  display: block;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  color: var(--cor-texto-secundario);
+
+  margin-bottom: 0.15rem;
+}
+
+/* Valor do campo */
+.dado-valor {
+  display: block;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  color: var(--cor-texto);
+
+  overflow-wrap: anywhere;
+}
+
+/* Campos que precisam de mais espaço */
+.dado-col-span-2 {
+  grid-column: span 2;
+}
+
+.dado-col-span-3 {
+  grid-column: span 3;
+}
+
+.dado-col-span-4 {
+  grid-column: span 4;
+}
+
+/* Tabelas dentro dos fieldsets */
+.detalhe-fieldset table {
+  margin-top: 0.4rem;
+}
+
+/* ----------------------------------------------------------
+   RESPONSIVIDADE
+   ---------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .grid-detalhes-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dado-col-span-3,
+  .dado-col-span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-detalhes-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .dado-col-span-2,
+  .dado-col-span-3,
+  .dado-col-span-4 {
+    grid-column: span 1;
+  }
 }
