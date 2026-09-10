@@ -243,6 +243,19 @@ fieldset fieldset legend {
   font-size: 0.95rem;
 }
 
+.campo-customizado {
+  /* Cor ou imagem de fundo */
+  background-color: var(--fundo-pagina);
+  
+  /* Borda personalizada */
+  border: 3px solid var(--cor-borda);
+  border-radius: 8px;
+  
+  /* Espaçamento interno e externo */
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
 /* Substitui os `style="display:grid..."` inline por uma classe reutilizável */
 .grid-2-colunas {
   display: grid;
@@ -573,17 +586,17 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   CAIXA EXTERNA DO MODAL
+   CAIXA EXTERNA DO MODAL - PADRÃO GENÉRICO
    ========================================================== */
 
 /*
-   Usa > * em vez de > div.
-   Assim pega o filho direto do overlay independentemente
+   Todos os popups CRUD voltam ao tamanho padrão/original.
+   O seletor > * pega o filho direto do overlay independentemente
    de ele ser div, section, article etc.
 */
 #modal-crud-overlay > * {
-  width: 90vw !important;
-  max-width: 1400px !important;
+  width: 90% !important;
+  max-width: 600px !important;
 
   max-height: 90vh !important;
 
@@ -596,6 +609,46 @@ button[type="submit"] {
   overflow: hidden;
 
   position: relative;
+}
+
+/* ==========================================================
+   FORMULÁRIO CRUD GENÉRICO
+   ========================================================== */
+
+/*
+   Classe comum dos formulários carregados no modal.
+   Não altera a largura da caixa externa.
+*/
+.form-modal-crud {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   EXCEÇÃO - MODAL EDITAR PESSOA
+   ========================================================== */
+
+/*
+   Somente a caixa externa que contém o formulário específico
+   de Editar Pessoa recebe largura ampliada.
+
+   No HTML do Editar Pessoa, usar:
+   class="form-modal-crud form-modal-crud-editar-pessoa"
+*/
+#modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
+  width: 90vw !important;
+  max-width: 1400px !important;
+}
+
+/*
+   Classe complementar do formulário Editar Pessoa.
+   Mantém a classe genérica e acrescenta apenas a especialização.
+*/
+.form-modal-crud-editar-pessoa {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ==========================================================
@@ -630,7 +683,7 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   GRID DE 4 COLUNAS
+   GRID DE 4 COLUNAS - EDITAR PESSOA
    ========================================================== */
 
 .popup-pessoa-editar .grid-4-colunas {
@@ -649,7 +702,7 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   CAMPOS
+   CAMPOS - EDITAR PESSOA
    ========================================================== */
 
 .popup-pessoa-editar input,
@@ -662,7 +715,7 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   TÍTULOS DAS COLUNAS
+   TÍTULOS DAS COLUNAS - EDITAR PESSOA
    ========================================================== */
 
 .popup-pessoa-editar .coluna-formulario h4 {
@@ -675,7 +728,7 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   ÁREA DOS BOTÕES
+   ÁREA DOS BOTÕES - EDITAR PESSOA
    ========================================================== */
 
 .popup-pessoa-editar .acoes-formulario {
@@ -687,13 +740,27 @@ button[type="submit"] {
 }
 
 /* ==========================================================
-   RESPONSIVIDADE
+   RESPONSIVIDADE DOS MODAIS
    ========================================================== */
 
-/* Em telas intermediárias: 2 colunas */
+/* Em telas intermediárias */
 @media (max-width: 1000px) {
+
+  /*
+     Popups genéricos continuam limitados a 600px.
+     O width maior apenas permite ocupar melhor a tela
+     quando ela for menor que esse limite.
+  */
   #modal-crud-overlay > * {
     width: 95vw !important;
+  }
+
+  /*
+     Editar Pessoa pode utilizar quase toda a largura disponível.
+  */
+  #modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
+    width: 95vw !important;
+    max-width: 1400px !important;
   }
 
   .popup-pessoa-editar .grid-4-colunas {
@@ -701,13 +768,19 @@ button[type="submit"] {
   }
 }
 
-/* Em telas pequenas: 1 coluna */
+/* Em telas pequenas */
 @media (max-width: 700px) {
+
   #modal-crud-overlay {
     padding: 10px;
   }
 
-  #modal-crud-overlay > * {
+  /*
+     No celular, tanto os modais genéricos quanto o Editar Pessoa
+     podem ocupar praticamente toda a tela.
+  */
+  #modal-crud-overlay > *,
+  #modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
     width: calc(100vw - 20px) !important;
     max-width: calc(100vw - 20px) !important;
     max-height: calc(100vh - 20px) !important;
@@ -816,61 +889,4 @@ button[type="submit"] {
   color: var(--cor-texto-secundario);
 
   margin-bottom: 0.15rem;
-}
-
-/* Valor do campo */
-.dado-valor {
-  display: block;
-
-  font-size: 0.95rem;
-  font-weight: 500;
-
-  color: var(--cor-texto);
-
-  overflow-wrap: anywhere;
-}
-
-/* Campos que precisam de mais espaço */
-.dado-col-span-2 {
-  grid-column: span 2;
-}
-
-.dado-col-span-3 {
-  grid-column: span 3;
-}
-
-.dado-col-span-4 {
-  grid-column: span 4;
-}
-
-/* Tabelas dentro dos fieldsets */
-.detalhe-fieldset table {
-  margin-top: 0.4rem;
-}
-
-/* ----------------------------------------------------------
-   RESPONSIVIDADE
-   ---------------------------------------------------------- */
-
-@media (max-width: 1000px) {
-  .grid-detalhes-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dado-col-span-3,
-  .dado-col-span-4 {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 700px) {
-  .grid-detalhes-4 {
-    grid-template-columns: 1fr;
-  }
-
-  .dado-col-span-2,
-  .dado-col-span-3,
-  .dado-col-span-4 {
-    grid-column: span 1;
-  }
 }

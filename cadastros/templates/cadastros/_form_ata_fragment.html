@@ -1,15 +1,23 @@
-<h3>{% if editando %}Editar Ata{% else %}Nova Ata{% endif %}</h3>
+<h3 style="text-align: center;">{% if editando %}Editar Ata{% else %}Nova Ata{% endif %}</h3>
 
 <form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
     {% csrf_token %}
-    <div class="campo">{{ form.numero.label_tag }} {{ form.numero }} <small style="color:#64748b;">{{ form.numero.help_text }}</small> {{ form.numero.errors }}</div>
-    <div class="grid-2-colunas">
-        <div class="campo">{{ form.tipo.label_tag }} {{ form.tipo }} {{ form.tipo.errors }}</div>
-        <div class="campo">{{ form.finalidade.label_tag }} {{ form.finalidade }} {{ form.finalidade.errors }}</div>
-    </div>
-    <div class="campo">{{ form.data.label_tag }} {{ form.data }} {{ form.data.errors }}</div>
-    <div class="campo">{{ form.assunto.label_tag }} {{ form.assunto }} {{ form.assunto.errors }}</div>
-    <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
+    <fieldset class="campo-customizado">
+        <div class="grid-1-colunas">
+            <div class="campo">{{ form.numero.label_tag }} {{ form.numero }} <i><small style="color:#fd0000;">{{ form.numero.help_text }}</small></i> {{ form.numero.errors }}</div>
+            <div class="campo">{{ form.tipo.label_tag }} {{ form.tipo }} {{ form.tipo.errors }}</div>
+        </div>
+    </fieldset>
+    <fieldset class="campo-customizado"> 
+        <div class="grid-2-colunas">
+            <div class="campo">{{ form.finalidade.label_tag }} {{ form.finalidade }} {{ form.finalidade.errors }}</div>
+            <div class="campo">{{ form.data.label_tag }} {{ form.data }} {{ form.data.errors }}</div>
+        </div>
+    </fieldset>
+    <fieldset class="campo-customizado">
+        <div class="campo">{{ form.assunto.label_tag }} {{ form.assunto }} {{ form.assunto.errors }}</div>
+        <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
+    </fieldset>
     <button type="submit">Salvar Ata</button>
 </form>
 
