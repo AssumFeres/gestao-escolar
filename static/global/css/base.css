@@ -246,11 +246,11 @@ fieldset fieldset legend {
 .campo-customizado {
   /* Cor ou imagem de fundo */
   background-color: var(--fundo-pagina);
-  
+
   /* Borda personalizada */
   border: 3px solid var(--cor-borda);
   border-radius: 8px;
-  
+
   /* Espaçamento interno e externo */
   padding: 20px;
   margin-bottom: 15px;
@@ -745,7 +745,6 @@ button[type="submit"] {
 
 /* Em telas intermediárias */
 @media (max-width: 1000px) {
-
   /*
      Popups genéricos continuam limitados a 600px.
      O width maior apenas permite ocupar melhor a tela
@@ -770,7 +769,6 @@ button[type="submit"] {
 
 /* Em telas pequenas */
 @media (max-width: 700px) {
-
   #modal-crud-overlay {
     padding: 10px;
   }

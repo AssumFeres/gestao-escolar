@@ -3,15 +3,20 @@
 
 <form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
     {% csrf_token %}
-    <div class="campo">
-        {{ form.requisito_contratacao.label_tag }}
-        {{ form.requisito_contratacao }}
-        {{ form.requisito_contratacao.errors }}
-    </div>
-    <div class="campo">
-        {{ form.documento_comprobatorio.label_tag }}
-        {{ form.documento_comprobatorio }}
-        {{ form.documento_comprobatorio.errors }}
-    </div>
+    <fieldset class="campo-customizado">
+        <div class="campo">
+            {{ form.requisito_contratacao.label_tag }}
+            {{ form.requisito_contratacao }}
+            {{ form.requisito_contratacao.errors }}
+        </div>
+        <div class="campo">
+            {{ form.documento_comprobatorio.label_tag }}
+            {{ form.documento_comprobatorio }}
+            {{ form.documento_comprobatorio.errors }}
+        </div>
+    </fieldset>
     <button type="submit">Salvar Requisitos</button>
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/_form_requisito_contratacao_fragment.html</p>
+
 </form>
