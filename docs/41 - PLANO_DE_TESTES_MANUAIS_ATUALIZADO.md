@@ -40,29 +40,44 @@ No campo **Resultado encontrado**, registrar preferencialmente:
 **Teste 01 — Criar aluno novo, testar preenchimento automático de CPF e API de CEP**
 Resultado esperado: ao digitar um CPF já cadastrado, os campos da Pessoa devem se preencher sozinhos. Ao digitar um CEP válido, endereço/cidade/UF devem se preencher automaticamente via API.
 Resultado encontrado —
-1.1 CPF PREENCHIDO - CARREGOU AS INFORMAÇÕES
-1.1.1 Só funciona com o CPF - com 11 digitos - colocar máscara de entrada de dados ###.###.###-##
-1.2 CEP via API - funcionou
-1.2.1 - A entrada deve ser somente números - colocar máscara de entrada de dados ##.###-###
-Observação:
-Alteração realizado no form_pessoa.html - trazendo o campo Função como sendo primeiro a ser preenchido de forma a configurar o form para aquela função
+
+## 1.1 CPF PREENCHIDO - CARREGOU AS INFORMAÇÕES
+
+### 1.1.1 Só funciona com o CPF - com 11 digitos - colocar máscara de entrada de dados ###.###.###-##
+
+## 1.2 CEP via API - funcionou
+
+### 1.2.1 - A entrada deve ser somente números - colocar máscara de entrada de dados ##.###-###
+
+# Observação:
+
+## Alteração realizado no form_pessoa.html - trazendo o campo Função como sendo primeiro a ser preenchido de forma a configurar o form para aquela função
 
 **Teste 01.a - editar pessoa cadastrada**
 Resultado esperado: Salvar a edição e popup estar visível na tela.
 Resultado encontrado:
-01.a.1 Salvou as alterações do cadastro - manteve sem edição o nº do CPF
-01.a.2 Popup maior que o monitor - escondeu o botão salvar - Realizei ajuste no CSS base.css e no \_form_pessoa_fragment.html (solicitar para te manter atualizado com os arquivos)
-observação:
-git commit -m "feat: ajusta popup de edição de pessoa com 4 colunas e rolagem"
-commit a5495014476cd2ec02c2955ee0197c1a1164552e (HEAD -> dev, origin/dev)
-Author: AssumFeres <107887188+AssumFeres@users.noreply.github.com>
-Date: Tue Sep 8 20:16:19 2026 -0300
 
-    feat: ajusta popup de edição de pessoa com 4 colunas e rolagem
+## 01.a.1 Salvou as alterações do cadastro - manteve sem edição o nº do CPF
+
+## 01.a.2 Popup maior que o monitor - escondeu o botão salvar - Realizei ajuste no CSS base.css e no \_form_pessoa_fragment.html (solicitar para te manter atualizado com os arquivos)
+
+# observação:
+
+## git commit -m "feat: ajusta popup de edição de pessoa com 4 colunas e rolagem"
+
+## commit a5495014476cd2ec02c2955ee0197c1a1164552e (HEAD -> dev, origin/dev)
+
+## Author: AssumFeres <107887188+AssumFeres@users.noreply.github.com>
+
+## Date: Tue Sep 8 20:16:19 2026 -0300
+
+### feat: ajusta popup de edição de pessoa com 4 colunas e rolagem
 
 **Teste 02 — Cadastrar aluno com CANAC preenchido e Código de Matrícula ANAC em branco**
 Resultado esperado: o campo Código de Matrícula ANAC deve continuar vazio — não deve receber automaticamente o valor do CANAC.
-Resultado encontrado —
+Resultado encontrado:
+
+##
 
 **Teste 03 — Cadastrar dois alunos com o mesmo CPF**
 Resultado esperado: o segundo cadastro deve reaproveitar/atualizar a Pessoa existente (busca por CPF), não criar uma duplicata.

@@ -140,24 +140,29 @@
 
         <fieldset>
             <legend>Contato de Emergência</legend>
-            <div class="grid-4-colunas">
+            <div class="grid-3-colunas"> 
                 <div class="campo"><label for="id_contato_emergencia_nome">Nome</label> {{ form.contato_emergencia_nome }} {{ form.contato_emergencia_nome.errors }}</div>
                 <div class="campo"><label for="id_contato_emergencia_parentesco">Parentesco</label> {{ form.contato_emergencia_parentesco }} {{ form.contato_emergencia_parentesco.errors }}</div>
                 <div class="campo"><label for="id_contato_emergencia_telefone">Telefone</label> {{ form.contato_emergencia_telefone }} {{ form.contato_emergencia_telefone.errors }}</div>
+            </div>
+            
+            <div class="grid-2-colunas">
                 <div class="campo"><label for="id_contato_emergencia_endereco">Endereço</label> {{ form.contato_emergencia_endereco }} {{ form.contato_emergencia_endereco.errors }}</div>
             </div>
         </fieldset>
 
         <fieldset>
             <legend>Responsável Legal (menor de idade)</legend>
-            <div class="grid-4-colunas">
+            <div class="grid-2-colunas"> 
                 <div class="campo"><label for="id_responsavel_nome">Nome</label> {{ form.responsavel_nome }} {{ form.responsavel_nome.errors }}</div>
-                <div class="campo"><label for="id_responsavel_endereco">Endereço</label> {{ form.responsavel_endereco }} {{ form.responsavel_endereco.errors }}</div>
+                <div class="campo"><label for="id_responsavel_qualificacao">Qualificação (pai/mãe/tutor)</label> {{ form.responsavel_qualificacao }} {{ form.responsavel_qualificacao.errors }}</div>
+            </div>
+            <div class="campo"><label for="id_responsavel_endereco">Endereço</label> {{ form.responsavel_endereco }} {{ form.responsavel_endereco.errors }}</div>
+            <div class="grid-4-colunas">
                 <div class="campo"><label for="id_responsavel_identidade">Identidade</label> {{ form.responsavel_identidade }} {{ form.responsavel_identidade.errors }}</div>
                 <div class="campo"><label for="id_responsavel_orgao_expedidor">Órgão expedidor</label> {{ form.responsavel_orgao_expedidor }} {{ form.responsavel_orgao_expedidor.errors }}</div>
 
                 <div class="campo"><label for="id_responsavel_data_emissao">Data de emissão</label> {{ form.responsavel_data_emissao }} {{ form.responsavel_data_emissao.errors }}</div>
-                <div class="campo"><label for="id_responsavel_qualificacao">Qualificação (pai/mãe/tutor)</label> {{ form.responsavel_qualificacao }} {{ form.responsavel_qualificacao.errors }}</div>
             </div>
         </fieldset>
     </fieldset>
