@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}{{ modulo }} - Sistema de Gestao Escolar{% endblock %}
+{% block title %}Em Construção - Sistema de Gestão Escolar{% endblock %}
 
 {% block content %}
-<h2>
-  <p align="center">{{ modulo|upper }}</p>
-</h2>
-<p align="center">Este módulo ainda está em construção.</p>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 nucleo/templates/nucleo/em_construcao.html</p>
+<h2 align="center" style="color: #007bff; margin-top: 40px;">Página em Construção 🛠️</h2>
+<p align="center">O módulo <strong>{{ modulo }}</strong> estará disponível em breve.</p>
+
+<p align="center" style="margin-top: 24px;">
+    <a href="{% url 'home' %}" style="color: #007bff; text-decoration: underline;">Voltar para o Início</a>
+</p>
+
 {% endblock %}

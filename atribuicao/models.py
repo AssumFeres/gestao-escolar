@@ -78,3 +78,105 @@ class MatriculaTurma(models.Model):
 
     def __str__(self):
         return f"{self.atribuicao_funcao.pessoa.nome_completo} - {self.turma} ({self.get_status_display()})"
+
+from django.db import models
+from django.contrib.auth.models import User # Ou o model de Instrutor se seu amigo já tiver criado
+
+class RegistroInstrucao(models.Model):
+    TIPO_CHOICES = [
+        ('TEORICA', 'Teórica'),
+        ('PRATICA', 'Prática'),
+        ('AVALIACAO', 'Avaliação/Exame'),
+    ]
+
+    # Relacionamentos (Chaves Estrangeiras)
+    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Instrutor")
+    # Se já existir um model de Turma, descomente a linha abaixo:
+    # turma = models.ForeignKey(Turma, on_delete=models.PROTECT, verbose_name="Turma")
+
+    # Dados da Instrução
+    data_instrucao = models.DateField(verbose_name="Data da Instrução")
+    carga_horaria = models.DecimalField(max_digits=4, decimal_places=2, verbose_name="Carga Horária (Horas)")
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='TEORICA', verbose_name="Tipo de Instrução")
+    
+    # Textos detalhados
+    conteudo = models.TextField(verbose_name="Conteúdo Programático Ministrado")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações/Ocorrências")
+
+    # Controle do Sistema
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Registro de Instrução"
+        verbose_name_plural = "Registros de Instrução"
+        ordering = ['-data_instrucao']
+
+    def __str__(self):
+        return f"Instrução de {self.instrutor} em {self.data_instrucao}"
+from django.db import models
+from django.contrib.auth.models import User # Ou seu modelo de Instrutor personalizado
+
+class Disciplina(models.Model):
+    nome = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.nome
+
+class Turma(models.Model):
+    nome = models.CharField(max_length=50)
+    
+    def __str__(self):
+        return self.nome
+
+# 1. MODELO DE ATRIBUIÇÃO
+class Atribuicao(models.Model):
+    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='atribuigoes')
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE)
+    ano_letivo = models.IntegerField(default=2026)
+
+    class Meta:
+        verbose_name_plural = "Atribuições"
+        unique_together = ('instrutor', 'disciplina', 'turma', 'ano_letivo')
+
+    def __str__(self):
+        return f"{self.instrutor.username} - {self.disciplina.nome} ({self.turma.nome})"
+
+# 2. MODELO DE HORÁRIOS
+class HorarioAula(models.Model):
+    DIAS_SEMANA = [
+        ('SEG', 'Segunda-feira'),
+        ('TER', 'Terça-feira'),
+        ('QUA', 'Quarta-feira'),
+        ('QUI', 'Quinta-feira'),
+        ('SEX', 'Sexta-feira'),
+    ]
+    atribuicao = models.ForeignKey(Atribuicao, on_delete=models.CASCADE)
+    dia_semana = models.CharField(max_length=3, choices=DIAS_SEMANA)
+    horario_inicio = models.TimeField()
+    horario_fim = models.TimeField()
+
+    def __str__(self):
+        return f"{self.dia_semana} | {self.horario_inicio} - {self.atribuicao.disciplina.nome}"
+
+# 3. MODELO DE REGISTRO DE INSTRUÇÃO 
+
+class RegistroInstrucao(models.Model):
+    TIPO_CHOICES = [('Teórica', 'Teórica'), ('Prática', 'Prática')]
+    
+    # Adicionado null=True e blank=True para não travar o banco com dados antigos
+    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='instrucoes_registradas', null=True, blank=True)
+    atribuicao = models.ForeignKey(Atribuicao, on_delete=models.CASCADE, null=True, blank=True)
+    
+    data_instrucao = models.DateField()
+    carga_horaria = models.DecimalField(max_digits=4, decimal_places=2)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    conteudo_programatico = models.TextField()
+
+    class Meta:
+        verbose_name = "Registro de Instrução"
+        verbose_name_plural = "Registros de Instrução"
+
+    def __str__(self):
+        return f"{self.data_instrucao} - {self.instrutor.username if self.instrutor else 'Sem Instrutor'}"

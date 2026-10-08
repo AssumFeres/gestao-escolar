@@ -22,7 +22,7 @@ from .forms import (
     AdicionarMatriculaTurmaForm, EditarMatriculaTurmaForm, FinalizarPlanejamentoForm,
     EditarStatusMatriculaForm, RevisarAprovacaoForm, EncerrarTurmaForm,
 )
-from .models import MatriculaTurma, StatusMatriculaTurma
+from .models import MatriculaTurma, StatusMatriculaTurma,RegistroInstrucao
 from .services import (
     FinalizarPlanejamentoService, AlterarStatusMatriculaService,
     PromoverAprovadosService, EncerrarTurmaService,
@@ -238,3 +238,96 @@ class EncerrarTurmaView(View):
                 return JsonResponse({'sucesso': True})
             return redirect('gerenciar-turma', pk=turma.pk)
         return render(request, self._template(request), {'form': form, 'turma': turma})
+
+    from django.shortcuts import render, redirect
+from .models import RegistroInstrucao
+from django.contrib import messages
+
+def registro_instrucao_view(request): # Ajuste o nome da função se seu colega usou outro
+    if request.method == "POST":
+        # Captura os dados enviados pelo formulário HTML
+        data_instrucao = request.POST.get('data_instrucao')
+        carga_horaria = request.POST.get('carga_horaria')
+        tipo = request.POST.get('tipo')
+        conteudo = request.POST.get('conteudo')
+        observacoes = request.POST.get('observacoes')
+
+        # Salva no banco de dados (vinculando ao usuário logado)
+        RegistroInstrucao.objects.create(
+            instrutor=request.user,
+            data_instrucao=data_instrucao,
+            carga_horaria=carga_horaria,
+            tipo=tipo,
+            conteudo=conteudo,
+            observacoes=observacoes
+        )
+        messages.success(request, "Instrução registrada com sucesso!")
+        return redirect(request.path) # Recarrega a página limpa
+
+    # Busca todos os registros para listar na tela
+    instrucoes = RegistroInstrucao.objects.all()
+    
+    return render(request, 'nucleo/registro_instrucao.html', {'instrucoes': instrucoes})
+from django.shortcuts import render, redirect
+from django.db.models import Sum
+from .models import Atribuicao, HorarioAula, RegistroInstrucao, Turma, Disciplina
+from django.contrib.auth.models import User
+
+# VIEW DE ATRIBUIÇÃO
+def atribuicao_view(request):
+    if request.method == 'POST':
+        instrutor_id = request.POST.get('instrutor')
+        disciplina_id = request.POST.get('disciplina')
+        turma_id = request.POST.get('turma')
+        
+        Atribuicao.objects.create(
+            instrutor_id=instrutor_id,
+            disciplina_id=disciplina_id,
+            turma_id=turma_id
+        )
+        return redirect('atribuicao')
+
+    context = {
+        'atribuigoes': Atribuicao.objects.all(),
+        'instrutores': User.objects.all(),
+        'disciplinas': Disciplina.objects.all(),
+        'turmas': Turma.objects.all(),
+    }
+    return render(request, 'coordenacao/atribuicao.html', context)
+
+# VIEW DE HORÁRIOS
+def horarios_view(request):
+    if request.method == 'POST':
+        atribuicao_id = request.POST.get('atribuicao')
+        dia_semana = request.POST.get('dia_semana')
+        inicio = request.POST.get('horario_inicio')
+        fim = request.POST.get('horario_fim')
+
+        HorarioAula.objects.create(
+            atribuicao_id=atribuicao_id,
+            dia_semana=dia_semana,
+            horario_inicio=inicio,
+            horario_fim=fim
+        )
+        return redirect('horarios')
+
+    context = {
+        'horarios': HorarioAula.objects.all().order_by('horario_inicio'),
+        'atribuigoes': Atribuicao.objects.all(),
+        'dias_semana': HorarioAula.DIAS_SEMANA,
+    }
+    return render(request, 'coordenacao/horarios.html', context)
+
+# VIEW DE RELATÓRIOS (Soma as horas dinamicamente por instrutor)
+def relatorios_view(request):
+    # Agrupa por instrutor e soma a carga horária dos registros de instrução realizados
+    relatorio_horas = User.objects.annotate(
+        total_horas=Sum('atribuigoes__registroinstrucao__carga_horaria')
+    ).filter(total_horas__gt=0)
+
+    context = {
+        'relatorio_horas': relatorio_horas,
+        'total_instrucoes': RegistroInstrucao.objects.count()
+    }
+    return render(request, 'coordenacao/relatorios.html', context)
+

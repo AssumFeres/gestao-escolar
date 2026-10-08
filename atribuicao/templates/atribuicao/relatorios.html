@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="card p-4 shadow-sm mb-4">
+        <h3 class="text-primary mb-2">Painel de Relatórios Coordenativos</h3>
+        <p class="text-muted">Acompanhamento consolidado de horas de instrução e métricas do sistema.</p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm bg-primary text-white">
+                <h6 class="text-uppercase tracking-wide opacity-75">Total de Instruções Ministradas</h6>
+                <h2 class="display-5 font-weight-bold mb-0">{{ total_instrucoes }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card p-4 shadow-sm">
+        <h4 class="mb-4">Carga Horária Acumulada por Instrutor</h4>
+        <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+                <tr><th>Nome do Instrutor</th><th>E-mail Corporativo</th><th class="text-end">Total de Horas Computadas</th></tr>
+            </thead>
+            <tbody>
+                {% for instrutor in relatorio_horas %}
+                <tr>
+                    <td><strong>{{ instrutor.username }}</strong></td>
+                    <td>{{ instrutor.email }}</td>
+                    <td class="text-end text-success"><strong>{{ instrutor.total_horas }} horas</strong></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted p-4">Nenhum registro de instrução prática ou teórica computado no banco.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
