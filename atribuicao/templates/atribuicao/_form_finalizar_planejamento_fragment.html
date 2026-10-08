@@ -1,20 +1,34 @@
-<h3>Finalizar Planejamento</h3>
-<p>Turma: <strong>{{ turma.nome }} - {{ turma.sigla }}</strong></p>
-<p style="color:#a94442; background-color:#f2dede; border:1px solid #ebccd1; padding:8px 12px; border-radius:4px;">
-    Esta ação não pode ser desfeita. A partir daqui, os alunos passam a ter
-    número fixo na turma e não podem mais ser excluídos individualmente.
-</p>
+{% if request.GET.parcial == '1' %}
+    <h3 style="margin-top: 0; color: #b45309;">⚠️ Finalizar Planejamento Curricular</h3>
+    <hr style="border: 0; border-top: 1px solid #cbd5e1; margin-bottom: 16px;">
 
-<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
-    <div class="campo">
-        {{ form.ata_inicio.label_tag }} {{ form.ata_inicio }}
-        <small style="color:#64748b;">{{ form.ata_inicio.help_text }}</small>
-        {{ form.ata_inicio.errors }}
-    </div>
-    <button type="submit">Confirmar e Finalizar Planejamento</button>
-</form>
+    <form method="POST" action="{% url 'finalizar-planejamento' pk=turma.pk %}?parcial=1">
+        {% csrf_token %}
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 16px;">
+            Ao efetivar o fechamento, o status mudará para <strong>Em Andamento</strong>. O sistema congelará a chamada e gerará os números de ordem em massa por ordem alfabética.
+        </p>
+        <div style="background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7; margin-bottom: 16px;">
+            {{ form.as_p }}
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" id="modal-cancelar-planejamento" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer;">Voltar</button>
+            <button type="submit" style="padding: 8px 16px; background: #b45309; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Efetivar Abertura</button>
+        </div>
+    </form>
 
-<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 atribuicao/templates/atribuicao/_form_finalizar_planejamento_fragment.html</p>
+    <script>
+        document.getElementById('modal-cancelar-planejamento').addEventListener('click', function() {
+            document.getElementById('modal-crud-overlay').style.display = 'none';
+        });
+    </script>
+{% else %}
+    {% extends 'base.html' %}
+    {% block content %}
+    <h2>Finalizar Planejamento - {{ turma.nome }}</h2>
+    <form method="POST" style="max-width: 500px; margin-top: 20px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-crud">Confirmar Fechamento</button>
+    </form>
+    {% endblock %}
+{% endif %}

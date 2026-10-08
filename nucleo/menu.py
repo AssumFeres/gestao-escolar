@@ -29,8 +29,7 @@ Cada item tem:
 'adicionar-turma'/'editar-turma' contam como o item Turma ativo.
 """
 
-MENU_NAVEGACAO = [
-    {
+MENU_NAVEGACAO = [   {
         "grupo": "Gestão",
         "itens": [
             {"label": "Dashboard", "url_name": None, "chave": "dashboard"},
@@ -121,15 +120,15 @@ MENU_NAVEGACAO = [
     {
         "grupo": "Coordenação",
         "itens": [
-            {"label": "Atribuição", "url_name": None, "chave": "atribuicao"},
-            {"label": "Horários", "url_name": None, "chave": "horarios"},
-            {"label": "Relatórios", "url_name": None, "chave": "relatorios-coordenacao"},
+            {"label": "Atribuição", "url_name": "atribuicao", "chave": "atribuicao"},
+            {"label": "Horários", "url_name": "horarios", "chave": "horarios"},
+            {"label": "Relatórios", "url_name": "relatorios", "chave": "relatorios-coordenacao"},
         ],
     },
     {
         "grupo": "Instrutores",
         "itens": [
-            {"label": "Registro de Instrução", "url_name": None, "chave": "registro-instrucao"},
+            {"label": "Registro de Instrução", "url_name": "registro_instrucao", "chave": "registro-instrucao"},
         ],
     },
 ]

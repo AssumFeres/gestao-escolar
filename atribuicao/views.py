@@ -1,19 +1,10 @@
-"""
-atribuicao/views.py
-
-Escopo desta etapa (docs/37, seção 9, item 4): só a gestão da composição da
-Turma enquanto PLANEJADA — Adicionar/Editar/Excluir aluno, Finalizar
-Planejamento. As telas de "Em Andamento"/"Encerrar Turma" (Relocação,
-mudança de status, revisão de aprovação em massa) ficam para a próxima
-etapa — dependem das perguntas 8-A (fechada em 07/09/2026: popup de revisão
-com checkbox por aluno) e 8-B (ainda em aberto).
-"""
-
 from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
+from django.contrib import messages
+from django.db.models import Sum
 
 from cadastros.models import Turma, SituacaoTurma
 from cadastros.views import ModalCrudMixin
@@ -22,7 +13,7 @@ from .forms import (
     AdicionarMatriculaTurmaForm, EditarMatriculaTurmaForm, FinalizarPlanejamentoForm,
     EditarStatusMatriculaForm, RevisarAprovacaoForm, EncerrarTurmaForm,
 )
-from .models import MatriculaTurma, StatusMatriculaTurma,RegistroInstrucao
+from .models import MatriculaTurma, StatusMatriculaTurma, RegistroInstrucao, HorarioAula, Atribuicao
 from .services import (
     FinalizarPlanejamentoService, AlterarStatusMatriculaService,
     PromoverAprovadosService, EncerrarTurmaService,
@@ -143,8 +134,6 @@ class FinalizarPlanejamentoView(View):
             return redirect('gerenciar-turma', pk=turma.pk)
         return render(request, self._template(request), {'form': form, 'turma': turma})
 
-
-
 class EditarStatusMatriculaView(View):
     """
     Botão "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3)
@@ -202,7 +191,7 @@ class RevisarAprovacaoView(View):
         turma = get_object_or_404(Turma, pk=pk)
         form = RevisarAprovacaoForm(request.POST, turma=turma)
         if form.is_valid():
-            PromoverAprovadosService().executar(turma, form.matriculas_aprovadas_ids())
+            PromoverAprovadosService().executar(turma, form.cleaned_data.get('aprovados_ids', []))
             if request.GET.get('parcial') == '1':
                 return JsonResponse({'sucesso': True})
             return redirect('gerenciar-turma', pk=turma.pk)
@@ -210,124 +199,100 @@ class RevisarAprovacaoView(View):
 
 
 class EncerrarTurmaView(View):
-    """2º clique de "Encerrar Turma" — só acessível quando não sobra ninguém Cursando."""
+    """2º clique de "Encerrar Turma" (docs/37, seção 4.4) — salva ata_encerramento, data_fim e muda Turma para ENCERRADA."""
 
     def _template(self, request):
         return 'atribuicao/_form_encerrar_turma_fragment.html' if request.GET.get('parcial') == '1' \
             else 'atribuicao/form_encerrar_turma.html'
 
-    def _turma_ou_bloqueio(self, pk):
-        turma = get_object_or_404(Turma, pk=pk)
-        if MatriculaTurma.objects.filter(turma=turma, status=StatusMatriculaTurma.CURSANDO).exists():
-            raise Http404("Ainda existem alunos Cursando — resolva individualmente (ou revise a aprovação em massa) antes de encerrar a Turma.")
-        return turma
-
     def get(self, request, pk):
-        turma = self._turma_ou_bloqueio(pk)
-        form = EncerrarTurmaForm(turma=turma)
+        turma = get_object_or_404(Turma, pk=pk)
+        form = EncerrarTurmaForm()
         return render(request, self._template(request), {'form': form, 'turma': turma})
 
     def post(self, request, pk):
-        turma = self._turma_ou_bloqueio(pk)
-        form = EncerrarTurmaForm(request.POST, turma=turma)
+        turma = get_object_or_404(Turma, pk=pk)
+        form = EncerrarTurmaForm(request.POST)
         if form.is_valid():
             EncerrarTurmaService().executar(
-                turma, form.cleaned_data['data_encerramento'], form.cleaned_data.get('ata_encerramento')
+                turma, form.cleaned_data['data_fim'], form.cleaned_data['ata_encerramento']
             )
             if request.GET.get('parcial') == '1':
                 return JsonResponse({'sucesso': True})
             return redirect('gerenciar-turma', pk=turma.pk)
         return render(request, self._template(request), {'form': form, 'turma': turma})
 
-    from django.shortcuts import render, redirect
-from .models import RegistroInstrucao
-from django.contrib import messages
 
-def registro_instrucao_view(request): # Ajuste o nome da função se seu colega usou outro
-    if request.method == "POST":
-        # Captura os dados enviados pelo formulário HTML
+# ======================================================================
+# 📂 VIEWS DE SUPORTE ADICIONAIS EXIGIDAS PELO SEU ARQUIVO DE ROTAS
+# ======================================================================
+
+def horarios_view(request):
+    """Lógica para processar e renderizar a definição da grade horária semanal."""
+    if request.method == 'POST':
+        atribuicao_id = request.POST.get('atribuicao')
+        dia_semana = request.POST.get('dia_semana')
+        horario_inicio = request.POST.get('horario_inicio')
+        horario_fim = request.POST.get('horario_fim')
+
+        try:
+            atribuicao = Atribuicao.objects.get(pk=atribuicao_id)
+            HorarioAula.objects.create(
+                atribuicao=atribuicao,
+                dia_semana=dia_semana,
+                horario_inicio=horario_inicio,
+                horario_fim=horario_fim
+            )
+            messages.success(request, "Horário fixado na grade semanal com sucesso!")
+            return redirect('horarios')
+        except Exception as e:
+            messages.error(request, f"Erro operacional ao salvar horário: {e}")
+            return redirect('horarios')
+
+    atribuigoes = Atribuicao.objects.all().select_related('disciplina', 'instrutor', 'turma').order_by('turma__nome', 'disciplina__nome')
+    horarios = HorarioAula.objects.all().select_related('atribuicao__disciplina', 'atribuicao__turma').order_by('dia_semana', 'horario_inicio')
+    dias_semana = [
+        ('SEG', 'Segunda-feira'), ('TER', 'Terça-feira'), ('QUA', 'Quarta-feira'),
+        ('QUI', 'Quinta-feira'), ('SEX', 'Sexta-feira'),
+    ]
+    return render(request, 'atribuicao/horarios.html', {'atribuigoes': atribuigoes, 'horarios': horarios, 'dias_semana': dias_semana})
+
+
+def registro_instrucao_view(request):
+    """Controlador para listagem histórica e gravação de diários de classe."""
+    if request.method == 'POST':
         data_instrucao = request.POST.get('data_instrucao')
         carga_horaria = request.POST.get('carga_horaria')
         tipo = request.POST.get('tipo')
         conteudo = request.POST.get('conteudo')
-        observacoes = request.POST.get('observacoes')
 
-        # Salva no banco de dados (vinculando ao usuário logado)
-        RegistroInstrucao.objects.create(
-            instrutor=request.user,
-            data_instrucao=data_instrucao,
-            carga_horaria=carga_horaria,
-            tipo=tipo,
-            conteudo=conteudo,
-            observacoes=observacoes
-        )
-        messages.success(request, "Instrução registrada com sucesso!")
-        return redirect(request.path) # Recarrega a página limpa
+        if request.user.is_authenticated:
+            RegistroInstrucao.objects.create(
+                instrutor=request.user,
+                data_instrucao=data_instrucao,
+                carga_horaria=carga_horaria,
+                tipo=tipo,
+                conteudo=conteudo
+            )
+            return redirect('registro_instrucao')
 
-    # Busca todos os registros para listar na tela
-    instrucoes = RegistroInstrucao.objects.all()
-    
-    return render(request, 'nucleo/registro_instrucao.html', {'instrucoes': instrucoes})
-from django.shortcuts import render, redirect
-from django.db.models import Sum
-from .models import Atribuicao, HorarioAula, RegistroInstrucao, Turma, Disciplina
-from django.contrib.auth.models import User
+    # Alimenta o {% for registro in registros %} do seu HTML
+    registros = RegistroInstrucao.objects.all().order_by('-data_instrucao')
+    return render(request, 'atribuicao/registro_instrucao.html', {'registros': registros})
 
-# VIEW DE ATRIBUIÇÃO
-def atribuicao_view(request):
-    if request.method == 'POST':
-        instrutor_id = request.POST.get('instrutor')
-        disciplina_id = request.POST.get('disciplina')
-        turma_id = request.POST.get('turma')
-        
-        Atribuicao.objects.create(
-            instrutor_id=instrutor_id,
-            disciplina_id=disciplina_id,
-            turma_id=turma_id
-        )
-        return redirect('atribuicao')
 
-    context = {
-        'atribuigoes': Atribuicao.objects.all(),
-        'instrutores': User.objects.all(),
-        'disciplinas': Disciplina.objects.all(),
-        'turmas': Turma.objects.all(),
-    }
-    return render(request, 'coordenacao/atribuicao.html', context)
 
-# VIEW DE HORÁRIOS
-def horarios_view(request):
-    if request.method == 'POST':
-        atribuicao_id = request.POST.get('atribuicao')
-        dia_semana = request.POST.get('dia_semana')
-        inicio = request.POST.get('horario_inicio')
-        fim = request.POST.get('horario_fim')
-
-        HorarioAula.objects.create(
-            atribuicao_id=atribuicao_id,
-            dia_semana=dia_semana,
-            horario_inicio=inicio,
-            horario_fim=fim
-        )
-        return redirect('horarios')
-
-    context = {
-        'horarios': HorarioAula.objects.all().order_by('horario_inicio'),
-        'atribuigoes': Atribuicao.objects.all(),
-        'dias_semana': HorarioAula.DIAS_SEMANA,
-    }
-    return render(request, 'coordenacao/horarios.html', context)
-
-# VIEW DE RELATÓRIOS (Soma as horas dinamicamente por instrutor)
 def relatorios_view(request):
-    # Agrupa por instrutor e soma a carga horária dos registros de instrução realizados
-    relatorio_horas = User.objects.annotate(
-        total_horas=Sum('atribuigoes__registroinstrucao__carga_horaria')
-    ).filter(total_horas__gt=0)
-
+    """Centralizador analítico de dados gerenciais do app de atribuição."""
     context = {
-        'relatorio_horas': relatorio_horas,
-        'total_instrucoes': RegistroInstrucao.objects.count()
+        'total_horas_ministradas': RegistroInstrucao.objects.aggregate(total=Sum('carga_horaria'))['total'] or 0,
+        'total_matriculas_ativas': MatriculaTurma.objects.filter(status=StatusMatriculaTurma.CURSANDO).count(),
+        'total_atribuigoes': Atribuicao.objects.count(),
     }
-    return render(request, 'coordenacao/relatorios.html', context)
+    return render(request, 'atribuicao/relatorios.html', context)
+
+
+def atribuicao_view(request):
+    """Redirecionamento automático da rota raiz para a listagem padrão de turmas."""
+    return redirect('lista-turmas')
 
