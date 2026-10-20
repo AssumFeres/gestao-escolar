@@ -126,3 +126,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Substitua pelo nome ou caminho real da sua tela de login (Exemplos):
+LOGIN_URL = 'home'  # Se o login for na página inicial
+# LOGIN_URL = '/usuarios/login/'  # Se tiver um app de usuários
+
+# Onde fica a tela de login
+LOGIN_URL = 'login'
+
+# Para onde o usuário vai se ele logar direto pela página de login (vai para o Dashboard)
+LOGIN_REDIRECT_URL = '/atribuicao/dashboard/'

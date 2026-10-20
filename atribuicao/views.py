@@ -281,7 +281,6 @@ def registro_instrucao_view(request):
     return render(request, 'atribuicao/registro_instrucao.html', {'registros': registros})
 
 
-
 def relatorios_view(request):
     """Centralizador analítico de dados gerenciais do app de atribuição."""
     context = {
@@ -296,3 +295,121 @@ def atribuicao_view(request):
     """Redirecionamento automático da rota raiz para a listagem padrão de turmas."""
     return redirect('lista-turmas')
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from cadastros.models import Pessoa, Turma  
+
+@login_required
+def dashboard_gestao_view(request):
+    # 1. Contagem dinâmica de Alunos e Turmas
+    total_alunos = Pessoa.objects.exclude(registro_aluno__isnull=True).exclude(registro_aluno='').count()
+    total_turmas = Turma.objects.count()  
+    
+    # 2. Cálculo automático de inconsistências
+    alunos_sem_cpf = Pessoa.objects.exclude(registro_aluno__isnull=True).exclude(registro_aluno='').filter(cpf='').count()
+    pessoas_sem_rm = Pessoa.objects.filter(registro_matricula__isnull=True).count()
+    
+    total_alertas = alunos_sem_cpf + pessoas_sem_rm
+    
+    context = {
+        'total_alunos_ativos': total_alunos,  
+        'turmas_andamento': total_turmas,     
+        'alertas_pendentes': total_alertas,  
+    }
+    return render(request, 'atribuicao/dashboard.html', context)
+
+
+@login_required
+def contratos_gestao_view(request):
+    """
+    Função oficial mapeada no urls.py para gerenciar os contratos da EMCA.
+    """
+    # 1. Captura os parâmetros de busca do formulário HTML
+    pesquisa = request.GET.get('pesquisa', '').strip()
+    status_filtro = request.GET.get('status', '').strip()
+
+    # 2. Busca os contratos no banco de dados trazendo o relacionamento do instrutor de forma otimizada
+    contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
+
+    # 3. Regras de Filtragem baseadas no que o usuário digita na tela
+    if pesquisa:
+        from django.db.models import Q
+        contratos = contratos.filter(
+            Q(numero_contrato__icontains=pesquisa) | 
+            Q(numero_processo__icontains=pesquisa) |
+            Q(instrutor__first_name__icontains=pesquisa) |
+            Q(instrutor__last_name__icontains=pesquisa) |
+            Q(credor_razao_social__icontains=pesquisa)
+        )
+
+    if status_filtro:
+        contratos = contratos.filter(status=status_filtro)
+
+    # 4. Cálculo dos indicadores reais para alimentar os cards do topo
+    total_vigentes = contratos.filter(status='VIGENTE').count()
+    total_empenhado = contratos.aggregate(total=Sum('valor_total_empenhado'))['total'] or 0.00
+
+    # 5. Organiza o contexto com todas as variáveis que o HTML precisa ler
+    context = {
+        'contratos': contratos,
+        'total_vigentes': total_vigentes,
+        'total_empenhado': total_empenhado,
+    }
+    
+    return render(request, 'atribuicao/contratos.html', context)
+
+from django.shortcuts import render
+from .models import ContratoFinanceiro
+
+def contratos_financeiros_view(request):
+    # Traz os contratos do banco ordenados pela vigência
+    contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
+    
+    context = {
+        'contratos': contratos,
+    }
+    return render(request, 'atribuicao/contratos.html', context)
+
+from django.db.models import Q, Sum  
+
+class ContratosFinanceirosView(View):
+    """
+    Controlador para a tela de Gestão de Contratos da EMCA.
+    Lista as informações com filtros dinâmicos e soma de empenhos.
+    """
+    def get(self, request):
+        # 1. Pega os termos de busca passados pelo formulário HTML
+        pesquisa = request.GET.get('pesquisa', '').strip()
+        status_filtro = request.GET.get('status', '').strip()
+
+        # Importando aqui dentro para evitar qualquer erro de importação circular no topo
+        from .models import ContratoFinanceiro  
+
+        # 2. Inicia a consulta relacionando o Usuário/Instrutor de forma otimizada
+        contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
+
+        # 3. Regras de Filtragem
+        if pesquisa:
+            contratos = contratos.filter(
+                Q(numero_contrato__icontains=pesquisa) | 
+                Q(numero_processo__icontains=pesquisa) |
+                Q(instrutor__first_name__icontains=pesquisa) |
+                Q(instrutor__last_name__icontains=pesquisa) |
+                Q(credor_razao_social__icontains=pesquisa)
+            )
+
+        if status_filtro:
+            contratos = contratos.filter(status=status_filtro)
+
+        # 4. Cálculo dos Indicadores para os cards do painel
+        total_vigentes = contratos.filter(status='VIGENTE').count()
+        total_empenhado = contratos.aggregate(total=Sum('valor_total_empenhado'))['total'] or 0.00
+
+        # 5. Montagem do contexto que será lido pelas tags do template
+        context = {
+            'contratos': contratos,
+            'total_vigentes': total_vigentes,
+            'total_empenhado': total_empenhado,
+        }
+        
+        return render(request, 'atribuicao/contratos.html', context)

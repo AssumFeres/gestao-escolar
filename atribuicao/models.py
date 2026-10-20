@@ -81,39 +81,6 @@ class MatriculaTurma(models.Model):
 
 from django.db import models
 from django.contrib.auth.models import User # Ou o model de Instrutor se seu amigo já tiver criado
-
-class RegistroInstrucao(models.Model):
-    TIPO_CHOICES = [
-        ('TEORICA', 'Teórica'),
-        ('PRATICA', 'Prática'),
-        ('AVALIACAO', 'Avaliação/Exame'),
-    ]
-
-    # Relacionamentos (Chaves Estrangeiras)
-    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Instrutor")
-    # Se já existir um model de Turma, descomente a linha abaixo:
-    # turma = models.ForeignKey(Turma, on_delete=models.PROTECT, verbose_name="Turma")
-
-    # Dados da Instrução
-    data_instrucao = models.DateField(verbose_name="Data da Instrução")
-    carga_horaria = models.DecimalField(max_digits=4, decimal_places=2, verbose_name="Carga Horária (Horas)")
-    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='TEORICA', verbose_name="Tipo de Instrução")
-    
-    # Textos detalhados
-    conteudo = models.TextField(verbose_name="Conteúdo Programático Ministrado")
-    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações/Ocorrências")
-
-    # Controle do Sistema
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Registro de Instrução"
-        verbose_name_plural = "Registros de Instrução"
-        ordering = ['-data_instrucao']
-
-    def __str__(self):
-        return f"Instrução de {self.instrutor} em {self.data_instrucao}"
 from django.db import models
 from django.contrib.auth.models import User # Ou seu modelo de Instrutor personalizado
 
@@ -161,7 +128,6 @@ class HorarioAula(models.Model):
         return f"{self.dia_semana} | {self.horario_inicio} - {self.atribuicao.disciplina.nome}"
 
 # 3. MODELO DE REGISTRO DE INSTRUÇÃO 
-
 class RegistroInstrucao(models.Model):
     TIPO_CHOICES = [('Teórica', 'Teórica'), ('Prática', 'Prática')]
     
@@ -180,3 +146,62 @@ class RegistroInstrucao(models.Model):
 
     def __str__(self):
         return f"{self.data_instrucao} - {self.instrutor.username if self.instrutor else 'Sem Instrutor'}"
+
+# ==========================================================
+# NOVO MÓDULO: GESTÃO DE CONTRATOS PÚBLICOS / PRESTAÇÃO DE SERVIÇOS
+# ==========================================================
+
+class TipoContrato(models.TextChoices):
+    INSTRUTOR = 'INSTRUTOR', 'Contrato de Trabalho - Instrutor'
+    TERCEIRIZADO = 'TERCEIRIZADO', 'Prestação de Serviços (Empresas)'
+    REPASSE = 'REPASSE', 'Convênio / Repasse de Verba'
+
+class StatusContratoPublico(models.TextChoices):
+    VIGENTE = 'VIGENTE', 'Vigente'
+    CONCLUIDO = 'CONCLUIDO', 'Concluído / Encerrado'
+    ADITIVADO = 'ADITIVADO', 'Aditivado'
+    SUSPENSO = 'SUSPENSO', 'Suspenso'
+
+class ContratoFinanceiro(models.Model):
+    """
+    Controla contratos financeiros de uma instituição pública.
+    Pode ser associado a um profissional (Instrutor) ou a um CNPJ/Fornecedor.
+    """
+    numero_processo = models.CharField(max_length=50, unique=True, verbose_name="Número do Processo/Licitatório")
+    numero_contrato = models.CharField(max_length=50, unique=True, verbose_name="Número do Contrato")
+    
+    tipo = models.CharField(max_length=20, choices=TipoContrato.choices, default=TipoContrato.INSTRUTOR)
+    
+    # Se for contrato de instrutor, vincula à pessoa/user do sistema
+    instrutor = models.ForeignKey(
+        'auth.User', 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True, 
+        related_name='contratos_trabalho',
+        verbose_name="Instrutor Associado"
+    )
+    
+    # Para empresas terceirizadas ou outros fins
+    credor_razao_social = models.CharField(max_length=255, blank=True, verbose_name="Razão Social / Credor")
+    cnpj_cpf_credor = models.CharField(max_length=18, blank=True, verbose_name="CNPJ/CPF do Credor")
+
+    # Valores e Vigência
+    valor_total_empenhado = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Valor Total Empenhado")
+    valor_hora_aula = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, verbose_name="Valor Hora-Aula (se aplicável)")
+    
+    data_assinatura = models.DateField(verbose_name="Data de Assinatura")
+    data_vigencia_inicio = models.DateField(verbose_name="Início da Vigência")
+    data_vigencia_fim = models.DateField(verbose_name="Fim da Vigência")
+    
+    status = models.CharField(max_length=20, choices=StatusContratoPublico.choices, default=StatusContratoPublico.VIGENTE)
+    objeto_contrato = models.TextField(verbose_name="Objeto do Contrato / Descrição")
+
+    class Meta:
+        verbose_name = "Contrato Financeiro"
+        verbose_name_plural = "Contratos Financeiros"
+        ordering = ['-data_vigencia_fim']
+
+    def __str__(self):
+        credor = self.instrutor.get_full_name() if self.instrutor else self.credor_razao_social
+        return f"Contrato {self.numero_contrato} - {credor}"

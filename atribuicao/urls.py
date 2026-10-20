@@ -3,7 +3,7 @@ from .views import (
     GerenciarTurmaView, AdicionarMatriculaTurmaView, EditarMatriculaTurmaView,
     ExcluirMatriculaTurmaView, FinalizarPlanejamentoView, EditarStatusMatriculaView,
     RevisarAprovacaoView, EncerrarTurmaView,
-    registro_instrucao_view, horarios_view, relatorios_view, atribuicao_view
+    registro_instrucao_view, horarios_view, relatorios_view, atribuicao_view,dashboard_gestao_view, contratos_gestao_view
 )
 
 urlpatterns = [
@@ -22,4 +22,6 @@ urlpatterns = [
     path('atribuicao/', atribuicao_view, name='atribuicao'),
     path('horarios/', horarios_view, name='horarios'),
     path('relatorios/', relatorios_view, name='relatorios'),
+    path('dashboard/', dashboard_gestao_view, name='dashboard'),
+    path('contratos/', contratos_gestao_view, name='contratos'),
 ]

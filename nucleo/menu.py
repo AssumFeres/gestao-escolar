@@ -32,9 +32,9 @@ Cada item tem:
 MENU_NAVEGACAO = [   {
         "grupo": "Gestão",
         "itens": [
-            {"label": "Dashboard", "url_name": None, "chave": "dashboard"},
-            {"label": "Contratos", "url_name": None, "chave": "contratos"},
-            {"label": "Relatórios", "url_name": None, "chave": "relatorios-gestao"},
+            {"label": "Dashboard", "url_name": "dashboard", "chave": "dashboard"},
+            {"label": "Contratos", "url_name": "contratos", "chave": "contratos"},
+            {"label": "Relatórios", "url_name": "relatorios", "chave": "relatorios-gestao"},
         ],
     },
     {
