@@ -4,7 +4,9 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Count
+from django.db import models
+from django.views.generic import ListView, TemplateView
 
 from cadastros.models import Turma, SituacaoTurma
 from cadastros.views import ModalCrudMixin
@@ -134,6 +136,7 @@ class FinalizarPlanejamentoView(View):
             return redirect('gerenciar-turma', pk=turma.pk)
         return render(request, self._template(request), {'form': form, 'turma': turma})
 
+
 class EditarStatusMatriculaView(View):
     """
     Botão "Editar/CRU" enquanto a Turma está EM_ANDAMENTO (docs/37, seção 4.3)
@@ -187,229 +190,131 @@ class RevisarAprovacaoView(View):
         form = RevisarAprovacaoForm(turma=turma)
         return render(request, self._template(request), {'form': form, 'turma': turma})
 
-    def post(self, request, pk):
-        turma = get_object_or_404(Turma, pk=pk)
-        form = RevisarAprovacaoForm(request.POST, turma=turma)
-        if form.is_valid():
-            PromoverAprovadosService().executar(turma, form.cleaned_data.get('aprovados_ids', []))
-            if request.GET.get('parcial') == '1':
-                return JsonResponse({'sucesso': True})
-            return redirect('gerenciar-turma', pk=turma.pk)
-        return render(request, self._template(request), {'form': form, 'turma': turma})
-
 
 class EncerrarTurmaView(View):
-    """2º clique de "Encerrar Turma" (docs/37, seção 4.4) — salva ata_encerramento, data_fim e muda Turma para ENCERRADA."""
-
-    def _template(self, request):
-        return 'atribuicao/_form_encerrar_turma_fragment.html' if request.GET.get('parcial') == '1' \
-            else 'atribuicao/form_encerrar_turma.html'
-
-    def get(self, request, pk):
-        turma = get_object_or_404(Turma, pk=pk)
-        form = EncerrarTurmaForm()
-        return render(request, self._template(request), {'form': form, 'turma': turma})
+    """Ação de encerramento de turma."""
 
     def post(self, request, pk):
         turma = get_object_or_404(Turma, pk=pk)
         form = EncerrarTurmaForm(request.POST)
         if form.is_valid():
-            EncerrarTurmaService().executar(
-                turma, form.cleaned_data['data_fim'], form.cleaned_data['ata_encerramento']
-            )
-            if request.GET.get('parcial') == '1':
-                return JsonResponse({'sucesso': True})
-            return redirect('gerenciar-turma', pk=turma.pk)
-        return render(request, self._template(request), {'form': form, 'turma': turma})
+            EncerrarTurmaService().executar(turma, form.cleaned_data['ata_encerramento'])
+            messages.success(request, f"Turma {turma.nome} encerrada com sucesso!")
+        return redirect('gerenciar-turma', pk=turma.pk)
 
 
-# ======================================================================
-# 📂 VIEWS DE SUPORTE ADICIONAIS EXIGIDAS PELO SEU ARQUIVO DE ROTAS
-# ======================================================================
-
-def horarios_view(request):
-    """Lógica para processar e renderizar a definição da grade horária semanal."""
-    if request.method == 'POST':
-        atribuicao_id = request.POST.get('atribuicao')
-        dia_semana = request.POST.get('dia_semana')
-        horario_inicio = request.POST.get('horario_inicio')
-        horario_fim = request.POST.get('horario_fim')
-
-        try:
-            atribuicao = Atribuicao.objects.get(pk=atribuicao_id)
-            HorarioAula.objects.create(
-                atribuicao=atribuicao,
-                dia_semana=dia_semana,
-                horario_inicio=horario_inicio,
-                horario_fim=horario_fim
-            )
-            messages.success(request, "Horário fixado na grade semanal com sucesso!")
-            return redirect('horarios')
-        except Exception as e:
-            messages.error(request, f"Erro operacional ao salvar horário: {e}")
-            return redirect('horarios')
-
-    atribuigoes = Atribuicao.objects.all().select_related('disciplina', 'instrutor', 'turma').order_by('turma__nome', 'disciplina__nome')
-    horarios = HorarioAula.objects.all().select_related('atribuicao__disciplina', 'atribuicao__turma').order_by('dia_semana', 'horario_inicio')
-    dias_semana = [
-        ('SEG', 'Segunda-feira'), ('TER', 'Terça-feira'), ('QUA', 'Quarta-feira'),
-        ('QUI', 'Quinta-feira'), ('SEX', 'Sexta-feira'),
-    ]
-    return render(request, 'atribuicao/horarios.html', {'atribuigoes': atribuigoes, 'horarios': horarios, 'dias_semana': dias_semana})
-
+# ==========================================================
+# SEÇÃO OPERACIONAL E PEDAGÓGICA (RECONSTRUÍDA)
+# ==========================================================
 
 def registro_instrucao_view(request):
-    """Controlador para listagem histórica e gravação de diários de classe."""
-    if request.method == 'POST':
-        data_instrucao = request.POST.get('data_instrucao')
-        carga_horaria = request.POST.get('carga_horaria')
-        tipo = request.POST.get('tipo')
-        conteudo = request.POST.get('conteudo')
+    """Renderiza a tela operacional de registro de instrução."""
+    instrucoes = RegistroInstrucao.objects.all().order_by('-data_instrucao')
+    return render(request, 'atribuicao/registro_instrucao.html', {'instrucoes': instrucoes})
 
-        if request.user.is_authenticated:
-            RegistroInstrucao.objects.create(
-                instrutor=request.user,
-                data_instrucao=data_instrucao,
-                carga_horaria=carga_horaria,
-                tipo=tipo,
-                conteudo=conteudo
-            )
-            return redirect('registro_instrucao')
 
-    # Alimenta o {% for registro in registros %} do seu HTML
-    registros = RegistroInstrucao.objects.all().order_by('-data_instrucao')
-    return render(request, 'atribuicao/registro_instrucao.html', {'registros': registros})
+def horarios_view(request):
+    """Renderiza os quadros de horários do módulo."""
+    horarios = HorarioAula.objects.all()
+    return render(request, 'atribuicao/horarios.html', {'horarios': horarios})
 
 
 def relatorios_view(request):
-    """Centralizador analítico de dados gerenciais do app de atribuição."""
-    context = {
-        'total_horas_ministradas': RegistroInstrucao.objects.aggregate(total=Sum('carga_horaria'))['total'] or 0,
-        'total_matriculas_ativas': MatriculaTurma.objects.filter(status=StatusMatriculaTurma.CURSANDO).count(),
-        'total_atribuigoes': Atribuicao.objects.count(),
-    }
-    return render(request, 'atribuicao/relatorios.html', context)
+    """Renderiza a central de relatórios operacionais."""
+    return render(request, 'atribuicao/relatorios.html')
 
 
 def atribuicao_view(request):
-    """Redirecionamento automático da rota raiz para a listagem padrão de turmas."""
-    return redirect('lista-turmas')
+    """Renderiza a tela de listagem geral de atribuições."""
+    atribuigoes = Atribuicao.objects.all()
+    return render(request, 'atribuicao/atribuicao.html', {'atribuigoes': atribuigoes})
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from cadastros.models import Pessoa, Turma  
 
-@login_required
 def dashboard_gestao_view(request):
-    # 1. Contagem dinâmica de Alunos e Turmas
-    total_alunos = Pessoa.objects.exclude(registro_aluno__isnull=True).exclude(registro_aluno='').count()
-    total_turmas = Turma.objects.count()  
-    
-    # 2. Cálculo automático de inconsistências
-    alunos_sem_cpf = Pessoa.objects.exclude(registro_aluno__isnull=True).exclude(registro_aluno='').filter(cpf='').count()
-    pessoas_sem_rm = Pessoa.objects.filter(registro_matricula__isnull=True).count()
-    
-    total_alertas = alunos_sem_cpf + pessoas_sem_rm
-    
-    context = {
-        'total_alunos_ativos': total_alunos,  
-        'turmas_andamento': total_turmas,     
-        'alertas_pendentes': total_alertas,  
-    }
-    return render(request, 'atribuicao/dashboard.html', context)
+    """Renderiza o painel operacional de gerenciamento de turmas."""
+    return render(request, 'atribuicao/dashboard.html')
 
-
-@login_required
 def contratos_gestao_view(request):
-    """
-    Função oficial mapeada no urls.py para gerenciar os contratos da EMCA.
-    """
-    # 1. Captura os parâmetros de busca do formulário HTML
-    pesquisa = request.GET.get('pesquisa', '').strip()
-    status_filtro = request.GET.get('status', '').strip()
+    """Renderiza a tela de contratos e prestação de serviços."""
+    return render(request, 'atribuicao/contratos.html')
 
-    # 2. Busca os contratos no banco de dados trazendo o relacionamento do instrutor de forma otimizada
-    contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
 
-    # 3. Regras de Filtragem baseadas no que o usuário digita na tela
-    if pesquisa:
+# ==========================================================
+# MÓDULO DE QUALIDADE (DIRECIONADA AO NÚCLEO)
+# ==========================================================
+
+class TreinamentoListView(ListView):
+    """Listagem de registros de instrução pedagógica."""
+
+    model = RegistroInstrucao
+    template_name = 'nucleo/treinamento.html'
+    context_object_name = 'instrucoes'
+    paginate_by = 15
+
+    def get_queryset(self):
+        return RegistroInstrucao.objects.select_related(
+            'instrutor', 'atribuicao__disciplina', 'atribuicao__turma'
+        ).order_by('-data_instrucao')
+
+
+class AuditoriaInternaListView(ListView):
+    """Histórico de movimentações de Atas oficiais."""
+
+    model = MatriculaTurma
+    template_name = 'nucleo/auditoria_interna.html'
+    context_object_name = 'historico_vinculos'
+    paginate_by = 20
+
+    def get_queryset(self):
         from django.db.models import Q
-        contratos = contratos.filter(
-            Q(numero_contrato__icontains=pesquisa) | 
-            Q(numero_processo__icontains=pesquisa) |
-            Q(instrutor__first_name__icontains=pesquisa) |
-            Q(instrutor__last_name__icontains=pesquisa) |
-            Q(credor_razao_social__icontains=pesquisa)
-        )
+        return MatriculaTurma.objects.filter(
+            Q(ata_inicio__isnull=False) | Q(ata_encerramento__isnull=False)
+        ).select_related('atribuicao_funcao__pessoa', 'turma', 'ata_inicio', 'ata_encerramento').order_by('-data_inicio')
 
-    if status_filtro:
-        contratos = contratos.filter(status=status_filtro)
 
-    # 4. Cálculo dos indicadores reais para alimentar os cards do topo
-    total_vigentes = contratos.filter(status='VIGENTE').count()
-    total_empenhado = contratos.aggregate(total=Sum('valor_total_empenhado'))['total'] or 0.00
+class IndicadoresQualidadeView(TemplateView):
+    """Painel analítico e consolidação de indicadores institucionais."""
 
-    # 5. Organiza o contexto com todas as variáveis que o HTML precisa ler
-    context = {
-        'contratos': contratos,
-        'total_vigentes': total_vigentes,
-        'total_empenhado': total_empenhado,
-    }
-    
-    return render(request, 'atribuicao/contratos.html', context)
+    template_name = 'nucleo/indicadores_qualidade.html'
 
-from django.shortcuts import render
-from .models import ContratoFinanceiro
-
-def contratos_financeiros_view(request):
-    # Traz os contratos do banco ordenados pela vigência
-    contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
-    
-    context = {
-        'contratos': contratos,
-    }
-    return render(request, 'atribuicao/contratos.html', context)
-
-from django.db.models import Q, Sum  
-
-class ContratosFinanceirosView(View):
-    """
-    Controlador para a tela de Gestão de Contratos da EMCA.
-    Lista as informações com filtros dinâmicos e soma de empenhos.
-    """
-    def get(self, request):
-        # 1. Pega os termos de busca passados pelo formulário HTML
-        pesquisa = request.GET.get('pesquisa', '').strip()
-        status_filtro = request.GET.get('status', '').strip()
-
-        # Importando aqui dentro para evitar qualquer erro de importação circular no topo
-        from .models import ContratoFinanceiro  
-
-        # 2. Inicia a consulta relacionando o Usuário/Instrutor de forma otimizada
-        contratos = ContratoFinanceiro.objects.all().select_related('instrutor')
-
-        # 3. Regras de Filtragem
-        if pesquisa:
-            contratos = contratos.filter(
-                Q(numero_contrato__icontains=pesquisa) | 
-                Q(numero_processo__icontains=pesquisa) |
-                Q(instrutor__first_name__icontains=pesquisa) |
-                Q(instrutor__last_name__icontains=pesquisa) |
-                Q(credor_razao_social__icontains=pesquisa)
-            )
-
-        if status_filtro:
-            contratos = contratos.filter(status=status_filtro)
-
-        # 4. Cálculo dos Indicadores para os cards do painel
-        total_vigentes = contratos.filter(status='VIGENTE').count()
-        total_empenhado = contratos.aggregate(total=Sum('valor_total_empenhado'))['total'] or 0.00
-
-        # 5. Montagem do contexto que será lido pelas tags do template
-        context = {
-            'contratos': contratos,
-            'total_vigentes': total_vigentes,
-            'total_empenhado': total_empenhado,
-        }
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        total = MatriculaTurma.objects.count()
+        context['total_matriculas'] = total
+        context['alunos_cursando'] = MatriculaTurma.objects.filter(status=StatusMatriculaTurma.CURSANDO).count()
+        context['alunos_aprovados'] = MatriculaTurma.objects.filter(status=StatusMatriculaTurma.APROVADO).count()
+        context['alunos_reprovados'] = MatriculaTurma.objects.filter(status=StatusMatriculaTurma.REPROVADO).count()
         
-        return render(request, 'atribuicao/contratos.html', context)
+        evadidos = MatriculaTurma.objects.filter(
+            status__in=[StatusMatriculaTurma.MATRICULA_EXCLUIDA, StatusMatriculaTurma.TRANSFERIDO]
+        ).count()
+        context['taxa_evasao'] = round((evadidos / total * 100), 1) if total > 0 else 0
+
+        # Agregação de carga horária letiva
+        horas = RegistroInstrucao.objects.aggregate(
+            tot=Sum('carga_horaria'),
+            teorica=Sum('carga_horaria', filter=models.Q(tipo='Teórica')),
+            pratica=Sum('carga_horaria', filter=models.Q(tipo='Prática'))
+        )
+        context['horas_totais_instrucao'] = horas['tot'] or 0
+        context['horas_teoricas'] = horas['teorica'] or 0
+        context['horas_praticas'] = horas['pratica'] or 0
+
+        total_h = context['horas_totais_instrucao']
+        context['pct_teorica'] = round((context['horas_teoricas'] / total_h * 100), 1) if total_h > 0 else 0
+        context['pct_pratica'] = round((context['horas_praticas'] / total_h * 100), 1) if total_h > 0 else 0
+
+        # Gestão de contratos empenhados
+        try:
+            from .models import ContratoFinanceiro
+            financeiro = ContratoFinanceiro.objects.aggregate(
+                total_empenhado=Sum('valor_total_empenhado'),
+                qtd_contratos=Count('id')
+            )
+            context['investimento_total'] = financeiro['total_empenhado'] or 0
+            context['total_contratos'] = financeiro['qtd_contratos'] or 0
+        except (ImportError, AttributeError):
+            context['investimento_total'] = 0
+            context['total_contratos'] = 0
+
+        return context

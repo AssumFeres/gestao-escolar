@@ -3,7 +3,8 @@ from .views import (
     GerenciarTurmaView, AdicionarMatriculaTurmaView, EditarMatriculaTurmaView,
     ExcluirMatriculaTurmaView, FinalizarPlanejamentoView, EditarStatusMatriculaView,
     RevisarAprovacaoView, EncerrarTurmaView,
-    registro_instrucao_view, horarios_view, relatorios_view, atribuicao_view,dashboard_gestao_view, contratos_gestao_view
+    registro_instrucao_view, horarios_view, relatorios_view, atribuicao_view, dashboard_gestao_view, contratos_gestao_view,
+    TreinamentoListView, AuditoriaInternaListView, IndicadoresQualidadeView
 )
 
 urlpatterns = [
@@ -24,4 +25,11 @@ urlpatterns = [
     path('relatorios/', relatorios_view, name='relatorios'),
     path('dashboard/', dashboard_gestao_view, name='dashboard'),
     path('contratos/', contratos_gestao_view, name='contratos'),
+
+    # ==========================================================
+    # NOVAS ROTAS MÓDULO DE QUALIDADE (EMCA 2026)
+    # ==========================================================
+    path('qualidade/treinamento/', TreinamentoListView.as_view(), name='qualidade-treinamento'),
+    path('qualidade/auditoria/', AuditoriaInternaListView.as_view(), name='qualidade-auditoria'),
+    path('qualidade/indicadores-qualidade/', IndicadoresQualidadeView.as_view(), name='qualidade-indicadores'),
 ]

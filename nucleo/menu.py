@@ -37,14 +37,15 @@ MENU_NAVEGACAO = [   {
             {"label": "Relatórios", "url_name": "relatorios", "chave": "relatorios-gestao"},
         ],
     },
-    {
+        {
         "grupo": "Qualidade",
         "itens": [
-            {"label": "Treinamento", "url_name": None, "chave": "treinamento"},
-            {"label": "Auditoria Interna", "url_name": None, "chave": "auditoria-interna"},
-            {"label": "Indicadores de Qualidade", "url_name": None, "chave": "indicadores-qualidade"},
-        ],
+            {"label": "Treinamento", "url_name": "qualidade-treinamento", "chave": "treinamento"},
+            {"label": "Auditoria Interna", "url_name": "qualidade-auditoria", "chave": "auditoria-interna"},
+            {"label": "Indicadores de Qualidade", "url_name": "qualidade-indicadores", "chave": "indicadores-qualidade"}
+        ]
     },
+
     {
         "grupo": "Secretaria",
         "itens": [
