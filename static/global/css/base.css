@@ -1,0 +1,890 @@
+/* ==========================================================
+   GESTÃO ESCOLAR
+   CSS BASE - Identidade Visual
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. PALETA DE CORES
+   ---------------------------------------------------------- */
+:root {
+  /* Cores institucionais */
+  --cor-primaria: #002060;
+  --cor-primaria-hover: #001640;
+  --cor-secundaria: #1f4e79;
+  --cor-destaque: #2f75b5;
+
+  /* Fundos */
+  --fundo-pagina: #f4f7fa;
+  --fundo-card: #ffffff;
+  --fundo-secao: #eaf0f8;
+
+  /* Bordas */
+  --cor-borda: #cbd5e1;
+
+  /* Textos */
+  --cor-texto: #1e293b;
+  --cor-texto-secundario: #64748b;
+
+  /* Estados */
+  --cor-sucesso: #198754;
+  --cor-aviso: #b7791f;
+  --cor-erro: #c62828;
+}
+
+/* ----------------------------------------------------------
+   2. CONFIGURAÇÃO GERAL
+   ---------------------------------------------------------- */
+body {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--cor-texto);
+  background-color: var(--fundo-pagina);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ----------------------------------------------------------
+   3. TÍTULOS
+   ---------------------------------------------------------- */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+}
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+}
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cor-secundaria);
+}
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  color: var(--cor-secundaria);
+}
+
+/* ----------------------------------------------------------
+   4. ESTRUTURA DA PÁGINA (header, nav, main)
+   ---------------------------------------------------------- */
+header {
+  background-color: var(--cor-primaria);
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: white; /* sobrescreve a regra genérica de h1, que é escura por padrão */
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 1rem;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+main {
+  flex: 1 1 auto;
+  padding: 2rem;
+  min-width: 0; /* evita que tabelas largas estourem o layout flex */
+}
+
+/* ----------------------------------------------------------
+   5. TABELAS
+   ---------------------------------------------------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: var(--fundo-card);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+th {
+  background-color: var(--fundo-secao);
+  color: var(--cor-secundaria);
+}
+
+/* ----------------------------------------------------------
+   6. LINKS
+   ---------------------------------------------------------- */
+a {
+  color: var(--cor-destaque);
+}
+
+a:hover {
+  color: var(--cor-primaria-hover);
+}
+
+/* ----------------------------------------------------------
+   7. FORMULÁRIOS (regras genéricas — válidas em qualquer tela)
+   ---------------------------------------------------------- */
+label {
+  font-weight: 500;
+  color: var(--cor-texto);
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+select,
+textarea {
+  border: 1px solid var(--cor-borda);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  background-color: var(--fundo-card);
+  color: var(--cor-texto);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--cor-destaque);
+  box-shadow: 0 0 0 2px rgba(47, 117, 181, 0.2);
+}
+
+button,
+input[type="submit"] {
+  background-color: var(--cor-primaria);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+/* ----------------------------------------------------------
+   8. TEXTOS AUXILIARES E ESTADOS
+   ---------------------------------------------------------- */
+.texto-secundario {
+  color: var(--cor-texto-secundario);
+}
+
+.sucesso {
+  color: var(--cor-sucesso);
+}
+.aviso {
+  color: var(--cor-aviso);
+}
+.erro {
+  color: var(--cor-erro);
+}
+
+/* ----------------------------------------------------------
+   9. FORMULÁRIOS DE CADASTRO (fieldsets aninhados, grids, formsets)
+   ---------------------------------------------------------- */
+
+/* Fieldset de nível 1 (bloco por categoria: Dados da Pessoa, Discente, etc.) */
+fieldset {
+  background-color: var(--fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+/* Fieldset dentro de fieldset (sub-grupo, ex: "Endereço" dentro de "Dados da Pessoa") */
+fieldset fieldset {
+  background-color: var(--fundo-secao);
+  border: 1px solid var(--cor-borda);
+  margin-bottom: 0.7rem;
+}
+
+legend {
+  font-weight: 600;
+  color: var(--cor-primaria);
+  padding: 0 0.5rem;
+}
+
+fieldset fieldset legend {
+  color: var(--cor-secundaria);
+  font-size: 0.95rem;
+}
+
+.campo-customizado {
+  /* Cor ou imagem de fundo */
+  background-color: var(--fundo-pagina);
+
+  /* Borda personalizada */
+  border: 3px solid var(--cor-borda);
+  border-radius: 8px;
+
+  /* Espaçamento interno e externo */
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+/* Substitui os `style="display:grid..."` inline por uma classe reutilizável */
+.grid-2-colunas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+/* Para grupos com exatamente 3 campos (ex: Identificadores, Função) */
+.grid-3-colunas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+/* Para formulários largos apresentados em popup */
+.grid-4-colunas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Grid de 5 colunas */
+.grid-5-colunas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Grid de 6 colunas */
+.grid-6-colunas {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Responsividade dos formulários */
+@media (max-width: 1200px) {
+  .grid-4-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-2-colunas,
+  .grid-3-colunas,
+  .grid-4-colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .grid-5-colunas,
+  .grid-6-colunas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-5-colunas,
+  .grid-6-colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Substitui os `style="margin-bottom:8px"` inline em cada campo */
+.campo {
+  margin-bottom: 0.4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label {
+  margin-bottom: 0.15rem;
+}
+
+/* Área de uma linha de Formset (Formação, Experiência, Vínculo Formal, Pendência) */
+.formset-bloco table {
+  margin-top: 0.8rem;
+}
+
+.formset-bloco .btn-adicionar {
+  background-color: var(--cor-secundaria);
+  margin: 0.5rem 0 1rem 0;
+}
+
+.formset-bloco .btn-adicionar:hover {
+  background-color: var(--cor-primaria);
+}
+
+/* Botões do CRUD via popup (Formação/Vínculo/Experiência/Pendência, docs/21) —
+   cor própria, intencionalmente distinta de --cor-primaria */
+.btn-crud {
+  background-color: #1f4e79;
+}
+
+.btn-crud:hover {
+  background-color: #163c5c;
+}
+
+/* Botão principal de salvar, no fim do formulário */
+button[type="submit"] {
+  font-size: 1.05rem;
+  padding: 0.7rem 2rem;
+  margin-top: 1rem;
+}
+
+/* Link com aparência de botão (ex: "+ Cadastrar nova pessoa" na lista) */
+.botao-link {
+  display: inline-block;
+  background-color: var(--cor-primaria);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+}
+
+.botao-link:hover {
+  background-color: var(--cor-primaria-hover);
+  color: white;
+}
+
+/* Logo no cabeçalho, ao lado do título — agora é um <a> (leva para a Home) */
+.header-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.logo {
+  height: 50px;
+  width: auto;
+}
+
+/* ----------------------------------------------------------
+   10. LAYOUT COM SIDEBAR (menu por ator, 06/09/2026)
+   ---------------------------------------------------------- */
+
+/* Área do usuário logado + logout, à direita do cabeçalho.
+   'header-usuario-nome' é um placeholder — não existe login/sessão real
+   ainda (ver Backlog); quando existir, o texto vem do usuário autenticado. */
+.header-usuario {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  font-weight: 600;
+}
+
+.header-logout {
+  color: white;
+  font-size: 1.3rem;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.header-logout:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* Envolve o sidebar + a área de trabalho (main), lado a lado */
+.layout-com-sidebar {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  background-color: var(--cor-primaria);
+  padding: 1rem 0;
+}
+
+.sidebar-grupo {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-grupo-titulo {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.2rem;
+  cursor: pointer;
+  border-radius: 0; /* sobrescreve o border-radius genérico de <button> */
+}
+
+.sidebar-grupo-titulo:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-submenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-submenu li {
+  padding: 0;
+}
+
+.sidebar-submenu a {
+  display: block;
+  color: #cbd5e1;
+  font-style: italic;
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.5rem 1.2rem 0.5rem 1.8rem;
+}
+
+.sidebar-submenu a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+/* Grupo expandido: só o titulo do grupo (o "botao") fica com fundo claro
+   (mesmo tom da area de trabalho, --fundo-pagina) -- da a sensacao de que a
+   area de trabalho "se estende" ate o menu (pedido de 07/09/2026). O FUNDO
+   DO SUBMENU EM SI NUNCA MUDA -- continua sempre --cor-primaria (#002060),
+   confirmado explicitamente em 07/09/2026 (correcao de uma tentativa
+   anterior que deixava o submenu inteiro claro, o que nao era o pedido).
+   */
+.sidebar-grupo.aberto .sidebar-grupo-titulo {
+  background-color: var(--fundo-pagina);
+  color: var(--cor-primaria);
+}
+
+/* Item ativo (a pagina que voce esta vendo agora) -- negrito + italico,
+   cor branca para se destacar contra o fundo escuro do submenu (que nunca
+   muda). Ajustado em 07/09/2026: antes só tinha negrito, faltava o italico
+   pedido. */
+.sidebar-submenu a.ativo {
+  font-weight: 700;
+  font-style: italic;
+  color: #ffffff;
+}
+
+/* Sem JS: todos os submenus ficam sempre visíveis (progressive enhancement —
+   ninguém perde acesso a um link só porque o script não carregou).
+   Com JS ('js-ativo' adicionada por sidebar.js): esconde os submenus dos
+   grupos fechados, comportamento de accordion. */
+.sidebar.js-ativo .sidebar-grupo:not(.aberto) .sidebar-submenu {
+  display: none;
+}
+
+/* ----------------------------------------------------------
+   11. POPUPS / MODAIS
+   ---------------------------------------------------------- */
+
+/* Conteúdo interno do popup de edição de pessoa.
+   A largura fica limitada ao modal externo; o conteúdo não cria uma
+   segunda caixa maior que o popup. */
+.popup-pessoa-editar {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Evita que os campos ultrapassem a largura de cada coluna */
+.popup-pessoa-editar input,
+.popup-pessoa-editar select,
+.popup-pessoa-editar textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Garante que cada coluna possa encolher corretamente dentro do grid */
+.popup-pessoa-editar .coluna-formulario {
+  min-width: 0;
+}
+
+/* Título de cada grupo */
+.popup-pessoa-editar .coluna-formulario h4 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--cor-primaria);
+}
+
+/* Área do botão */
+.popup-pessoa-editar .acoes-formulario {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* ==========================================================
+   12. MODAL CRUD GENÉRICO
+   ========================================================== */
+
+/* Fundo escurecido */
+#modal-crud-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  background-color: rgba(0, 0, 0, 0.45);
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  z-index: 9999;
+}
+
+/* ==========================================================
+   CAIXA EXTERNA DO MODAL - PADRÃO GENÉRICO
+   ========================================================== */
+
+/*
+   Todos os popups CRUD voltam ao tamanho padrão/original.
+   O seletor > * pega o filho direto do overlay independentemente
+   de ele ser div, section, article etc.
+*/
+#modal-crud-overlay > * {
+  width: 90% !important;
+  max-width: 600px !important;
+
+  max-height: 90vh !important;
+
+  box-sizing: border-box !important;
+
+  background-color: var(--fundo-card);
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  position: relative;
+}
+
+/* ==========================================================
+   FORMULÁRIO CRUD GENÉRICO
+   ========================================================== */
+
+/*
+   Classe comum dos formulários carregados no modal.
+   Não altera a largura da caixa externa.
+*/
+.form-modal-crud {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   EXCEÇÃO - MODAL EDITAR PESSOA
+   ========================================================== */
+
+/*
+   Somente a caixa externa que contém o formulário específico
+   de Editar Pessoa recebe largura ampliada.
+
+   No HTML do Editar Pessoa, usar:
+   class="form-modal-crud form-modal-crud-editar-pessoa"
+*/
+#modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
+  width: 90vw !important;
+  max-width: 1400px !important;
+}
+
+/*
+   Classe complementar do formulário Editar Pessoa.
+   Mantém a classe genérica e acrescenta apenas a especialização.
+*/
+.form-modal-crud-editar-pessoa {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   CORPO DO MODAL
+   ========================================================== */
+
+#modal-crud-corpo {
+  width: 100% !important;
+  max-width: none !important;
+
+  max-height: 85vh;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+
+  padding: 1.5rem;
+}
+
+/* ==========================================================
+   EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar {
+  width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  overflow: visible;
+}
+
+/* ==========================================================
+   GRID DE 4 COLUNAS - EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar .grid-4-colunas {
+  display: grid;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 20px;
+
+  width: 100%;
+}
+
+/* Cada coluna pode encolher corretamente */
+.popup-pessoa-editar .coluna-formulario {
+  min-width: 0;
+}
+
+/* ==========================================================
+   CAMPOS - EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar input,
+.popup-pessoa-editar select,
+.popup-pessoa-editar textarea {
+  width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   TÍTULOS DAS COLUNAS - EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar .coluna-formulario h4 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+
+  padding-bottom: 0.3rem;
+
+  border-bottom: 2px solid var(--cor-primaria);
+}
+
+/* ==========================================================
+   ÁREA DOS BOTÕES - EDITAR PESSOA
+   ========================================================== */
+
+.popup-pessoa-editar .acoes-formulario {
+  margin-top: 1rem;
+
+  padding-top: 0.8rem;
+
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* ==========================================================
+   RESPONSIVIDADE DOS MODAIS
+   ========================================================== */
+
+/* Em telas intermediárias */
+@media (max-width: 1000px) {
+  /*
+     Popups genéricos continuam limitados a 600px.
+     O width maior apenas permite ocupar melhor a tela
+     quando ela for menor que esse limite.
+  */
+  #modal-crud-overlay > * {
+    width: 95vw !important;
+  }
+
+  /*
+     Editar Pessoa pode utilizar quase toda a largura disponível.
+  */
+  #modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
+    width: 95vw !important;
+    max-width: 1400px !important;
+  }
+
+  .popup-pessoa-editar .grid-4-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Em telas pequenas */
+@media (max-width: 700px) {
+  #modal-crud-overlay {
+    padding: 10px;
+  }
+
+  /*
+     No celular, tanto os modais genéricos quanto o Editar Pessoa
+     podem ocupar praticamente toda a tela.
+  */
+  #modal-crud-overlay > *,
+  #modal-crud-overlay > *:has(.form-modal-crud-editar-pessoa) {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+  }
+
+  #modal-crud-corpo {
+    padding: 1rem;
+
+    max-height: calc(100vh - 40px);
+  }
+
+  .popup-pessoa-editar .grid-4-colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================
+   MENSAGENS DE ERRO DOS FORMULÁRIOS
+   ========================================================== */
+
+.erro {
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  color: #a94442;
+
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+
+  border-radius: 4px;
+
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* O Django gera os erros dentro de uma <ul class="errorlist"> */
+.erro .errorlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.erro .errorlist li {
+  margin: 0;
+  padding: 0;
+}
+
+.erro {
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  color: #a94442;
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icone-erro {
+  font-size: 3rem;
+  line-height: 2;
+  flex-shrink: 0;
+}
+
+.erro .errorlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ==========================================================
+   DETALHE DA PESSOA - VISUALIZAÇÃO EM 4 COLUNAS
+   ========================================================== */
+
+.detalhe-fieldset {
+  margin-bottom: 1rem;
+}
+
+/* Grid principal dos dados */
+.grid-detalhes-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+/* Cada informação da ficha */
+.dado-detalhe {
+  background-color: var(--fundo-secao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 5px;
+
+  padding: 0.55rem 0.7rem;
+
+  min-width: 0;
+}
+
+/* Nome do campo */
+.dado-rotulo {
+  display: block;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  color: var(--cor-texto-secundario);
+
+  margin-bottom: 0.15rem;
+}

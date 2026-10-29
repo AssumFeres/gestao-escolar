@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{% if encerrando %}Encerrar{% else %}Adicionar{% endif %} Vínculo Formal - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-pessoa' pk=atribuicao.pessoa_id %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_historico_vinculo_fragment.html' %}
+{% endblock %}

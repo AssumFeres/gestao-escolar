@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Ata {{ ata.numero }} - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'lista-atas' %}" class="botao-link">&larr; Voltar para Atas</a></p>
+
+<h2>
+  <p align="center">Ata {{ ata.numero }}</p>
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'editar-ata' pk=ata.pk %}"
+          style="font-size: 0.9rem; vertical-align: middle; margin-left: 12px;">
+    Editar
+  </button>
+</h2>
+
+<table>
+  <tr>
+    <th>Tipo</th>
+    <td>{{ ata.get_tipo_display }}</td>
+    <th>Finalidade</th>
+    <td>{{ ata.get_finalidade_display }}</td>
+  </tr>
+  <tr>
+    <th>Data</th>
+    <td>{{ ata.data|date:"d/m/Y" }}</td>
+    <th>Assunto</th>
+    <td>{{ ata.assunto|default:"-----" }}</td>
+  </tr>
+  <tr>
+    <th>Observação</th>
+    <td colspan="3">{{ ata.observacao|default:"-----" }}</td>
+  </tr>
+</table>
+
+{% if ata.finalidade == 'ORIENTACAO' or ata.finalidade == 'CONSELHO_ENSINO' or ata.finalidade == 'OUTRO' %}
+<fieldset>
+  <legend>Pessoas Vinculadas</legend>
+  {% if ata.pessoas_vinculadas.all %}
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>CPF</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for vinculo in ata.pessoas_vinculadas.all %}
+      <tr>
+        <td><a href="{% url 'detalhe-pessoa' pk=vinculo.pessoa.pk %}">{{ vinculo.pessoa.nome_completo }}</a></td>
+        <td>{{ vinculo.pessoa.cpf }}</td>
+        <td>
+          <button type="button" class="btn-abrir-modal-crud btn-crud"
+                  data-url="{% url 'excluir-ata-pessoa' pk=vinculo.id %}">
+            Desvincular
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Nenhuma pessoa vinculada.</p>
+  {% endif %}
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'adicionar-ata-pessoa' pk=ata.pk %}">
+    + Vincular Pessoa
+  </button>
+</fieldset>
+{% endif %}
+
+<div id="modal-crud-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div id="modal-crud-caixa" style="background-color:#ffffff; padding:24px 28px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:600px; width:90%; position:relative;">
+        <button type="button" id="modal-crud-fechar" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
+        <div id="modal-crud-corpo">Carregando...</div>
+    </div>
+</div>
+
+<script src="{% static 'cadastros/js/modal-crud.js' %}"></script>
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_ata.html</p>
+{% endblock %}

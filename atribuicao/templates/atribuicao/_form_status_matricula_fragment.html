@@ -1,0 +1,34 @@
+<h3>Editar Status</h3>
+<p>
+    Aluno: <strong>{{ matricula.atribuicao_funcao.pessoa.nome_completo }}</strong>
+    — Turma: <strong>{{ matricula.turma.nome }}</strong>
+</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo">{{ form.status.label_tag }} {{ form.status }} {{ form.status.errors }}</div>
+    <div class="campo">
+        {{ form.turma_destino.label_tag }} {{ form.turma_destino }}
+        <small style="color:#64748b;">{{ form.turma_destino.help_text }}</small>
+        {{ form.turma_destino.errors }}
+    </div>
+    <div class="campo">
+        {{ form.motivo_saida.label_tag }} {{ form.motivo_saida }}
+        <small style="color:#64748b;">{{ form.motivo_saida.help_text }}</small>
+        {{ form.motivo_saida.errors }}
+    </div>
+    <div class="campo">
+        {{ form.data_fim.label_tag }} {{ form.data_fim }}
+        <small style="color:#64748b;">{{ form.data_fim.help_text }}</small>
+        {{ form.data_fim.errors }}
+    </div>
+    <div class="campo">
+        {{ form.ata_encerramento.label_tag }} {{ form.ata_encerramento }}
+        <small style="color:#64748b;">{{ form.ata_encerramento.help_text }}</small>
+        {{ form.ata_encerramento.errors }}
+    </div>
+    <button type="submit">Salvar</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 atribuicao/templates/atribuicao/_form_status_matricula_fragment.html</p>

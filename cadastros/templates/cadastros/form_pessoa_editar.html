@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Editar Pessoa - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-pessoa' pk=object.pk %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_pessoa_editar_fragment.html' %}
+{% endblock %}

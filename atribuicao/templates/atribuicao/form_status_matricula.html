@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Editar Status - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'gerenciar-turma' pk=matricula.turma_id %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'atribuicao/_form_status_matricula_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: atribuicao/templates/atribuicao/form_status_matricula.html</p>
+{% endblock %}
