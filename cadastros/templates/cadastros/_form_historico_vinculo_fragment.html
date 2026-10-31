@@ -1,0 +1,33 @@
+<h3>{% if encerrando %}Encerrar Vínculo Formal{% else %}Adicionar Vínculo Formal{% endif %}</h3>
+<p>{{ atribuicao.pessoa.nome_completo }} — {{ atribuicao.funcao.nome }}</p>
+
+{% if encerrando %}
+<p><strong>Vínculo:</strong> {{ object.vinculo_formal.nome }} (desde {{ object.data_inicio|date:"d/m/Y" }})</p>
+{% endif %}
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <fieldset class="campo-customizado">
+        {% if encerrando %}
+            <div class="campo">{{ form.data_fim.label_tag }} {{ form.data_fim }} {{ form.data_fim.errors }}</div>
+            <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
+    </fieldset>
+        <button type="submit">Encerrar Vínculo</button>
+    {% else %}
+        <fieldset class="campo-customizado">
+            <div>
+                <div>
+                    <div class="campo">{{ form.vinculo_formal.label_tag }} {{ form.vinculo_formal }} {{ form.vinculo_formal.errors }}</div>
+                </div>
+                <div class="grid-2-colunas">
+                    <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
+                    <div class="campo">{{ form.data_fim.label_tag }} {{ form.data_fim }} {{ form.data_fim.errors }}</div>
+                </div>
+                <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
+            </div>
+        </fieldset>
+        <button type="submit">Salvar Vínculo</button>
+    {% endif %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/_form_historico_vinculo_fragmenet.html</p>
+</form>

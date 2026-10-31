@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Nova{% endif %} Turma - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-oferta-modulo' pk=oferta_modulo.pk %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_turma_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: cadastros/templates/cadastros/form_turma.html</p>
+{% endblock %}

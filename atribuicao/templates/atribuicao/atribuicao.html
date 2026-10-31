@@ -1,0 +1,57 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <!-- Formulário -->
+        <div class="col-md-5">
+            <div class="card p-4 shadow-sm">
+                <h4 class="mb-4 text-primary">Nova Atribuição de Disciplina</h4>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Instrutor / Professor</label>
+                        <select name="instrutor" class="form-control form-select" required>
+                            <option value="">Selecione um instrutor...</option>
+                            {% for i in instrutores %} <option value="{{ i.id }}">{{ i.username }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Disciplina</label>
+                        <select name="disciplina" class="form-control form-select" required>
+                            <option value="">Selecione a disciplina...</option>
+                            {% for d in disciplinas %} <option value="{{ d.id }}">{{ d.nome }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Turma</label>
+                        <select name="turma" class="form-control form-select" required>
+                            <option value="">Selecione a turma...</option>
+                            {% for t in turmas %} <option value="{{ t.id }}">{{ t.nome }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Salvar Atribuição</button>
+                </form>
+            </div>
+        </div>
+        <!-- Lista -->
+        <div class="col-md-7">
+            <div class="card p-4 shadow-sm">
+                <h4 class="mb-4">Histórico de Atribuições</h4>
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr><th>Instrutor</th><th>Disciplina</th><th>Turma</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for a in atribuigoes %}
+                        <tr><td>{{ a.instrutor.username }}</td><td>{{ a.disciplina.nome }}</td><td><span class="badge bg-secondary">{{ a.turma.nome }}</span></td></tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted">Nenhuma atribuição realizada até o momento.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
