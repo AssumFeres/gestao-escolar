@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h3 class="fw-bold text-dark mb-1">Auditoria Interna de Vínculos</h3>
+    <p class="text-muted small mb-4">Rastreabilidade legal de entradas, saídas, atas oficiais de turmas e validações em lote.</p>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Ata Inicial</th>
+                        <th>Ata Encerramento</th>
+                        <th>Status Final</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for matricula in historico_vinculos %}
+                    <tr>
+                        <td class="fw-semibold">{{ matricula.atribuicao_funcao.pessoa.nome_completo }}</td>
+                        <td>{{ matricula.turma.nome }}</td>
+                        <td><span class="text-primary fw-mono">📜 {{ matricula.ata_inicio.numero|default:"—" }}</span></td>
+                        <td><span class="text-danger fw-mono">📜 {{ matricula.ata_encerramento.numero|default:"—" }}</span></td>
+                        <td>
+                            <span class="badge {% if matricula.status == 'CURSANDO' %}bg-primary{% elif matricula.status == 'APROVADO' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ matricula.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Nenhuma movimentação formal registrada para auditoria.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

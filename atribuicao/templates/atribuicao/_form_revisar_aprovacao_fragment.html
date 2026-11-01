@@ -1,0 +1,22 @@
+<h3>Revisar Aprovação — {{ turma.nome }}</h3>
+<p>
+    Todos os alunos abaixo estão marcados para aprovar. Desmarque quem
+    <strong>não</strong> deve ser aprovado agora (será resolvido individualmente
+    depois, via "Editar Status").
+</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for matricula, campo in form.linhas %}
+    <div class="campo" style="flex-direction: row; align-items: center; gap: 8px;">
+        {{ campo }}
+        <label for="{{ campo.id_for_label }}">{{ matricula.atribuicao_funcao.pessoa.nome_completo }}</label>
+    </div>
+    {% empty %}
+    <p>Nenhum aluno ainda Cursando nesta Turma.</p>
+    {% endfor %}
+    <button type="submit">Confirmar Aprovações</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 atribuicao/templates/atribuicao/_form_revisar_aprovacao_fragment.html</p>

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<div class="container mt-4" style="padding: 20px;">
+    <h2>Formulário de Registro de Instrução</h2>
+    <hr>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success" style="padding: 10px; background-color: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row" style="display: flex; gap: 30px; margin-top: 20px;">
+        <!-- Lado Esquerdo: Formulário -->
+        <div style="flex: 1; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e3e6f0;">
+            <h4 style="margin-bottom: 20px; color: #4e73df;">Nova Instrução</h4>
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold;">Data da Instrução:</label><br>
+                    <input type="date" name="data_instrucao" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccf; border-radius: 4px;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold;">Carga Horária (Horas):</label><br>
+                    <input type="number" step="0.1" name="carga_horaria" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccf; border-radius: 4px;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold;">Tipo de Instrução:</label><br>
+                    <select name="tipo" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccf; border-radius: 4px;">
+                        <option value="TEORICA">Teórica</option>
+                        <option value="PRATICA">Prática</option>
+                        <option value="AVALIACAO">Avaliação/Exame</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold;">Conteúdo Programático:</label><br>
+                    <textarea name="conteudo" rows="4" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccf; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold;">Observações/Ocorrências:</label><br>
+                    <textarea name="observacoes" rows="2" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccf; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" style="background-color: #4e73df; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">Salvar Registro</button>
+            </form>
+        </div>
+
+        <!-- Lado Direito: Listagem -->
+        <div style="flex: 1.5; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e3e6f0;">
+            <h4 style="margin-bottom: 20px; color: #4e73df;">Histórico de Instruções</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e3e6f0;">
+                        <th style="padding: 12px;">Data</th>
+                        <th style="padding: 12px;">Instrutor</th>
+                        <th style="padding: 12px;">Tipo</th>
+                        <th style="padding: 12px;">Carga H.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inst in instrucoes %}
+                    <tr style="border-bottom: 1px solid #e3e6f0;">
+                        <td style="padding: 12px;">{{ inst.data_instrucao|date:"d/m/Y" }}</td>
+                        <td style="padding: 12px;">{{ inst.instrutor.username }}</td>
+                        <td style="padding: 12px;">{{ inst.get_tipo_display }}</td>
+                        <td style="padding: 12px;">{{ inst.carga_horaria }}h</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="padding: 30px; text-align: center; color: #858796;">Nenhuma instrução registrada ainda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

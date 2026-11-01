@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% if object.ativo %}Inativar{% else %}Reativar{% endif %} Item do Conteudo Programatico - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-disciplina' pk=object.disciplina_id %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_toggle_ativo_conteudo_programatico_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: cadastros/templates/cadastros/form_toggle_ativo_conteudo_programatico.html</p>
+{% endblock %}

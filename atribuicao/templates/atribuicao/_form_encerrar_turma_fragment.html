@@ -1,0 +1,19 @@
+<h3>Encerrar Turma — {{ turma.nome }}</h3>
+<p style="color:#a94442; background-color:#f2dede; border:1px solid #ebccd1; padding:8px 12px; border-radius:4px;">
+    Esta ação não pode ser desfeita.
+    {% if turma.oferta_modulo.modulo.categoria == 'BASICO' %}
+    Módulo Básico: os alunos aprovados ficam "Aguardando Turma" — o vínculo com a EMCA não é encerrado.
+    {% else %}
+    Os alunos aprovados terão o vínculo com a EMCA encerrado (exceto quem estiver acumulando com outra Turma regular em andamento, no caso de Extracurricular).
+    {% endif %}
+</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo">{{ form.data_encerramento.label_tag }} {{ form.data_encerramento }} {{ form.data_encerramento.errors }}</div>
+    <div class="campo">{{ form.ata_encerramento.label_tag }} {{ form.ata_encerramento }} {{ form.ata_encerramento.errors }}</div>
+    <button type="submit">Confirmar Encerramento da Turma</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 atribuicao/templates/atribuicao/_form_encerrar_turma_fragment.html</p>

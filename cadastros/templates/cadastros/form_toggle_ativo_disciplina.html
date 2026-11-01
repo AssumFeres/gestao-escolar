@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% if object.ativo %}Inativar{% else %}Reativar{% endif %} Disciplina - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-disciplina' pk=object.pk %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_toggle_ativo_disciplina_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: cadastros/templates/cadastros/form_toggle_ativo_disciplina.html</p>
+{% endblock %}

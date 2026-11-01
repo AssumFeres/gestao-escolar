@@ -1,0 +1,89 @@
+[
+  {
+    "model": "cadastros.funcao",
+    "pk": 1,
+    "fields": {
+      "nome": "Diretor",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 2,
+    "fields": {
+      "nome": "Gerente de Qualidade",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 3,
+    "fields": {
+      "nome": "Coordenador de Curso Aviônicos",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 4,
+    "fields": {
+      "nome": "Coordenador de Curso Célula",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 5,
+    "fields": {
+      "nome": "Coordenador de Curso GMP",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 6,
+    "fields": {
+      "nome": "Secretária",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 7,
+    "fields": {
+      "nome": "Auxiliar Administrativo",
+      "categoria": "GESTAO"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 8,
+    "fields": {
+      "nome": "Docente - Instrutor",
+      "categoria": "DOCENTE"
+    }
+  },
+  {
+    "model": "cadastros.funcao",
+    "pk": 9,
+    "fields": {
+      "nome": "Discente - Aluno",
+      "categoria": "DISCENTE"
+    }
+  },
+  {
+    "model": "cadastros.vinculoformal",
+    "pk": 1,
+    "fields": {
+      "nome": "FAPETI"
+    }
+  },
+  {
+    "model": "cadastros.vinculoformal",
+    "pk": 2,
+    "fields": {
+      "nome": "PMT"
+    }
+  }
+]
+

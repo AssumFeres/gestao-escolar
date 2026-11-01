@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Adicionar{% endif %} Formação - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'preencher-requisitos-docente' pk=dados_docente.id %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'cadastros/_form_formacao_fragment.html' %}
+{% endblock %}

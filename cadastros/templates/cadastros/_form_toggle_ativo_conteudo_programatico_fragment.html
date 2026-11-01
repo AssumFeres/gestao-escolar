@@ -1,0 +1,15 @@
+<h3>{% if object.ativo %}Inativar{% else %}Reativar{% endif %} Item do Conteúdo Programático</h3>
+
+<p>
+    Tem certeza que deseja {% if object.ativo %}inativar{% else %}reativar{% endif %}
+    o item <strong>#{{ object.ordem }} - {{ object.descricao|truncatechars:60 }}</strong>
+    da disciplina <strong>{{ object.disciplina.sigla }}</strong>?
+</p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <button type="submit">Confirmar</button>
+    
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_toggle_ativo_conteudo_programatico_fragment.html</p>
