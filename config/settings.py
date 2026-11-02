@@ -148,3 +148,6 @@ LOGIN_REDIRECT_URL = '/atribuicao/dashboard/'
 
 # Permite que o Django confie no formulário enviado a partir do domínio do Render
 CSRF_TRUSTED_ORIGINS = ['https://onrender.com']
+# Garante que o Django entenda que o Render usa HTTPS por trás do proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
