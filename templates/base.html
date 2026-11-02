@@ -6,6 +6,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Sistema de Gestao Escolar{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'global/css/base.css' %}" />
+    
+    <!-- Estilização Exclusiva do Menu do Usuário (Injetado) -->
+    <style>
+      .header-dropdown {
+          position: relative;
+          display: inline-block;
+          cursor: pointer; /* Faz aparecer a mãozinha ao passar o mouse */
+          margin-right: 15px;
+          padding: 5px 10px;
+      }
+      .header-usuario-nome {
+          color: #ffffff;
+          font-weight: bold;
+          user-select: none;
+      }
+      /* Caixa flutuante escondida por padrão */
+      .header-dropdown-conteudo {
+          display: none;
+          position: absolute;
+          right: 0;
+          background-color: #ffffff;
+          min-width: 160px;
+          box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+          z-index: 1000;
+          border-radius: 4px;
+          margin-top: 5px;
+          overflow: hidden;
+      }
+      /* Links dentro do menu */
+      .header-dropdown-conteudo a {
+          color: #333333 !important;
+          padding: 10px 15px;
+          text-decoration: none;
+          display: block;
+          font-size: 14px;
+          text-align: left;
+      }
+      .header-dropdown-conteudo a:hover {
+          background-color: #f1f1f1;
+      }
+      /* Botão Sair Vermelho */
+      .header-dropdown-conteudo a.txt-logout:hover {
+          background-color: #fff5f5;
+          color: #dc3545 !important;
+      }
+      .dropdown-divisor {
+          border: 0;
+          border-top: 1px solid #e5e5e5;
+          margin: 0;
+      }
+      /* MÁGICA: Abre o menu dinamicamente ao passar o mouse */
+      .header-dropdown:hover .header-dropdown-conteudo {
+          display: block;
+      }
+      .btn-atribuicao {
+          color: #a4c5ff;
+          text-decoration: none;
+      }
+      .btn-atribuicao:hover {
+          text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -13,11 +75,19 @@
         <img src="{% static 'global/img/logo-emca.png' %}" alt="Logo EMCA" class="logo">
         <h1>Sistema de Gestao Escolar da EMCA</h1>
       </a>
+      
       <div class="header-usuario">
-        <!-- Placeholder: ainda não existe login/sessão real (previsto no Backlog).
-             Quando existir, troca por {{ request.user.get_full_name }} ou equivalente. -->
-        <span class="header-usuario-nome">Usuário</span>
-        <a href="{% url 'lista-turmas' %}">Atribuição</a>
+        <div class="header-dropdown">
+          <span class="header-usuario-nome">
+            👤 {{ request.user.username|default:"Usuário" }} ▾
+          </span>
+          <div class="header-dropdown-conteudo">
+            <a href="/admin/password_change/">🔑 Alterar Senha</a>
+            <hr class="dropdown-divisor">
+            <a href="/admin/logout/" class="txt-logout">🚪 Sair do Sistema</a>
+          </div>
+        </div>
+        <a href="{% url 'lista-turmas' %}" class="btn-atribuicao">Atribuição</a>
       </div>
     </header>
 
