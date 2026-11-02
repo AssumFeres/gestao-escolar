@@ -7,13 +7,17 @@
     <title>{% block title %}Sistema de Gestao Escolar{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'global/css/base.css' %}" />
     
-    <!-- Estilização Exclusiva do Menu do Usuário (Injetado) -->
+    <!-- Estilização Injetada Exclusiva para o Menu Flutuante do Usuário -->
     <style>
+      .header-usuario {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+      }
       .header-dropdown {
           position: relative;
           display: inline-block;
-          cursor: pointer; /* Faz aparecer a mãozinha ao passar o mouse */
-          margin-right: 15px;
+          cursor: pointer; /* A mãozinha aparece APENAS aqui no Usuário */
           padding: 5px 10px;
       }
       .header-usuario-nome {
@@ -34,7 +38,7 @@
           margin-top: 5px;
           overflow: hidden;
       }
-      /* Links dentro do menu */
+      /* Links internos do menu flutuante */
       .header-dropdown-conteudo a {
           color: #333333 !important;
           padding: 10px 15px;
@@ -42,6 +46,7 @@
           display: block;
           font-size: 14px;
           text-align: left;
+          cursor: pointer;
       }
       .header-dropdown-conteudo a:hover {
           background-color: #f1f1f1;
@@ -56,17 +61,10 @@
           border-top: 1px solid #e5e5e5;
           margin: 0;
       }
-      /* MÁGICA: Abre o menu dinamicamente ao passar o mouse */
+      /* Gatilho Hover: Abre o menu ao posicionar o mouse */
       .header-dropdown:hover .header-dropdown-conteudo {
           display: block;
-      }
-      .btn-atribuicao {
-          color: #a4c5ff;
-          text-decoration: none;
-      }
-      .btn-atribuicao:hover {
-          text-decoration: underline;
-      }
+       }
     </style>
   </head>
   <body>
@@ -87,7 +85,8 @@
             <a href="/admin/logout/" class="txt-logout">🚪 Sair do Sistema</a>
           </div>
         </div>
-        <a href="{% url 'lista-turmas' %}" class="btn-atribuicao">Atribuição</a>
+        <!-- Link de atribuição restaurado ao padrão original do projeto -->
+        <a href="{% url 'lista-turmas' %}">Atribuição</a>
       </div>
     </header>
 
