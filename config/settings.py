@@ -145,3 +145,6 @@ LOGIN_URL = 'login'
 
 # Para onde o usuário vai se ele logar direto pela página de login (vai para o Dashboard)
 LOGIN_REDIRECT_URL = '/atribuicao/dashboard/'
+
+# Permite que o Django confie no formulário enviado a partir do domínio do Render
+CSRF_TRUSTED_ORIGINS = ['https://onrender.com']
