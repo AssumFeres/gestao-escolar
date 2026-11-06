@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="padding: 20px; font-family: sans-serif; background-color: #f8f9fa; min-height: 100vh;">
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #333; margin-bottom: 5px; font-weight: bold;">📝 Registro de Treinamentos e Instruções</h3>
+        <span style="color: #666; font-size: 14px;">Acompanhamento diário de conteúdos programáticos e horas-aula executadas pelas atribuições.</span>
+    </div>
+
+    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; background-color: #f8f9fa;">
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Data</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Instrutor</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Disciplina / Turma</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Tipo</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Carga Horária</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Conteúdo Programático</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registros %}
+                <tr style="border-bottom: 1px solid #dee2e6; font-size: 14px; vertical-align: top;">
+                    <td style="padding: 12px; color: #212529; white-space: nowrap;">{{ r.data_instrucao|date:"d/m/Y" }}</td>
+                    <td style="padding: 12px; color: #212529; font-weight: 500;">{{ r.atribuicao.instrutor.pessoa.nome_completo }}</td>
+                    <td style="padding: 12px; color: #495057;">
+                        {{ r.atribuicao.disciplina.nome }} 
+                        <span style="font-size: 12px; background: #e9ecef; padding: 2px 6px; border-radius: 4px; margin-left: 4px; color: #495057;">{{ r.atribuicao.turma.nome }}</span>
+                    </td>
+                    <td style="padding: 12px; color: #212529;">{{ r.tipo }}</td>
+                    <td style="padding: 12px; color: #212529; font-weight: bold;">{{ r.carga_horaria }}h</td>
+                    <td style="padding: 12px; color: #666; max-width: 300px; word-wrap: break-word;">{{ r.conteudo_programatico }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 30px; text-align: center; color: #666; font-style: italic;">
+                        ❌ Nenhum registro de instrução efetuado ou encontrado no banco de dados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

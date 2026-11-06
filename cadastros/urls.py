@@ -1,4 +1,5 @@
 from django.urls import path
+from cadastros.views import DashboardView #automaizando dashboards
 from .views import (
     ListaPessoasView, DetalhePessoaView, NovoCadastroPessoaView,
     EditarPessoaView,
@@ -23,7 +24,7 @@ from .views import (
     EditarOfertaModuloView, EncerrarOfertaModuloView,
     AdicionarTurmaView, EditarTurmaView, ListaTurmasView,
     ListaAtasView, DetalheAtaView, AdicionarAtaView, EditarAtaView,
-    AdicionarAtaPessoaView, ExcluirAtaPessoaView,
+    AdicionarAtaPessoaView, ExcluirAtaPessoaView, ListaContratosView, AdicionarContratoView
 )
 
 urlpatterns = [
@@ -93,4 +94,7 @@ urlpatterns = [
 
     path('<int:pk>/editar/', EditarPessoaView.as_view(), name='editar-pessoa'),
     path('<int:pk>/', DetalhePessoaView.as_view(), name='detalhe-pessoa'),
+    path('dashboard/', DashboardView.as_view(), name='dashboard_principal'),
+    path('contratos/', ListaContratosView.as_view(), name='contratos'),
+    path('contratos/adicionar/', AdicionarContratoView.as_view(), name='adicionar-contrato')
 ]

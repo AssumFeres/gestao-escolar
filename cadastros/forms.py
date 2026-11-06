@@ -651,3 +651,72 @@ FormacaoDocenteFormSet = forms.formset_factory(FormacaoDocenteForm, extra=1)
 ExperienciaProfissionalFormSet = forms.formset_factory(ExperienciaProfissionalForm, extra=1)
 HistoricoVinculoFormalFormSet = forms.formset_factory(HistoricoVinculoFormalForm, extra=1)
 PendenciaCadastroFormSet = forms.formset_factory(PendenciaCadastroForm, extra=1)
+# LOCALIZAÇÃO: Fim do arquivo cadastros/forms.py
+
+from django import forms
+from atribuicao.models import ContratoFinanceiro
+
+class ContratoFinanceiroModelForm(forms.ModelForm):
+    """
+    SRP: Validação técnica e estrutural para inserção/edição de 
+    contratos públicos no ecossistema escolar.
+    """
+    class Meta:
+        model = ContratoFinanceiro
+        fields = [
+            'numero_processo', 'numero_contrato', 'tipo', 'instrutor',
+            'credor_razao_social', 'cnpj_cpf_credor', 'valor_total_empenhado',
+            'valor_hora_aula', 'data_assinatura', 'data_vigencia_inicio',
+            'data_vigencia_fim', 'status', 'objeto_contrato'
+        ]
+        widgets = {
+            'numero_processo': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_contrato': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'instrutor': forms.Select(attrs={'class': 'form-select'}),
+            'credor_razao_social': forms.TextInput(attrs={'class': 'form-control'}),
+            'cnpj_cpf_credor': forms.TextInput(attrs={'class': 'form-control'}),
+            'valor_total_empenhado': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'valor_hora_aula': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'data_assinatura': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_vigencia_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_vigencia_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'objeto_contrato': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inicio = cleaned_data.get('data_vigencia_inicio')
+        fim = cleaned_data.get('data_vigencia_fim')
+
+        if inicio and fim and fim < inicio:
+            raise forms.ValidationError("A data de fim da vigência não pode ser anterior à data de início.")
+        
+        return cleaned_data
+
+
+from django import forms
+from atribuicao.models import Atribuicao
+from cadastros.models import AtribuicaoFuncao
+
+class AtribuicaoInstrutorForm(forms.ModelForm):
+    class Meta:
+        model = Atribuicao
+        fields = ['instrutor', 'disciplina', 'turma']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. ESTILIZAÇÃO DAS SETAS
+        self.fields['instrutor'].widget.attrs.update({'class': 'form-control select2'})
+        self.fields['disciplina'].widget.attrs.update({'class': 'form-control'})
+        self.fields['turma'].widget.attrs.update({'class': 'form-control'})
+
+        # 2. FILTRAGEM AUTOMÁTICA (Remove Alunos e Discentes da lista)
+        # Como vimos na imagem que o seu sistema usa as palavras "Aluno" e "discente",
+        # filtramos o banco para travar e não trazer essas funções na seta de professores.
+        self.fields['instrutor'].queryset = AtribuicaoFuncao.objects.select_related('pessoa').exclude(
+            forms.models.Q(cargo__icontains='aluno') | 
+            forms.models.Q(cargo__icontains='discente')
+        ).order_by('pessoa__nome_completo')

@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'nucleo',
     'cadastros',
     'atribuicao',
+    'relatorios',
 ]
 
 MIDDLEWARE = [

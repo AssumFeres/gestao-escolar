@@ -1,0 +1,119 @@
+{% extends 'nucleo/base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid px-4 py-3">
+    
+    <!-- Cabeçalho idêntico ao seu layout -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark"><i class="bi bi-bank text-danger"></i> Painel de Controle - Visão Geral</h2>
+        <p class="text-muted">Bem-vindo ao centro de operações da EMCA. Veja o status das matrículas e turmas em tempo real para o ano de {{ ano_letivo }}.</p>
+    </div>
+
+    <!-- Navegação por Abas (Cards Superiores) -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Alunos -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100 border-top border-primary border-3 tab-button active" onclick="alternarPainel(event, 'painel-alunos')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-uppercase text-muted fw-bold small">Total Alunos Ativos</h6>
+                    <h2 class="display-5 fw-bold text-primary m-0">{{ total_alunos_ativos }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Turmas -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100 border-top border-success border-3 tab-button" onclick="alternarPainel(event, 'painel-turmas')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-uppercase text-muted fw-bold small">Turmas em Andamento</h6>
+                    <h2 class="display-5 fw-bold text-success m-0">{{ turmas_em_andamento }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Alertas -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100 border-top border-danger border-3 tab-button" onclick="alternarPainel(event, 'painel-alertas')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-uppercase text-muted fw-bold small">Alertas do Sistema</h6>
+                    <h2 class="display-5 fw-bold text-danger m-0">{{ alertas_sistema|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção Dinâmica de Detalhes / Ações -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="m-0 fw-bold text-secondary"><i class="bi bi-bell-fill text-warning"></i> Detalhes do Painel Selecionado</h5>
+        </div>
+        <div class="card-body p-0">
+            
+            <!-- SUB-PAINEL 1: ALUNOS ATIVOS (Visível por padrão) -->
+            <div id="painel-alunos" class="conteudo-painel p-4" style="display: block;">
+                <h6 class="fw-bold text-primary mb-3">Listagem resumida de auditoria de alunos</h6>
+                <p class="text-muted">Há <strong>{{ total_alunos_ativos }}</strong> alunos com matrículas operacionais ativas no corrente ano letivo.</p>
+            </div>
+
+            <!-- SUB-PAINEL 2: TURMAS EM ANDAMENTO -->
+            <div id="painel-turmas" class="conteudo-painel p-4" style="display: none;">
+                <h6 class="fw-bold text-success mb-3">Informações das turmas em andamento</h6>
+                <p class="text-muted">Atualmente, o sistema registra <strong>{{ turmas_em_andamento }}</strong> turmas executando atividades acadêmicas.</p>
+            </div>
+
+            <!-- SUB-PAINEL 3: TABELA DE ALERTAS DO SISTEMA (Ações Urgentes) -->
+            <div id="painel-alertas" class="conteudo-painel" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%;" class="ps-4">Módulo</th>
+                                <th style="width: 70%;">Descrição do Alerta</th>
+                                <th style="width: 15%;" class="text-center pe-4">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-danger">Operacional</td>
+                                <td class="text-secondary">{{ alerta.mensagem }}</td>
+                                <td class="text-center pe-4">
+                                    {% if 'Contrato' in alerta.mensagem %}
+                                        <a href="{% url 'contratos' %}" class="btn btn-sm btn-outline-danger">Ver Contratos</a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>Analisar</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">
+                                    <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
+                                    Nenhum alerta crítico ou inconsistência pendente no sistema.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para fazer a troca dos painéis sem dar F5 -->
+<script>
+function alternarPainel(event, idPainel) {
+    // Oculta todos os blocos de conteúdo
+    document.querySelectorAll('.conteudo-painel').forEach(p => p.style.display = 'none');
+    
+    // Mostra o bloco clicado
+    document.getElementById(idPainel).style.display = 'block';
+    
+    // Remove bordas e destaques extras de botões se necessário, mantendo o foco visual
+    document.querySelectorAll('.tab-button').forEach(card => card.classList.remove('opacity-75'));
+    event.currentTarget.classList.add('opacity-100');
+}
+</script>
+{% endblock %}

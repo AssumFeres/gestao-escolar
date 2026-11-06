@@ -1,42 +1,44 @@
-"""
-nucleo/views.py
-
-HomeView          — tela inicial da navegação.
-EmConstrucaoView  — placeholder para qualquer módulo do menu que ainda não
-                    tem tela própria. Recebe a 'chave' (identificador único,
-                    ver menu.py) pela URL, e resolve o texto (label) a
-                    exibir procurando essa chave em MENU_NAVEGACAO — assim
-                    o texto mostrado na tela sempre bate com o que aparece
-                    no menu, sem duplicar a lista de nomes aqui.
-"""
-
 from django.views.generic import TemplateView
 
-from .menu import MENU_NAVEGACAO
-
-# Rótulos para chaves que não vêm de MENU_NAVEGACAO (hoje, só o logout do
-# cabeçalho, que não é um item de menu de verdade).
-_ROTULOS_EXTRAS = {
-    'logout': 'Logout',
-}
-
-
-def _rotulo_por_chave(chave):
-    for grupo in MENU_NAVEGACAO:
-        for item in grupo['itens']:
-            if item.get('chave') == chave:
-                return item['label']
-    return _ROTULOS_EXTRAS.get(chave, chave)
-
-
 class HomeView(TemplateView):
+    """View da página inicial do sistema."""
     template_name = 'nucleo/home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Imports locais à prova de falhas circulares e NameError
+        from cadastros.models import AtribuicaoFuncao
+        from django.db.models import Q
+        
+        # CORREÇÃO: Adicionado '__nome' para buscar o texto dentro do relacionamento de Função
+        context['instrutores'] = AtribuicaoFuncao.objects.select_related('pessoa').exclude(
+            Q(funcao__nome__icontains='aluno') | 
+            Q(funcao__nome__icontains='discente')
+        ).order_by('pessoa__nome_completo')
+        
+        return context
+
 
 
 class EmConstrucaoView(TemplateView):
+    """View provisória para páginas e relatórios em desenvolvimento."""
     template_name = 'nucleo/em_construcao.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['modulo'] = _rotulo_por_chave(kwargs.get('chave', ''))
+        
+        # Imports locais idênticos para garantir que o menu lateral não quebre nesta tela
+        from cadastros.models import AtribuicaoFuncao
+        from django.db.models import Q
+        
+        # Saneamento completo do menu lateral dinâmico
+        context['instrutores'] = AtribuicaoFuncao.objects.select_related('pessoa').exclude(
+            Q(cargo__icontains='aluno') | 
+            Q(cargo__icontains='discente')
+        ).order_by('pessoa__nome_completo')
+        
+        # Captura o parâmetro da URL de forma segura
+        context['chave'] = self.kwargs.get('chave')
+        
         return context

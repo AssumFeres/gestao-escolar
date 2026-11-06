@@ -84,31 +84,39 @@ from django.contrib.auth.models import User # Ou o model de Instrutor se seu ami
 from django.db import models
 from django.contrib.auth.models import User # Ou seu modelo de Instrutor personalizado
 
-class Disciplina(models.Model):
-    nome = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return self.nome
 
-class Turma(models.Model):
-    nome = models.CharField(max_length=50)
-    
-    def __str__(self):
-        return self.nome
-
-# 1. MODELO DE ATRIBUIÇÃO
 class Atribuicao(models.Model):
-    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='atribuigoes')
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE)
-    ano_letivo = models.IntegerField(default=2026)
+    """
+    Módulo Coordenação: Realiza o vínculo oficial de um Instrutor (Docente)
+    a uma Disciplina e Turma criadas pela Secretaria (app cadastros).
+    """
+    instrutor = models.ForeignKey(
+        'cadastros.AtribuicaoFuncao', 
+        on_delete=models.PROTECT, 
+        related_name='atribuigoes_docentes',
+        verbose_name="Instrutor/Professor"
+    )
+    disciplina = models.ForeignKey(
+        'cadastros.Disciplina', 
+        on_delete=models.PROTECT, 
+        related_name='atribuigoes_disciplina',
+        verbose_name="Disciplina"
+    )
+    turma = models.ForeignKey(
+        'cadastros.Turma', 
+        on_delete=models.PROTECT, 
+        related_name='atribuigoes_turma',
+        verbose_name="Turma"
+    )
 
     class Meta:
-        verbose_name_plural = "Atribuições"
-        unique_together = ('instrutor', 'disciplina', 'turma', 'ano_letivo')
+        verbose_name = "Atribuição de Instrutor"
+        verbose_name_plural = "Atribuições de Instrutores"
+        unique_together = ('instrutor', 'disciplina', 'turma')
 
     def __str__(self):
-        return f"{self.instrutor.username} - {self.disciplina.nome} ({self.turma.nome})"
+        return f"{self.instrutor.pessoa.nome_completo} - {self.disciplina.nome} ({self.turma.nome})"
+
 
 # 2. MODELO DE HORÁRIOS
 class HorarioAula(models.Model):
@@ -127,17 +135,43 @@ class HorarioAula(models.Model):
     def __str__(self):
         return f"{self.dia_semana} | {self.horario_inicio} - {self.atribuicao.disciplina.nome}"
 
-# 3. MODELO DE REGISTRO DE INSTRUÇÃO 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+
 class RegistroInstrucao(models.Model):
-    TIPO_CHOICES = [('Teórica', 'Teórica'), ('Prática', 'Prática')]
+    # Uso de TextChoices limpa o banco de dados contra strings bagunçadas
+    class TipoInstrucao(models.TextChoices):
+        TEORICA = 'TEORICA', 'Teórica'
+        PRATICA = 'PRATICA', 'Prática'
     
-    # Adicionado null=True e blank=True para não travar o banco com dados antigos
-    instrutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='instrucoes_registradas', null=True, blank=True)
-    atribuicao = models.ForeignKey(Atribuicao, on_delete=models.CASCADE, null=True, blank=True)
-    
+    atribuicao = models.ForeignKey(
+        Atribuicao, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='registros'
+    )
     data_instrucao = models.DateField()
-    carga_horaria = models.DecimalField(max_digits=4, decimal_places=2)
-    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    
+    # Trava a carga horária em no máximo 12 horas por diário lançado
+    carga_horaria = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2,
+        validators=[
+            MinValueValidator(0.50),
+            MaxValueValidator(12.00)
+        ]
+    )
+    
+    
+    tipo = models.CharField(
+        max_length=10, 
+        choices=TipoInstrucao.choices,
+        default=TipoInstrucao.TEORICA
+    )
     conteudo_programatico = models.TextField()
 
     class Meta:
@@ -145,7 +179,10 @@ class RegistroInstrucao(models.Model):
         verbose_name_plural = "Registros de Instrução"
 
     def __str__(self):
-        return f"{self.data_instrucao} - {self.instrutor.username if self.instrutor else 'Sem Instrutor'}"
+        if self.atribuicao and self.atribuicao.instrutor:
+            return f"{self.data_instrucao} - {self.atribuicao.instrutor.pessoa.nome_completo}"
+        return f"{self.data_instrucao} - Sem Atribuição"
+
 
 # ==========================================================
 # NOVO MÓDULO: GESTÃO DE CONTRATOS PÚBLICOS / PRESTAÇÃO DE SERVIÇOS
@@ -169,9 +206,24 @@ class ContratoFinanceiro(models.Model):
     """
     numero_processo = models.CharField(max_length=50, unique=True, verbose_name="Número do Processo/Licitatório")
     numero_contrato = models.CharField(max_length=50, unique=True, verbose_name="Número do Contrato")
-    
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor do Contrato")
     tipo = models.CharField(max_length=20, choices=TipoContrato.choices, default=TipoContrato.INSTRUTOR)
+    valor = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0.00, 
+        verbose_name="Valor Global do Contrato"
+    )
     
+    instrutor = models.ForeignKey(
+        'cadastros.AtribuicaoFuncao', 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True, 
+        related_name='contratos_trabalho',
+        verbose_name="Instrutor Associado"
+    )
+    credor_razao_social = models.CharField(max_length=255, blank=True, verbose_name="Razão Social / Credor")
     # Se for contrato de instrutor, vincula à pessoa/user do sistema
     instrutor = models.ForeignKey(
         'auth.User', 

@@ -1,0 +1,67 @@
+{% extends 'nucleo/base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark"><i class="bi bi-file-earmark-text-fill text-primary"></i> Gestão de Contratos</h2>
+            <p class="text-muted m-0">Controle licitatório e contratos de prestação de serviços.</p>
+        </div>
+        <!-- Botão preparado para disparar o ModalCrudMixin do seu sistema -->
+        <div>
+            <button class="btn btn-primary btn-modal-crud" data-url="{% url 'adicionar-contrato' %}">
+                <i class="bi bi-plus-lg"></i> Novo Contrato
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabela Corporativa -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Contrato</th>
+                            <th>Tipo</th>
+                            <th>Credor / Beneficiário</th>
+                            <th>Valor Total</th>
+                            <th>Vigência</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contrato in contratos %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="fw-bold d-block text-dark">{{ contrato.numero_contrato }}</span>
+                                <small class="text-muted">Proc: {{ contrato.numero_processo }}</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ contrato.get_tipo_display }}</span></td>
+                            <td>
+                                {% if contrato.instrutor %}
+                                    {{ contrato.instrutor.get_full_name|default:contrato.instrutor.username }}
+                                {% else %}
+                                    {{ contrato.credor_razao_social }}
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold">R$ {{ contrato.valor_total_empenhado }}</td>
+                            <td><small>{{ contrato.data_vigencia_inicio|date:"d/m/Y" }} até {{ contrato.data_vigencia_fim|date:"d/m/Y" }}</small></td>
+                            <td>
+                                <span class="badge {% if contrato.status == 'VIGENTE' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ contrato.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">Nenhum contrato cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

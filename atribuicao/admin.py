@@ -8,11 +8,13 @@ from .models import RegistroInstrucao
 
 @admin.register(RegistroInstrucao)
 class RegistroInstrucaoAdmin(admin.ModelAdmin):
-    # Escolha quais colunas vão aparecer na lista geral de registros
-    list_display = ('instrutor', 'data_instrucao', 'tipo', 'carga_horaria')
-    
-    # Adicione filtros na lateral direita para facilitar a busca
+    list_display = ('get_instrutor', 'atribuicao', 'data_instrucao', 'carga_horaria', 'tipo')
+    # Adiciona filtros e buscas inteligentes para o painel não travar
     list_filter = ('tipo', 'data_instrucao')
-    
-    # Permita buscar por texto digitando o nome do instrutor ou conteúdo
-    search_fields = ('instrutor__username', 'conteudo')
+    search_fields = ('atribuicao__instrutor__pessoa__nome_completo', 'conteudo_programatico')
+
+    @admin.display(ordering='atribuicao__instrutor', description='Instrutor')
+    def get_instrutor(self, obj):
+        if obj.atribuicao and obj.atribuicao.instrutor:
+            return obj.atribuicao.instrutor.pessoa.nome_completo
+        return "Sem Instrutor"

@@ -416,31 +416,33 @@ class SituacaoTurma(models.TextChoices):
     ENCERRADA = 'ENCERRADA', 'Encerrada'
 
 
-class Turma(models.Model):
-    """
-    Pertence a uma OfertaModulo e herda as datas dela (sem data_inicio/data_fim
-    próprias — confirmado em 05/09/2026). 'periodo' vive aqui, não em OfertaModulo,
-    porque pode variar entre Turmas da mesma Oferta (ex: Básico 2026 com turma no
-    vespertino e outra no noturno).
-    """
-    oferta_modulo = models.ForeignKey(OfertaModulo, on_delete=models.PROTECT, related_name='turmas')
-    nome = models.CharField(max_length=100)
-    sigla = models.CharField(max_length=10)
-    periodo = models.CharField(max_length=20, choices=PeriodoTurma.choices)
-    situacao = models.CharField(max_length=20, choices=SituacaoTurma.choices, default=SituacaoTurma.PLANEJADA)
-    # Preenchida só no 2º clique de "Encerrar Turma" (docs/37, seção 4.4) —
-    # gap identificado em 07/09/2026: a spec da secretaria pede essa data,
-    # mas o campo nunca tinha sido criado.
-    data_encerramento = models.DateField(null=True, blank=True)
-    observacao = models.TextField(blank=True)
+# LOCALIZAÇÃO: cadastros/models.py
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['oferta_modulo', 'sigla'], name='unique_sigla_por_oferta'),
-        ]
+class StatusTurma(models.TextChoices):
+    PLANEJADA = 'PLANEJADA', 'Planejada'
+    EM_ANDAMENTO = 'EM_ANDAMENTO', 'Em Andamento'
+    CONCLUIDA = 'CONCLUIDA', 'Concluída'
+
+class Turma(models.Model):
+    nome = models.CharField(max_length=50)
+    sigla = models.CharField(max_length=10, blank=True, null=True)
+    periodo = models.CharField(max_length=20, blank=True, null=True) # Ex: Matutino, Noturno
+    observacao = models.TextField(blank=True, null=True)
+    
+    # NOVOS CAMPOS PARA ATENDER O DASHBOARD:
+    status = models.CharField(
+        max_length=20, 
+        choices=StatusTurma.choices, 
+        default=StatusTurma.PLANEJADA, 
+        db_index=True # Indexado para deixar a busca do dashboard ultra rápida
+    )
+    ano_letivo = models.PositiveIntegerField(
+        default=2026, 
+        db_index=True # Indexado para filtrar o ano corrente no painel
+    )
 
     def __str__(self):
-        return f"{self.nome} ({self.oferta_modulo})"
+        return f"{self.nome} ({self.ano_letivo}) - {self.get_status_display()}"
 
 
 class TipoAta(models.TextChoices):
@@ -566,6 +568,18 @@ class SituacaoAtribuicao(models.TextChoices):
     ATIVO = 'ATIVO', 'Ativo'
     INATIVO = 'INATIVO', 'Inativo'
 
+class AtribuicaoFuncaoQuerySet(models.QuerySet):
+    def ativos(self):
+        """Retorna apenas as atribuições com situação ATIVA."""
+        return self.filter(situacao=SituacaoAtribuicao.ATIVO)
+
+    def apenas_instrutores(self):
+        """Filtra apenas docentes/gestão, excluindo discentes de forma segura."""
+        return self.ativos().select_related('pessoa', 'funcao').exclude(
+            funcao__nome__icontains='aluno'
+        ).exclude(
+            funcao__nome__icontains='discente'
+        ).order_by('pessoa__nome_completo')
 
 class AtribuicaoFuncao(models.Model):
     """
@@ -577,6 +591,7 @@ class AtribuicaoFuncao(models.Model):
     nunca gravada aqui. Sem campo de Ata: a Ata de encerramento de um
     Discente vive em MatriculaTurma.ata_encerramento, não aqui.
     """
+    objects = AtribuicaoFuncaoQuerySet.as_manager()
     pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='atribuicoes')
     funcao = models.ForeignKey(Funcao, on_delete=models.PROTECT, related_name='atribuicoes')
     situacao = models.CharField(max_length=10, choices=SituacaoAtribuicao.choices, default=SituacaoAtribuicao.ATIVO)

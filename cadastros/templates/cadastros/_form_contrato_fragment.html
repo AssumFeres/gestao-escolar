@@ -1,0 +1,72 @@
+<form id="form-contrato" method="POST" action="{% if form.instance.pk %}{% url 'editar-contrato' form.instance.pk %}{% else %}{% url 'adicionar-contrato' %}{% endif %}">
+    {% csrf_token %}
+    
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Número do Processo/Licitatório</label>
+            {{ form.numero_processo }}
+            {{ form.numero_processo.errors }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Número do Contrato</label>
+            {{ form.numero_contrato }}
+            {{ form.numero_contrato.errors }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Tipo de Contrato</label>
+            {{ form.tipo }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Instrutor Associado (se aplicável)</label>
+            {{ form.instrutor }}
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold small">Razão Social / Credor</label>
+            {{ form.credor_razao_social }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">CNPJ/CPF do Credor</label>
+            {{ form.cnpj_cpf_credor }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Status do Contrato</label>
+            {{ form.status }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Valor Total Empenhado</label>
+            {{ form.valor_total_empenhado }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold small">Valor Hora-Aula (se aplicável)</label>
+            {{ form.valor_hora_aula }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold small">Data de Assinatura</label>
+            {{ form.data_assinatura }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small">Início da Vigência</label>
+            {{ form.data_vigencia_inicio }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small">Fim da Vigência</label>
+            {{ form.data_vigencia_fim }}
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold small">Objeto do Contrato / Descrição</label>
+            {{ form.objeto_contrato }}
+        </div>
+    </div>
+    
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger mt-3 mb-0">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+</form>

@@ -245,3 +245,168 @@ class EncerrarTurmaForm(forms.Form):
             self.fields['ata_encerramento'].widget = forms.HiddenInput()
         else:
             self.fields['ata_encerramento'].required = True
+
+# ==========================================================
+# NOVO FORMULÁRIO: ATRIBUIÇÃO DE DISCIPLINAS (COORDENAÇÃO)
+# ==========================================================
+from atribuicao.models import Atribuicao
+from cadastros.models import AtribuicaoFuncao, Disciplina, Turma
+
+class CriarAtribuicaoForm(forms.ModelForm):
+    """
+    Formulário para a aba Coordenação (Nova Atribuição de Disciplina).
+    Carrega dinamicamente os dados cadastrados na Secretaria.
+    """
+    instrutor = forms.ModelChoiceField(
+        queryset=AtribuicaoFuncao.objects.filter(situacao='ATIVO'), # Filtra apenas profissionais ativos
+        label="Instrutor / Professor",
+        empty_label="Selecione um instrutor..."
+    )
+    disciplina = forms.ModelChoiceField(
+        queryset=Disciplina.objects.all().order_by('nome'),
+        label="Disciplina",
+        empty_label="Selecione a disciplina..."
+    )
+    turma = forms.ModelChoiceField(
+        queryset=Turma.objects.filter(status='PLANEJADA').order_by('nome'), # Traz as turmas planejadas/ativas
+        label="Turma",
+        empty_label="Selecione a turma..."
+    )
+
+    class Meta:
+        model = Atribuicao
+        fields = ['instrutor', 'disciplina', 'turma']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Injeta classes CSS para garantir que o Django renderize com o estilo do seu layout Bootstrap/CSS
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-select'})
+
+from django import forms
+from .models import Atribuicao
+from cadastros.models import AtribuicaoFuncao  # Ajuste o import se o nome do model no app cadastros for diferente
+
+
+class AtribuicaoInstrutorForm(forms.ModelForm):
+    class Meta:
+        model = Atribuicao
+        fields = ['instrutor', 'disciplina', 'turma']
+        labels = {
+            'instrutor': 'Instrutor / Professor',
+            'disciplina': 'Disciplina',
+            'turma': 'Turma',
+        }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. ESTILIZAÇÃO PROFISSIONAL: Aplica classes do Bootstrap uniformemente
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-control'})
+            
+        # Adiciona a classe select2 especificamente no instrutor para buscas rápidas
+        self.fields['instrutor'].widget.attrs.update({'class': 'form-control'})
+
+
+        # 2. BLINDAGEM DE ARQUITETURA: Filtra apenas perfis com situação ATIVA e que NÃO sejam discentes
+        # Import local seguro para evitar loops de carregamento
+        from cadastros.models import SituacaoAtribuicao
+        from django.db.models import Q
+
+        self.fields['instrutor'].queryset = self.fields['instrutor'].queryset.select_related('pessoa', 'funcao').filter(
+            situacao=SituacaoAtribuicao.ATIVO
+        ).exclude(
+            Q(funcao__nome__icontains='aluno') | 
+            Q(funcao__nome__icontains='discente')
+        ).order_by('pessoa__nome_completo')
+        
+        # 3. FILTRO DE TURMAS OPERACIONAIS: Impede vincular instrutores a turmas já encerradas
+        from cadastros.models import SituacaoTurma
+        self.fields['turma'].queryset = self.fields['turma'].queryset.exclude(
+            status=SituacaoTurma.ENCERRADA
+        ).order_by('ano_letivo', 'nome')
+
+
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import HorarioAula
+
+class HorarioAulaForm(forms.ModelForm):
+    class Meta:
+        model = HorarioAula
+        fields = ['atribuicao', 'dia_semana', 'horario_inicio', 'horario_fim']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Estiliza e otimiza a seta de vínculos
+        self.fields['atribuicao'].widget.attrs.update({'class': 'form-control select2'})
+        self.fields['atribuicao'].queryset = self.fields['atribuicao'].queryset.select_related(
+            'instrutor__pessoa', 'disciplina', 'turma'
+        )
+        # Estiliza os demais campos
+        self.fields['dia_semana'].widget.attrs.update({'class': 'form-control'})
+        self.fields['horario_inicio'].widget.attrs.update({'class': 'form-control', 'type': 'time'})
+        self.fields['horario_fim'].widget.attrs.update({'class': 'form-control', 'type': 'time'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        atribuicao = cleaned_data.get('atribuicao')
+        dia_semana = cleaned_data.get('dia_semana')
+        horario_inicio = cleaned_data.get('horario_inicio')
+        horario_fim = cleaned_data.get('horario_fim')
+
+        # Se algum dado obrigatório estiver faltando, deixa os validadores padrão do Django agirem
+        if not (atribuicao and dia_semana and horario_inicio and horario_fim):
+            return cleaned_data
+
+        # VALIDAÇÃO 1: Impede inversão de lógica temporal
+        if horario_inicio >= horario_fim:
+            raise ValidationError({
+                'horario_inicio': "O horário de início deve ser menor do que o horário de término da aula."
+            })
+
+        # VALIDAÇÃO 2: Algoritmo Antichoque de Horário do Instrutor
+        # Busca se já existe QUALQUEER horário agendado para o MESMO instrutor, no MESMO dia, 
+        # onde as faixas de horários se sobreponham (concorrência de tempo)
+        instrutor_id = atribuicao.instrutor_id
+        
+        conflitos_instrutor = HorarioAula.objects.filter(
+            atribuicao__instrutor_id=instrutor_id,
+            dia_semana=dia_semana,
+            horario_inicio__lt=horario_fim,   # Início do existente acontece antes do fim do novo
+            horario_fim__gt=horario_inicio    # Fim do existente acontece depois do início do novo
+        )
+
+        # Se estamos editando um horário existente, exclui ele próprio da checagem de conflitos
+        if self.instance and self.instance.pk:
+            conflitos_instrutor = conflitos_instrutor.exclude(pk=self.instance.pk)
+
+        if conflitos_instrutor.exists():
+            conflito = conflitos_instrutor.first()
+            raise ValidationError(
+                f"Choque de Agenda! O professor {atribuicao.instrutor.pessoa.nome_completo} "
+                f"já possui uma aula vinculada neste mesmo dia ({dia_semana}) entre às "
+                f"{conflito.horario_inicio.strftime('%H:%M')} e {conflito.horario_fim.strftime('%H:%M')} "
+                f"na turma {conflito.atribuicao.turma.nome}."
+            )
+
+        # VALIDAÇÃO 3 (Opcional - Antichoque de Sala/Turma):
+        # Se você também quiser impedir que duas matérias diferentes usem a mesma TURMA no mesmo horário:
+        conflitos_turma = HorarioAula.objects.filter(
+            atribuicao__turma_id=atribuicao.turma_id,
+            dia_semana=dia_semana,
+            horario_inicio__lt=horario_fim,
+            horario_fim__gt=horario_inicio
+        )
+        if self.instance and self.instance.pk:
+            conflitos_turma = conflitos_turma.exclude(pk=self.instance.pk)
+
+        if conflitos_turma.exists():
+            conflito_t = conflitos_turma.first()
+            raise ValidationError(
+                f"Conflito de Sala! A turma {atribuicao.turma.nome} já possui a disciplina "
+                f"{conflito_t.atribuicao.disciplina.nome} alocada neste mesmo horário."
+            )
+
+        return cleaned_data

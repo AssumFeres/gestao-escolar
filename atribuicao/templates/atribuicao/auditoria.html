@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="padding: 20px; font-family: sans-serif; background-color: #f8f9fa; min-height: 100vh;">
+    
+    <!-- Cabeçalho Institucional -->
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #333; margin-bottom: 5px; font-weight: bold;">🔍 Auditoria Interna de Vínculos</h3>
+        <span style="color: #666; font-size: 14px;">Rastreabilidade legal de entradas, saídas, atas oficiais de turmas e validações em lote.</span>
+    </div>
+
+    <!-- Tabela Dinâmica de Rastreabilidade de Compliance -->
+    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; background-color: #f8f9fa;">
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Aluno / Discente</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Turma</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Ata Inicial / Vínculo</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px;">Ata Encerramento / Saída</th>
+                    <th style="padding: 12px; font-weight: bold; color: #495057; font-size: 14px; text-align: right;">Status Final</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movimentacoes %}
+                <tr style="border-bottom: 1px solid #dee2e6; font-size: 14px; vertical-align: middle;">
+                    <!-- 1. IDENTIFICAÇÃO DO ALUNO -->
+                    <td style="padding: 14px 12px; color: #212529; font-weight: 500;">{{ m.atribuicao_funcao.pessoa.nome_completo }}</td>
+                    
+                    <!-- 2. IDENTIFICAÇÃO DA TURMA -->
+                    <td style="padding: 14px 12px; color: #495057;">{{ m.turma.nome }}</td>
+                    
+                    <!-- 3. RASTREABILIDADE DA ATA INICIAL -->
+                    <td style="padding: 14px 12px; color: #666;">
+                        {% if m.ata_inicio %}
+                            <!-- Exibe a ata (via __str__ ou número) amarrada à data efetiva da matrícula -->
+                            <strong style="color: #0056b3;">Ata Nº {{ m.ata_inicio.numero|default:m.ata_inicio }}</strong>
+                            {% if m.data_inicio %}
+                                <br><small style="color: #888;">Efetivado em: {{ m.data_inicio|date:"d/m/Y" }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #bbb; font-style: italic;">— Entrada Avulsa (Sem Ata) —</span>
+                        {% endif %}
+                    </td>
+                    
+                    <!-- 4. RASTREABILIDADE DA ATA DE ENCERRAMENTO -->
+                    <td style="padding: 14px 12px; color: #666;">
+                        {% if m.ata_encerramento %}
+                            <strong style="color: #990000;">Ata Nº {{ m.ata_encerramento.numero|default:m.ata_encerramento }}</strong>
+                            {% if m.data_fim %}
+                                <br><small style="color: #888;">Terminado em: {{ m.data_fim|date:"d/m/Y" }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #bbb; font-style: italic;">— Ativo / Sem Ocorrência —</span>
+                        {% endif %}
+                    </td>
+                    
+                    <!-- 5. STATUS FINAL RENDERIZADO POR NÍVEIS DE AUDITORIA -->
+                    <td style="padding: 14px 12px; text-align: right;">
+                        {% if m.status == 'CURSANDO' %}
+                            <span style="background: #cff4fc; color: #055160; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">Cursando</span>
+                        {% elif m.status == 'APROVADO' %}
+                            <span style="background: #d1e7dd; color: #0f5132; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">Aprovado</span>
+                        {% elif m.status == 'REPROVADO' %}
+                            <span style="background: #f8d7da; color: #842029; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">Reprovado</span>
+                        {% elif m.status == 'TRANSFERIDO' %}
+                            <span style="background: #fff3cd; color: #664d03; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">Transferido</span>
+                        {% elif m.status == 'MATRICULA_EXCLUIDA' %}
+                            <span style="background: #f8d7da; color: #842029; border: 1px dashed #842029; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">Matrícula Excluída</span>
+                        {% else %}
+                            <span style="background: #e2e3e5; color: #41464b; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">{{ m.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 40px; text-align: center; color: #666; font-style: italic;">
+                        ❌ Nenhuma movimentação formal registrada ou enviada para auditoria externa.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

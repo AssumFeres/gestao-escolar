@@ -46,7 +46,9 @@ from .serializers import (
     CadastrarPessoaInputSerializer, CadastrarPessoaOutputSerializer,
     BuscarPessoaPorCpfInputSerializer, PessoaOutputSerializer,
 )
-
+from django.core.cache import cache
+from django.shortcuts import redirect
+from django.urls import reverse
 
 class BuscarCepView(APIView):
     """
@@ -1269,10 +1271,10 @@ class ListaTurmasView(ListView):
     template_name = 'cadastros/lista_turmas.html'
     context_object_name = 'turmas'
 
+    
     def get_queryset(self):
-        return Turma.objects.select_related('oferta_modulo', 'oferta_modulo__modulo').order_by(
-            '-oferta_modulo__ano_letivo', 'oferta_modulo__modulo__nome', 'nome'
-        )
+        return Turma.objects.order_by('-ano_letivo', 'nome')
+
 
 
 # --- Ata + AtaPessoa (estrutura curricular, docs/33; docs/35) ---
@@ -1368,3 +1370,250 @@ class ExcluirAtaPessoaView(ModalCrudMixin, DeleteView):
     def get_success_url(self):
         return reverse('detalhe-ata', kwargs={'pk': self.object.ata_id})
 
+# LOCALIZAÇÃO: cadastros/views.py
+
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from django.db.models import Exists, OuterRef
+from django.contrib.auth.models import User
+
+# Imports dos modelos do seu ecossistema
+from cadastros.models import Turma
+from atribuicao.models import (
+    MatriculaTurma, StatusMatriculaTurma, Atribuicao, RegistroInstrucao, ContratoFinanceiro
+)
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    """
+    SRP: Responsável por agregar métricas gerenciais e auditar inconsistências 
+    entre módulos utilizando Cache Temporário para mitigar gargalos no banco.
+    """
+    template_name = 'nucleo/dashboard.html'
+
+    def get(self, request, *args, **kwargs):
+        # Captura o parâmetro de query '?refresh=1' vindo do botão do HTML
+        if request.GET.get('refresh') == '1':
+            ano_atual = timezone.now().year
+            cache.delete(f'dados_dashboard_gerencial_{ano_atual}')  # Invalida o cache antigo
+            return redirect(reverse('dashboard'))  # Redireciona limpando a URL
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        ano_atual = timezone.now().year
+        data_hoje = timezone.now().date()
+        context['ano_letivo'] = ano_atual
+
+        # Chave única para isolar os dados deste ano na memória cache
+        cache_key = f'dados_dashboard_gerencial_{ano_atual}'
+        dados_painel = cache.get(cache_key)
+
+        # Se o cache expirou ou não existe, executa as aggregations no banco
+        if not dados_painel:
+            # 1. Métrica: Total de Alunos Ativos
+            total_alunos = (
+                MatriculaTurma.objects
+                .filter(status=StatusMatriculaTurma.CURSANDO, turma__ano_letivo=ano_atual)
+                .values('atribuicao_funcao__pessoa')
+                .distinct()
+                .count()
+            )
+
+            # 2. Métrica: Turmas em Andamento
+            turmas_ativas = (
+                Turma.objects
+                .filter(status='EM_ANDAMENTO', ano_letivo=ano_atual)
+                .count()
+            )
+
+            # 3. GERAÇÃO DE ALERTAS AUTOMÁTICOS
+            alertas = []
+
+            # --- REGRA A: Contratos Financeiros Próximos do Vencimento (< 30 dias) ---
+            data_limite_contrato = data_hoje + timezone.timedelta(days=30)
+            contratos_criticos = ContratoFinanceiro.objects.filter(
+                status='VIGENTE',
+                data_vigencia_fim__lte=data_limite_contrato
+            )
+            for contrato in contratos_criticos:
+                alertas.append({
+                    'modulo': 'Contratos',
+                    'mensagem': f"O contrato {contrato.numero_contrato} vencerá em {contrato.data_vigencia_fim.strftime('%d/%m/%Y')}.",
+                    'url_name': 'contratos',
+                    'texto_botao': 'Ver Contratos'
+                })
+
+            # --- REGRA B: Turmas Planejadas sem nenhuma Atribuição de Instrutor ---
+            turmas_sem_professor = Turma.objects.filter(
+                status='PLANEJADA',
+                ano_letivo=ano_atual
+            ).annotate(
+                tem_instrutor=Exists(Atribuicao.objects.filter(turma=OuterRef('pk')))
+            ).filter(tem_instrutor=False)
+            
+            for turma in turmas_sem_professor:
+                alertas.append({
+                    'modulo': 'Planejamento',
+                    'mensagem': f"Turma '{turma.nome}' está em planejamento, mas não possui nenhum instrutor atribuído.",
+                    'url_name': 'lista-turmas',
+                    'texto_botao': 'Atribuir'
+                })
+
+            # --- REGRA C: Instrutores Ativos sem lançar Registro de Instrução (Alerta de 7 dias) ---
+            ha_sete_dias = data_hoje - timezone.timedelta(days=7)
+            instrutores_omissos = User.objects.filter(
+                atribuigoes__ano_letivo=ano_atual
+            ).annotate(
+                lançou_aula=Exists(
+                    RegistroInstrucao.objects.filter(
+                        instrutor=OuterRef('pk'),
+                        data_instrucao__gte=ha_sete_dias
+                    )
+                )
+            ).filter(lançou_aula=False).distinct()
+
+            for instrutor in instrutores_omissos:
+                nome_professor = instrutor.get_full_name() or instrutor.username
+                alertas.append({
+                    'modulo': 'Instrutores',
+                    'mensagem': f"O instrutor {nome_professor} não realiza registros de instrução há mais de 7 dias.",
+                    'url_name': 'registro_instrucao',
+                    'texto_botao': 'Cobrar'
+                })
+
+            # --- REGRA D: Evasão Escolar Recente (Alunos que abandonaram/saíram no mês) ---
+            ha_trinta_dias = data_hoje - timezone.timedelta(days=30)
+            evasoes_recentes = MatriculaTurma.objects.filter(
+                status__in=[StatusMatriculaTurma.TRANSFERIDO, StatusMatriculaTurma.MATRICULA_EXCLUIDA],
+                data_fim__gte=ha_trinta_dias
+            ).select_related('atribuicao_funcao__pessoa', 'turma')
+
+            for matricula in evasoes_recentes:
+                aluno = matricula.atribuicao_funcao.pessoa.nome_completo
+                alertas.append({
+                    'modulo': 'Secretaria',
+                    'mensagem': f"Evidência de desligamento: Aluno(a) {aluno} saiu da turma {matricula.turma.nome}.",
+                    'url_name': 'lista-pessoas',
+                    'texto_botao': 'Ficha Aluno'
+                })
+
+            # Estrutura os dados calculados para salvar no cache
+            dados_painel = {
+                'total_alunos_ativos': total_alunos,
+                'turmas_em_andamento': turmas_ativas,
+                'alertas_sistema': alertas
+            }
+
+            # Persiste os dados calculados por 5 minutos (300 segundos)
+            cache.set(cache_key, dados_painel, 300)
+
+        # Atualiza o contexto do template com o dicionário de dados
+        context.update(dados_painel)
+        return context
+
+# ==============================================================================
+# MÓDULO: GESTÃO DE CONTRATOS PÚBLICOS / PRESTAÇÃO DE SERVIÇOS
+# ==============================================================================
+from django.views.generic import ListView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.http import JsonResponse
+from django.db.models import Q
+from atribuicao.models import ContratoFinanceiro
+from .forms import ContratoFinanceiroModelForm
+
+class ListaContratosView(LoginRequiredMixin, ListView):
+    """
+    SRP: Responsável por traduzir requisições HTTP para renderização
+    e filtragem da listagem de contratos públicos vigentes ou encerrados.
+    """
+    model = ContratoFinanceiro
+    template_name = 'cadastros/lista_contratos.html'
+    context_object_name = 'contratos'
+
+    def get_queryset(self):
+        # Traz o relacionamento do instrutor para evitar múltiplas queries (N+1)
+        queryset = ContratoFinanceiro.objects.select_related('instrutor').all()
+        
+        # Filtro de busca na barra de pesquisa
+        termo_busca = self.request.GET.get('busca', '').strip()
+        if termo_busca:
+            queryset = queryset.filter(
+                Q(numero_contrato__icontains=termo_busca) |
+                Q(credor_razao_social__icontains=termo_busca) |
+                Q(instrutor__username__icontains=termo_busca)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filtro_busca'] = self.request.GET.get('busca', '')
+        return context
+
+
+class AdicionarContratoView(LoginRequiredMixin, ModalCrudMixin, CreateView):
+    """
+    SRP: Responsável por gerenciar a requisição AJAX/HTTP para renderizar
+    o fragmento do formulário dentro do modal e persistir novos contratos.
+    """
+    model = ContratoFinanceiro
+    form_class = ContratoFinanceiroModelForm
+    template_name = 'cadastros/_form_contrato_fragment.html'
+    success_url = reverse_lazy('contratos')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'sucesso': True, 'redirect': str(self.success_url)})
+        return response
+# LOCALIZAÇÃO: Fim do arquivo cadastros/views.py
+
+from django.views.generic import ListView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.http import JsonResponse
+from django.db.models import Q
+from atribuicao.models import ContratoFinanceiro
+from .forms import ContratoFinanceiroModelForm
+
+class ListaContratosView(LoginRequiredMixin, ListView):
+    """
+    SRP: Responsável por renderizar a listagem de contratos.
+    """
+    model = ContratoFinanceiro
+    template_name = 'cadastros/lista_contratos.html'
+    context_object_name = 'contratos'
+
+    def get_queryset(self):
+        queryset = ContratoFinanceiro.objects.select_related('instrutor').all()
+        termo_busca = self.request.GET.get('busca', '').strip()
+        if termo_busca:
+            queryset = queryset.filter(
+                Q(numero_contrato__icontains=termo_busca) |
+                Q(credor_razao_social__icontains=termo_busca) |
+                Q(instrutor__username__icontains=termo_busca)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filtro_busca'] = self.request.GET.get('busca', '')
+        return context
+
+
+class AdicionarContratoView(LoginRequiredMixin, ModalCrudMixin, CreateView):
+    """
+    SRP: Responsável por abrir o formulário no Modal.
+    """
+    model = ContratoFinanceiro
+    form_class = ContratoFinanceiroModelForm
+    template_name = 'cadastros/_form_contrato_fragment.html'
+    success_url = reverse_lazy('contratos')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'sucesso': True, 'redirect': str(self.success_url)})
+        return response

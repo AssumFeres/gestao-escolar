@@ -13,13 +13,17 @@
                         <label class="form-label font-weight-bold">Vínculo (Atribuição)</label>
                         <select name="atribuicao" class="form-control form-select" required>
                             <option value="">Selecione a disciplina e o instrutor...</option>
-                            {% for a in atribuigoes %} <option value="{{ a.id }}">{{ a.disciplina.nome }} - {{ a.instrutor.username }} ({{ a.turma.nome }})</option> {% endfor %}
+                            {% for a in atribuigoes %} 
+                                <option value="{{ a.id }}">{{ a.disciplina.nome }} - {{ a.instrutor.pessoa.nome_completo }} ({{ a.turma.nome }})</option> 
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label font-weight-bold">Dia da Semana</label>
                         <select name="dia_semana" class="form-control form-select" required>
-                            {% for sigla, nome in dias_semana %} <option value="{{ sigla }}">{{ nome }}</option> {% endfor %}
+                            {% for sigla, nome in dias_semana %} 
+                                <option value="{{ sigla }}">{{ nome }}</option> 
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="row">
@@ -36,19 +40,34 @@
                 </form>
             </div>
         </div>
+
         <!-- Lista -->
         <div class="col-md-7">
             <div class="card p-4 shadow-sm">
                 <h4 class="mb-4">Quadro Geral de Aulas Semanais</h4>
                 <table class="table table-hover table-striped">
                     <thead class="table-dark">
-                        <tr><th>Dia</th><th>Horário</th><th>Disciplina</th><th>Turma</th></tr>
+                        <tr>
+                            <th>Dia</th>
+                            <th>Horário</th>
+                            <th>Disciplina</th>
+                            <th>Professor</th>
+                            <th>Turma</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        {% for h in horarios %}
-                        <tr><td><strong>{{ h.get_dia_semana_display }}</strong></td><td>{{ h.horario_inicio|time:"H:i" }} - {{ h.horario_fim|time:"H:i" }}</td><td>{{ h.atribuicao.disciplina.nome }}</td><td>{{ h.atribuicao.turma.nome }}</td></tr>
+                        {% for horario in quadro_geral %}
+                        <tr>
+                            <td>{{ horario.get_dia_semana_display }}</td>
+                            <td>{{ horario.horario_inicio|time:"H:i" }} - {{ horario.horario_fim|time:"H:i" }}</td>
+                            <td>{{ horario.atribuicao.disciplina.nome }}</td>
+                            <td>{{ horario.atribuicao.instrutor.pessoa.nome_completo }}</td>
+                            <td><span class="badge bg-secondary">{{ horario.atribuicao.turma.nome }}</span></td>
+                        </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted">Nenhum horário fixado na grade ainda.</td></tr>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Nenhum horário fixado na grade ainda.</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>

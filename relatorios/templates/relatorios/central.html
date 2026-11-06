@@ -1,0 +1,180 @@
+{% extends 'nucleo/base.html' %}
+
+{% block conteudo %}
+<!-- Importação do CDN do Chart.js para os gráficos -->
+<script src="https://jsdelivr.net"></script>
+
+<div class="container-fluid px-4 py-3">
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark"><i class="bi bi-file-earmark-bar-graph-fill text-success"></i> Central de Relatórios e Indicadores</h2>
+        <p class="text-muted">Painel unificado para extração de dados analíticos e acompanhamento do ano letivo de {{ ano_letivo }}.</p>
+    </div>
+
+    <!-- Linha de Cards Gerenciais -->
+    <div class="row g-4 mb-5">
+        <!-- CARD 1: GESTÃO -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-primary"><i class="bi bi-cash-coin"></i> Relatórios da Gestão</h5>
+                    <p class="text-muted small">Indicadores fiscais e contratos vigentes da instituição.</p>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Contratos Vigentes: <span class="badge bg-primary rounded-pill">{{ financeiro.total_contratos }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Volume Empenhado: <span class="fw-bold">R$ {{ financeiro.total_empenhado|default:"0,00" }}</span>
+                        </li>
+                    </ul>
+                    <button class="btn btn-sm btn-primary w-100" onclick="alert('Exportando balanço...')"><i class="bi bi-download"></i> Exportar Extrato Técnico</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2: SECRETARIA -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-success"><i class="bi bi-people-fill"></i> Movimentação da Secretaria</h5>
+                    <p class="text-muted small">Censo acadêmico, evasão e aprovações do período.</p>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Discentes Cadastrados: <span class="badge bg-success rounded-pill">{{ secretaria.total_alunos }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Evasões no Ano: <span class="badge bg-danger rounded-pill">{{ secretaria.evados_ano }}</span>
+                        </li>
+                    </ul>
+                    <button class="btn btn-sm btn-success w-100" onclick="alert('Gerando censo...')"><i class="bi bi-file-earmark-pdf"></i> Emitir Censo Escolar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: COORDENAÇÃO -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-start border-warning border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-warning text-dark"><i class="bi bi-journal-bookmark-fill"></i> Indicadores Pedagógicos</h5>
+                    <p class="text-muted small">Acompanhamento do planejamento de ofertas e status de turmas.</p>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Turmas em Andamento: <span class="badge bg-warning text-dark rounded-pill">{{ coordenacao.turmas_ativas }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Turmas em Planejamento: <span class="badge bg-secondary rounded-pill">{{ coordenacao.turmas_planejadas }}</span>
+                        </li>
+                    </ul>
+                    <button class="btn btn-sm btn-warning w-100 text-dark" onclick="alert('Processando mapas...')"><i class="bi bi-printer"></i> Imprimir Mapa de Turmas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO DE GRÁFICOS INTERATIVOS -->
+    <div class="row g-4">
+        <!-- Gráfico 1: Balanço Censo Acadêmico -->
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold text-secondary"><i class="bi bi-bar-chart-line-fill text-primary"></i> Balanço de Fluxo de Alunos ({{ ano_letivo }})</h6>
+                </div>
+                <div class="card-body py-4">
+                    <div style="position: relative; height:300px; width:100%;">
+                        <canvas id="chartAlunos"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico 2: Distribuição Volumétrica de Turmas -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold text-secondary"><i class="bi bi-pie-chart-fill text-success"></i> Ocupação Operacional de Turmas</h6>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center py-4">
+                    <div style="position: relative; height:260px; width:100%;">
+                        <canvas id="chartTurmas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuração de Inicialização dos Gráficos com dados do Django ORM -->
+<script>
+    // 1. Configuração do Gráfico de Alunos (Barras)
+    const ctxAlunos = document.getElementById('chartAlunos').getContext('2d');
+    new Chart(ctxAlunos, {
+        type: 'bar',
+        data: {
+            labels: ['Cadastrados Ativos', 'Aprovações Consolidadas', 'Evasões / Saídas'],
+            datasets: [{
+                label: 'Volume de Alunos',
+                data: [
+                    {{ secretaria.total_alunos|default:0 }},
+                    {{ secretaria.aprovados_ano|default:0 }},
+                    {{ secretaria.evados_ano|default:0 }}
+                ],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.75)',  # Verde para ativos
+                    'rgba(0, 123, 255, 0.75)',  # Azul para aprovados
+                    'rgba(220, 53, 69, 0.75)'   # Vermelho para evasão
+                ],
+                borderColor: [
+                    '#28a745',
+                    '#007bff',
+                    '#dc3545'
+                ],
+                borderWidth: 1.5,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+
+    // 2. Configuração do Gráfico de Turmas (Doughnut / Rosca)
+    const ctxTurmas = document.getElementById('chartTurmas').getContext('2d');
+    new Chart(ctxTurmas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Em Andamento', 'Em Planejamento'],
+            datasets: [{
+                data: [
+                    {{ coordenacao.turmas_ativas|default:0 }},
+                    {{ coordenacao.turmas_planejadas|default:0 }}
+                ],
+                backgroundColor: [
+                    '#ffc107',  # Amarelo/Aviso para ativas
+                    '#6c757d'   # Cinza para planejadas
+                ],
+                borderWidth: 2,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 12 } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
