@@ -51,15 +51,15 @@ git commit -m "prefixo: descrição breve do que foi feito"
 
 **Prefixos usados no projeto:**
 
-| Prefixo | Quando usar |
-|---|---|
-| `feat` | Funcionalidade nova |
-| `fix` | Correção de um bug |
-| `docs` | Só documentação (`docs/`), sem mudança de código |
-| `test` | Só testes, sem funcionalidade nova junto |
-| `chore` | Configuração, tooling, manutenção — sem efeito funcional pro usuário |
-| `refactor` | Reorganiza/reescreve código existente sem mudar comportamento externo |
-| `wip` | Trabalho reconhecidamente incompleto (ex: precisa parar no meio, mas quer salvar o progresso) |
+| Prefixo    | Quando usar                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `feat`     | Funcionalidade nova                                                                           |
+| `fix`      | Correção de um bug                                                                            |
+| `docs`     | Só documentação (`docs/`), sem mudança de código                                              |
+| `test`     | Só testes, sem funcionalidade nova junto                                                      |
+| `chore`    | Configuração, tooling, manutenção — sem efeito funcional pro usuário                          |
+| `refactor` | Reorganiza/reescreve código existente sem mudar comportamento externo                         |
+| `wip`      | Trabalho reconhecidamente incompleto (ex: precisa parar no meio, mas quer salvar o progresso) |
 
 **Regra prática:** cada commit deve representar um pedaço pequeno e testável — não acumule várias mudanças não relacionadas num commit só. Prefira `git status` mostrando poucos arquivos por commit a um commit gigante no fim do dia.
 
@@ -127,7 +127,7 @@ Acessa em `http://127.0.0.1:8000/`. `Ctrl+C` (ou `Ctrl+Break` no Windows) para p
 python manage.py makemigrations pessoas
 ```
 
-**Sempre leia a saída com atenção** — o comando detecta *toda* diferença acumulada entre o código e o histórico de migrations, não só a mudança que você acabou de fazer. Se aparecer algo inesperado, investigue antes de aplicar.
+**Sempre leia a saída com atenção** — o comando detecta _toda_ diferença acumulada entre o código e o histórico de migrations, não só a mudança que você acabou de fazer. Se aparecer algo inesperado, investigue antes de aplicar.
 
 **Se pedir um valor "one-off"** (ao adicionar campo obrigatório numa tabela que já tem dados): confirme se há dado real na tabela antes de escolher um valor arbitrário — se a tabela estiver vazia, qualquer valor serve, sem risco.
 
@@ -218,21 +218,21 @@ git push
 
 ## 4. Erros comuns e o que fazem
 
-| Sintoma | Causa provável | O que fazer |
-|---|---|---|
-| `NameError: name 'X' is not defined` em `models.py` | Uma classe referencia outra definida mais abaixo no arquivo | Mover a classe que falta para cima, ou usar referência por string (`'NomeDaClasse'`) se houver dependência circular |
-| `ImportError: cannot import name 'X' from 'pessoas.Y'` | `X` foi removido/renomeado em `Y`, mas outro arquivo ainda tenta importá-lo | Localizar todos os arquivos que importam `X` (busca por texto no projeto) e atualizar |
-| `IndentationError` | Espaçamento incorreto após uma edição manual | Conferir se a linha alterada está no mesmo nível de indentação das linhas vizinhas |
-| `IntegrityError: UNIQUE constraint failed` | Um campo com `unique=True` recebeu valor duplicado — inclusive string vazia `""`, que conta como valor igual a outra `""` | Se o campo deveria aceitar "vazio" sem conflito, usar `null=True` junto de `blank=True`, e garantir que código Python envie `None`, não `""` |
-| `ManagementForm data is missing` | Um Formset foi enviado sem os campos ocultos de controle (`TOTAL_FORMS`, etc.) | Confirmar que o template inclui `{{ meu_formset.management_form }}` |
-| `No changes detected in app 'pessoas'` ao rodar `makemigrations` | O arquivo `models.py` não foi salvo antes de rodar o comando | Salvar o arquivo (`Ctrl+S`) e rodar de novo |
-| `git push` falha com `Could not resolve host` | Instabilidade momentânea de rede, não relacionado a Git/código | Tentar `git push` de novo depois de alguns segundos |
+| Sintoma                                                          | Causa provável                                                                                                            | O que fazer                                                                                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NameError: name 'X' is not defined` em `models.py`              | Uma classe referencia outra definida mais abaixo no arquivo                                                               | Mover a classe que falta para cima, ou usar referência por string (`'NomeDaClasse'`) se houver dependência circular                          |
+| `ImportError: cannot import name 'X' from 'pessoas.Y'`           | `X` foi removido/renomeado em `Y`, mas outro arquivo ainda tenta importá-lo                                               | Localizar todos os arquivos que importam `X` (busca por texto no projeto) e atualizar                                                        |
+| `IndentationError`                                               | Espaçamento incorreto após uma edição manual                                                                              | Conferir se a linha alterada está no mesmo nível de indentação das linhas vizinhas                                                           |
+| `IntegrityError: UNIQUE constraint failed`                       | Um campo com `unique=True` recebeu valor duplicado — inclusive string vazia `""`, que conta como valor igual a outra `""` | Se o campo deveria aceitar "vazio" sem conflito, usar `null=True` junto de `blank=True`, e garantir que código Python envie `None`, não `""` |
+| `ManagementForm data is missing`                                 | Um Formset foi enviado sem os campos ocultos de controle (`TOTAL_FORMS`, etc.)                                            | Confirmar que o template inclui `{{ meu_formset.management_form }}`                                                                          |
+| `No changes detected in app 'pessoas'` ao rodar `makemigrations` | O arquivo `models.py` não foi salvo antes de rodar o comando                                                              | Salvar o arquivo (`Ctrl+S`) e rodar de novo                                                                                                  |
+| `git push` falha com `Could not resolve host`                    | Instabilidade momentânea de rede, não relacionado a Git/código                                                            | Tentar `git push` de novo depois de alguns segundos                                                                                          |
 
 ---
 
 ## 5. Sobre trabalhar em mais de uma máquina
 
-O catálogo de dados (`Funcao`, `VinculoFormal`, etc.) **não é versionado pelo Git** — só o *schema* (via migrations) é. Isso significa que, numa máquina nova ou depois de um período sem uso, o roteiro completo é:
+O catálogo de dados (`Funcao`, `VinculoFormal`, etc.) **não é versionado pelo Git** — só o _schema_ (via migrations) é. Isso significa que, numa máquina nova ou depois de um período sem uso, o roteiro completo é:
 
 ```powershell
 git pull origin <branch>
