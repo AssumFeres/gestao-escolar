@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Turmas - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+
+
+<h2>
+  <p align="center">CADASTRO DE TURMAS</p>
+</h2>
+<p>Cada Turma pertence a uma Oferta de Módulo — clique numa linha para abrir a Oferta correspondente (Adicionar/Editar Turma acontece por lá).</p>
+
+{% if turmas %}
+<table>
+  <thead>
+    <tr>
+      <th>Módulo</th>
+      <th>Ano Letivo</th>
+      <th>Turma</th>
+      <th>Sigla</th>
+      <th>Período</th>
+      <th>Situação</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for turma in turmas %}
+    <tr>
+      <td><a href="{% url 'detalhe-oferta-modulo' pk=turma.oferta_modulo.pk %}">{{ turma.oferta_modulo.modulo.sigla }} - {{ turma.oferta_modulo.modulo.nome }}</a></td>
+      <td>{{ turma.oferta_modulo.ano_letivo }}</td>
+      <td>{{ turma.nome }}</td>
+      <td>{{ turma.sigla }}</td>
+      <td>{{ turma.get_periodo_display }}</td>
+      <td>{{ turma.get_situacao_display }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Nenhuma turma cadastrada.</p>
+{% endif %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/lista_turmas.html</p>
+{% endblock %}

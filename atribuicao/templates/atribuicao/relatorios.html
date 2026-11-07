@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="padding: 24px; max-width: 1200px; margin: 0 auto; font-family: system-ui, -apple-system, sans-serif;">
+    
+    <!-- Cabeçalho da Página -->
+    <div style="margin-bottom: 32px;">
+        <h2 style="color: #0f172a; margin: 0 0 4px 0; font-size: 1.75rem; font-weight: 700;">📊 Relatórios e Indicadores Gerenciais</h2>
+        <p style="color: #64748b; margin: 0; font-size: 0.95rem;">Centralizador analítico de dados gerenciais do aplicativo de atribuição.</p>
+    </div>
+
+    <!-- Grid de Indicadores (Métricas processadas pela View) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 40px;">
+        
+        <!-- Card 1: Horas Ministradas -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-left: 5px solid #2563eb;">
+            <p style="color: #64748b; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.05em;">Total Horas Ministradas</p>
+            <h3 style="color: #1e293b; font-size: 2.25rem; margin: 0; font-weight: 700;">
+                {% if total_horas_ministradas.total %}{{ total_horas_ministradas.total }}h{% else %}0h{% endif %}
+            </h3>
+        </div>
+
+        <!-- Card 2: Matrículas Ativas -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-left: 5px solid #16a34a;">
+            <p style="color: #64748b; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.05em;">Matrículas Ativas</p>
+            <h3 style="color: #1e293b; font-size: 2.25rem; margin: 0; font-weight: 700;">{{ total_matriculas_ativas }}</h3>
+        </div>
+
+        <!-- Card 3: Atribuições Realizadas -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-left: 5px solid #ca8a04;">
+            <p style="color: #64748b; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.05em;">Total de Atribuições</p>
+            <h3 style="color: #1e293b; font-size: 2.25rem; margin: 0; font-weight: 700;">{{ total_atribuigoes }}</h3>
+        </div>
+
+    </div>
+
+    <!-- Seção de Ações / Comandos de Exportação -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 1.2rem; font-weight: 600;">⚡ Comandos e Exportações disponíveis</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Linha de comando para Relatório Geral -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                <div>
+                    <h4 style="color: #334155; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;">Relatório Consolidado de Atribuição</h4>
+                    <p style="color: #64748b; margin: 0; font-size: 0.85rem;">Exporta a relação completa de instrutores, turmas vinculadas e carga horária total calculada.</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <a href="#" style="background: #f1f5f9; color: #334155; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 500; border: 1px solid #cbd5e1; transition: background 0.2s;">Visualizar Dados</a>
+                    <a href="#" style="background: #0f172a; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.2s;">Exportar PDF</a>
+                </div>
+            </div>
+
+            <!-- Linha de comando para Registro de Instrução -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="color: #334155; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;">Espelho de Ponto / Horas de Instrução</h4>
+                    <p style="color: #64748b; margin: 0; font-size: 0.85rem;">Gera o documento de conferência física de horas ministradas por período letivo.</p>
+                </div>
+                <div>
+                    <!-- Link direcionando para a rota de registro de instrução que vimos no seu urls.py -->
+                    <a href="{% url 'registro_instrucao' %}" style="background: #2563eb; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.2s;">Acessar Registros</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

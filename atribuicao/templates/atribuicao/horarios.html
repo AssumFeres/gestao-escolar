@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <!-- Formulário -->
+        <div class="col-md-5">
+            <div class="card p-4 shadow-sm">
+                <h4 class="mb-4 text-primary">Definir Grade de Horário</h4>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Vínculo (Atribuição)</label>
+                        <select name="atribuicao" class="form-control form-select" required>
+                            <option value="">Selecione a disciplina e o instrutor...</option>
+                            {% for a in atribuigoes %} <option value="{{ a.id }}">{{ a.disciplina.nome }} - {{ a.instrutor.username }} ({{ a.turma.nome }})</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Dia da Semana</label>
+                        <select name="dia_semana" class="form-control form-select" required>
+                            {% for sigla, nome in dias_semana %} <option value="{{ sigla }}">{{ nome }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label font-weight-bold">Horário de Início</label>
+                            <input type="time" name="horario_inicio" class="form-control" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label font-weight-bold">Horário de Fim</label>
+                            <input type="time" name="horario_fim" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-4">Fixar Horário na Grade</button>
+                </form>
+            </div>
+        </div>
+        <!-- Lista -->
+        <div class="col-md-7">
+            <div class="card p-4 shadow-sm">
+                <h4 class="mb-4">Quadro Geral de Aulas Semanais</h4>
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr><th>Dia</th><th>Horário</th><th>Disciplina</th><th>Turma</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for h in horarios %}
+                        <tr><td><strong>{{ h.get_dia_semana_display }}</strong></td><td>{{ h.horario_inicio|time:"H:i" }} - {{ h.horario_fim|time:"H:i" }}</td><td>{{ h.atribuicao.disciplina.nome }}</td><td>{{ h.atribuicao.turma.nome }}</td></tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">Nenhum horário fixado na grade ainda.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

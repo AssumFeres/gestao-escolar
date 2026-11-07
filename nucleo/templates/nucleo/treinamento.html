@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h3 class="fw-bold text-dark mb-1">Registro de Treinamentos e Instruções</h3>
+    <p class="text-muted small mb-4">Acompanhamento diário de conteúdos programáticos e horas-aula executadas.</p>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Instrutor</th>
+                        <th>Disciplina / Turma</th>
+                        <th>Tipo</th>
+                        <th>Carga Horária</th>
+                        <th>Conteúdo Programático</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inst in instrucoes %}
+                    <tr>
+                        <td>{{ inst.data_instrucao|date:"d/m/Y" }}</td>
+                        <td class="fw-semibold text-secondary">{{ inst.instrutor.get_full_name|default:inst.instrutor.username }}</td>
+                        <td>{{ inst.atribuicao.disciplina.nome }} <small class="text-muted">({{ inst.atribuicao.turma.nome }})</small></td>
+                        <td><span class="badge {% if inst.tipo == 'Prática' %}bg-success{% else %}bg-info{% endif %}">{{ inst.tipo }}</span></td>
+                        <td class="fw-bold">{{ inst.carga_horaria }}h</td>
+                        <td><small class="text-truncate d-inline-block" style="max-width: 250px;">{{ inst.conteudo_programatico }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted">Nenhum registro de instrução efetuado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ turma.nome }} - Gestão de Alunos - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'detalhe-oferta-modulo' pk=turma.oferta_modulo.pk %}" class="botao-link">&larr; Voltar para a Oferta</a></p>
+
+<h2>
+  <p align="center">{{ turma.nome }} - {{ turma.sigla }} - {{ turma.oferta_modulo.modulo.nome }} {{ turma.oferta_modulo.ano_letivo }}</p>
+</h2>
+
+<p style="text-align:center; font-weight:600;">
+  <span style="{% if turma.situacao == 'PLANEJADA' %}color:#002060; text-decoration:underline;{% else %}color:#999;{% endif %}">Planejada</span>
+  &rarr;
+  <span style="{% if turma.situacao == 'EM_ANDAMENTO' %}color:#002060; text-decoration:underline;{% else %}color:#999;{% endif %}">Em Andamento</span>
+  &rarr;
+  <span style="{% if turma.situacao == 'ENCERRADA' %}color:#002060; text-decoration:underline;{% else %}color:#999;{% endif %}">Encerrada</span>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nr</th>
+      <th>Status</th>
+      <th>Aluno</th>
+      <th>Código de Matrícula ANAC</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for matricula in matriculas %}
+    <tr>
+      <td>{{ matricula.numero_na_turma|default:"-----" }}</td>
+      <td>{{ matricula.get_status_display }}</td>
+      <td>{{ matricula.atribuicao_funcao.pessoa.nome_completo }}</td>
+      <td>{{ matricula.atribuicao_funcao.dados_discente.codigo_matricula_anac|default:"-----" }}</td>
+      <td>
+        {% if turma.situacao == 'PLANEJADA' %}
+        <button type="button" class="btn-abrir-modal-crud btn-crud"
+                data-url="{% url 'editar-matricula-turma' pk=matricula.pk %}">
+          Editar
+        </button>
+        <button type="button" class="btn-abrir-modal-crud btn-crud"
+                data-url="{% url 'excluir-matricula-turma' pk=matricula.pk %}">
+          Excluir
+        </button>
+        {% elif matricula.status == 'CURSANDO' %}
+        <button type="button" class="btn-abrir-modal-crud btn-crud"
+                data-url="{% url 'editar-status-matricula' pk=matricula.pk %}">
+          Editar Status
+        </button>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="margin-top:1rem;">
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'adicionar-matricula-turma' pk=turma.pk %}">
+    + Adicionar Aluno
+  </button>
+
+  {% if turma.situacao == 'PLANEJADA' %}
+  <button type="button" class="btn-abrir-modal-crud btn-crud"
+          data-url="{% url 'finalizar-planejamento' pk=turma.pk %}"
+          style="margin-left: 12px;">
+    Finalizar Planejamento
+  </button>
+  {% endif %}
+
+  {% if turma.situacao == 'EM_ANDAMENTO' %}
+    {% if ha_cursando %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'revisar-aprovacao' pk=turma.pk %}"
+            style="margin-left: 12px;">
+      Encerrar Turma
+    </button>
+    {% else %}
+    <button type="button" class="btn-abrir-modal-crud btn-crud"
+            data-url="{% url 'encerrar-turma' pk=turma.pk %}"
+            style="margin-left: 12px;">
+      Encerrar Turma
+    </button>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% if turma.situacao == 'ENCERRADA' %}
+<p style="margin-top:1rem; color:#64748b;">
+    Turma encerrada em {{ turma.data_encerramento|date:"d/m/Y" }}.
+</p>
+{% endif %}
+
+<div id="modal-crud-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div id="modal-crud-caixa" style="background-color:#ffffff; padding:24px 28px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:600px; width:90%; position:relative;">
+        <button type="button" id="modal-crud-fechar" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
+        <div id="modal-crud-corpo">Carregando...</div>
+    </div>
+</div>
+
+<script src="{% static 'cadastros/js/modal-crud.js' %}"></script>
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 atribuicao/templates/atribuicao/gerenciar_turma.html</p>
+{% endblock %}

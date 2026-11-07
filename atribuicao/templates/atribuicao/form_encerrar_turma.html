@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Encerrar Turma - Sistema de Gestao Escolar{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'gerenciar-turma' pk=turma.pk %}" class="botao-link">&larr; Voltar</a></p>
+{% include 'atribuicao/_form_encerrar_turma_fragment.html' %}
+
+<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 página cheia: atribuicao/templates/atribuicao/form_encerrar_turma.html</p>
+{% endblock %}

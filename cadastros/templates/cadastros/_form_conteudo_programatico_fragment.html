@@ -1,0 +1,12 @@
+<h3>{% if editando %}Editar{% else %}Novo{% endif %} Item do Conteúdo Programático</h3>
+<p>Disciplina: <strong>{{ disciplina.sigla }} - {{ disciplina.nome }}</strong></p>
+
+<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+    {% csrf_token %}
+    <div class="campo">{{ form.ordem.label_tag }} {{ form.ordem }} {{ form.ordem.errors }}</div>
+    <div class="campo">{{ form.descricao.label_tag }} {{ form.descricao }} {{ form.descricao.errors }}</div>
+    <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
+    <button type="submit">Salvar Item</button>
+</form>
+
+<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_conteudo_programatico_fragment.html</p>
