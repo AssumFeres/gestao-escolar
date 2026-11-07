@@ -10,12 +10,7 @@
 
 {{ funcao_categorias|json_script:"funcao-categorias-data" }}
 
-{% if form.non_field_errors %}
-<div class="erro" style="margin-bottom: 1rem;">
-    <span class="erro">⚠️</span>
-    {{ form.non_field_errors }}
-</div>
-{% endif %}
+{% include 'includes/mensagem_erro.html' with erros=form.non_field_errors only %}
 
 <form method="post" id="form-cadastro-pessoa">
     {% csrf_token %}
@@ -39,7 +34,11 @@
             <legend>Dados Básicos</legend>
             <div class="grid-5-colunas">
                 <div class="campo">{{ form.nome_completo.label_tag }} {{ form.nome_completo }} {{ form.nome_completo.errors }}</div>
-                <div class="campo">{{ form.cpf.label_tag }} {{ form.cpf }} {{ form.cpf.errors }}</div>
+                <div class="campo">
+                    {{ form.cpf.label_tag }} {{ form.cpf }} {{ form.cpf.errors }}
+                    <small id="ajuda-consulta-cpf">Pressione Enter para consultar uma pessoa pelo CPF.</small>
+                    <div id="aviso-pessoa-encontrada" role="status" aria-atomic="true"></div>
+                </div>
                 <div class="campo">{{ form.data_nascimento.label_tag }} {{ form.data_nascimento }} {{ form.data_nascimento.errors }}</div>
                 <div class="campo">{{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}</div>
                 <div class="campo">{{ form.telefone.label_tag }} {{ form.telefone }} {{ form.telefone.errors }}</div>
@@ -118,7 +117,11 @@
         <fieldset>
             <legend>Endereço</legend>
             <div class="grid-4-colunas">
-                <div class="campo">{{ form.endereco_cep.label_tag }} {{ form.endereco_cep }} {{ form.endereco_cep.errors }}</div>
+                <div class="campo">
+                    {{ form.endereco_cep.label_tag }} {{ form.endereco_cep }} {{ form.endereco_cep.errors }}
+                    <small id="ajuda-consulta-cep">A consulta é feita ao sair do campo.</small>
+                    <div id="status-consulta-cep" role="status" aria-atomic="true"></div>
+                </div>
                 <div class="campo">{{ form.endereco_logradouro.label_tag }} {{ form.endereco_logradouro }} {{ form.endereco_logradouro.errors }}</div>
                 <div class="campo">{{ form.endereco_numero.label_tag }} {{ form.endereco_numero }} {{ form.endereco_numero.errors }}</div>
                 <div class="campo">{{ form.endereco_complemento.label_tag }} {{ form.endereco_complemento }} {{ form.endereco_complemento.errors }}</div>
@@ -191,9 +194,10 @@
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-            <table>
+<table>
+  <caption class="visualmente-oculto">Formações adicionadas ao cadastro</caption>
                 <thead>
-                    <tr><th>Tipo</th><th>Curso</th><th>Entidade</th><th>Cidade</th><th>UF</th><th>Ano</th></tr>
+                    <tr><th scope="col">Tipo</th><th scope="col">Curso</th><th scope="col">Entidade</th><th scope="col">Cidade</th><th scope="col">UF</th><th scope="col">Ano</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -222,9 +226,10 @@
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-            <table>
+<table>
+  <caption class="visualmente-oculto">Experiências profissionais adicionadas ao cadastro</caption>
                 <thead>
-                    <tr><th>Organização</th><th>Cargo</th><th>Data início</th><th>Data fim</th></tr>
+                    <tr><th scope="col">Organização</th><th scope="col">Cargo</th><th scope="col">Data início</th><th scope="col">Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -252,9 +257,10 @@
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-            <table>
+<table>
+  <caption class="visualmente-oculto">Vínculos formais adicionados ao cadastro</caption>
                 <thead>
-                    <tr><th>Vínculo Formal</th><th>Data início</th><th>Data fim</th></tr>
+                    <tr><th scope="col">Vínculo Formal</th><th scope="col">Data início</th><th scope="col">Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -298,9 +304,10 @@
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-            <table>
+<table>
+  <caption class="visualmente-oculto">Pendências adicionadas ao cadastro</caption>
                 <thead>
-                    <tr><th>Tipo</th><th>Descrição</th></tr>
+                    <tr><th scope="col">Tipo</th><th scope="col">Descrição</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -312,7 +319,10 @@
 
 <p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/form_pessoa.html</p>
 
-<script src="{% static 'cadastros/js/buscar-cep.js' %}"></script>
-<script src="{% static 'cadastros/js/form-dinamico.js' %}"></script>
-<script src="{% static 'cadastros/js/buscar-cpf.js' %}"></script>
+{% include 'includes/modal_crud.html' %}
+<script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-8"></script>
+<script src="{% static 'cadastros/js/feedback-consulta.js' %}?v=20261107-8"></script>
+<script src="{% static 'cadastros/js/buscar-cep.js' %}?v=20261107-8"></script>
+<script src="{% static 'cadastros/js/form-dinamico.js' %}?v=20261107-8"></script>
+<script src="{% static 'cadastros/js/buscar-cpf.js' %}?v=20261107-8"></script>
 {% endblock %}

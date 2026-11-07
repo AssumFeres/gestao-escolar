@@ -14,6 +14,14 @@
 document.addEventListener('DOMContentLoaded', function () {
     var cpfInput = document.getElementById('id_cpf');
     if (!cpfInput) return;
+    var regiao = document.getElementById('aviso-pessoa-encontrada');
+    var feedback = window.CadastroFeedback;
+    var consultaAtual = 0;
+    feedback.associar(cpfInput, ['ajuda-consulta-cpf', 'aviso-pessoa-encontrada']);
+    cpfInput.addEventListener('input', function () {
+        consultaAtual++;
+        feedback.mostrar(regiao, '');
+    });
 
     var mapaCampos = {
         nome_completo: 'id_nome_completo',
@@ -47,24 +55,32 @@ document.addEventListener('DOMContentLoaded', function () {
     cpfInput.addEventListener('keydown', function (evento) {
         if (evento.key !== 'Enter') return;
         evento.preventDefault(); // não deixa o Enter submeter o formulário
+        var consulta = ++consultaAtual;
 
         var cpf = cpfInput.value.replace(/\D/g, '');
         if (cpf.length !== 11) {
+            feedback.mostrar(regiao, 'Informe um CPF com 11 dígitos para consultar uma pessoa.', true);
             return;
         }
 
+        feedback.mostrar(regiao, 'Consultando o CPF...');
         fetch('/api/cadastros/pessoa-por-cpf/' + cpf + '/')
-            .then(function (resposta) { return resposta.json(); })
+            .then(function (resposta) {
+                if (!resposta.ok) throw new Error('Falha na consulta.');
+                return resposta.json();
+            })
             .then(function (dados) {
+                if (consulta !== consultaAtual || cpfInput.value.replace(/\D/g, '') !== cpf) return;
                 if (!dados.encontrada) {
-                    removerAviso();
+                    feedback.mostrar(regiao, 'Pessoa não encontrada. Continue preenchendo o cadastro.');
                     return;
                 }
                 preencherCampos(dados.pessoa);
-                mostrarAviso(dados.pessoa.nome_completo);
+                feedback.mostrar(regiao, 'Pessoa já cadastrada: ' + dados.pessoa.nome_completo + '. Dados carregados — edite o que precisar antes de salvar.');
             })
             .catch(function () {
-                console.warn('Não foi possível buscar a Pessoa por este CPF.');
+                if (consulta !== consultaAtual || cpfInput.value.replace(/\D/g, '') !== cpf) return;
+                feedback.mostrar(regiao, 'Não foi possível consultar o CPF. Tente novamente ou continue preenchendo o cadastro.', true);
             });
     });
 
@@ -77,25 +93,4 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function removerAviso() {
-        var avisoAnterior = document.getElementById('aviso-pessoa-encontrada');
-        if (avisoAnterior) avisoAnterior.remove();
-    }
-
-    function mostrarAviso(nome) {
-        removerAviso();
-
-        var aviso = document.createElement('div');
-        aviso.id = 'aviso-pessoa-encontrada';
-        aviso.textContent = 'Pessoa já cadastrada: ' + nome + '. Dados carregados — edite o que precisar antes de salvar.';
-        aviso.style.backgroundColor = '#fff3cd';
-        aviso.style.border = '1px solid #ffeeba';
-        aviso.style.color = '#856404';
-        aviso.style.padding = '10px 14px';
-        aviso.style.borderRadius = '6px';
-        aviso.style.marginTop = '0.5rem';
-
-        var fieldsetPai = cpfInput.closest('fieldset');
-        fieldsetPai.insertAdjacentElement('afterend', aviso);
-    }
 });

@@ -3,10 +3,13 @@
 
 <form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
     {% csrf_token %}
-    <div class="campo">{{ form.ordem.label_tag }} {{ form.ordem }} {{ form.ordem.errors }}</div>
-    <div class="campo">{{ form.descricao.label_tag }} {{ form.descricao }} {{ form.descricao.errors }}</div>
-    <div class="campo">{{ form.observacao.label_tag }} {{ form.observacao }} {{ form.observacao.errors }}</div>
-    <button type="submit">Salvar Item</button>
+    {% include 'includes/resumo_erros_formulario.html' with form=form only %}
+    {% include 'includes/campo_formulario.html' with campo=form.ordem only %}
+    {% include 'includes/campo_formulario.html' with campo=form.descricao only %}
+    {% include 'includes/campo_formulario.html' with campo=form.observacao only %}
+    <button type="submit" class="btn-salvar">Salvar Item</button>
+    <button type="submit" form="form-cancelar-conteudo-programatico" class="btn-cancelar" data-fechar-modal-crud>Cancelar</button>
 </form>
+<form id="form-cancelar-conteudo-programatico" method="get" action="{% url 'detalhe-disciplina' pk=disciplina.pk %}"></form>
 
 <p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_conteudo_programatico_fragment.html</p>

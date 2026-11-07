@@ -4,7 +4,7 @@
  * Responsabilidades (Etapa 7.4d + ajustes posteriores):
  *  1. Mostrar/esconder QUALQUER elemento com o atributo `data-categoria`.
  *  2. "Adicionar linha" nos Formsets (Formacao, Experiencia, Historico, Pendencia).
- *  3. Popup proprio de aviso (substitui alert() nativo do navegador).
+ *  3. Avisos no modal compartilhado, com alert() como alternativa nativa.
  *  4. Botao "Editar" (desabilitado de proposito) ao lado de cada "+ Adicionar".
  *  5. Data de Nascimento: valida no cliente (feedback imediato, a validacao
  *     de verdade e no backend, forms.py::clean_data_nascimento) duas coisas
@@ -20,64 +20,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---------- 0. Popup de aviso centralizado (substitui alert()) ----------
 
     function mostrarToast(mensagem) {
-        var popupAnterior = document.getElementById('popup-formset');
-        if (popupAnterior) {
-            popupAnterior.remove();
-        }
-
-        var overlay = document.createElement('div');
-        overlay.id = 'popup-formset';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-        overlay.style.zIndex = '9999';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-
-        var caixa = document.createElement('div');
-        caixa.style.backgroundColor = '#ffffff';
-        caixa.style.color = '#333333';
-        caixa.style.padding = '24px 28px';
-        caixa.style.borderRadius = '8px';
-        caixa.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.35)';
-        caixa.style.maxWidth = '360px';
-        caixa.style.fontSize = '1rem';
-        caixa.style.lineHeight = '1.5';
-        caixa.style.textAlign = 'center';
-
-        var texto = document.createElement('p');
-        texto.textContent = mensagem;
-        texto.style.margin = '0 0 18px 0';
-
-        var botaoOk = document.createElement('button');
-        botaoOk.type = 'button';
-        botaoOk.textContent = 'OK';
-        botaoOk.style.backgroundColor = '#c0392b';
-        botaoOk.style.color = '#ffffff';
-        botaoOk.style.border = 'none';
-        botaoOk.style.borderRadius = '6px';
-        botaoOk.style.padding = '8px 24px';
-        botaoOk.style.fontSize = '0.95rem';
-        botaoOk.style.cursor = 'pointer';
-
-        function fecharPopup() {
-            overlay.remove();
-        }
-
-        botaoOk.addEventListener('click', fecharPopup);
-        overlay.addEventListener('click', function (evento) {
-            if (evento.target === overlay) fecharPopup();
+        var aviso = new CustomEvent('modal-crud-aviso', {
+            cancelable: true,
+            detail: { mensagem: mensagem, gatilho: document.activeElement }
         });
-
-        caixa.appendChild(texto);
-        caixa.appendChild(botaoOk);
-        overlay.appendChild(caixa);
-        document.body.appendChild(overlay);
-        botaoOk.focus();
+        // O aviso nativo mantém o feedback se o componente não carregar.
+        if (document.dispatchEvent(aviso)) window.alert(mensagem);
     }
 
     // ---------- 1. Mostrar/esconder por categoria (generalizado) ----------
@@ -121,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var hiddenArea = bloco.querySelector('.formset-hidden');
         var tabelaBody = bloco.querySelector('table tbody');
         var botaoAdicionar = bloco.querySelector('.btn-adicionar');
+        var estado = document.createElement('p');
+        estado.className = 'visualmente-oculto';
+        estado.setAttribute('role', 'status');
+        estado.setAttribute('aria-atomic', 'true');
+        bloco.appendChild(estado);
 
         function idDoCampo(indice, campo) {
             return 'id_' + prefix + '-' + indice + '-' + campo;
@@ -199,6 +152,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             totalFormsInput.value = novoIndice + 1;
+            var legenda = bloco.closest('fieldset').querySelector('legend');
+            estado.textContent = 'Registro adicionado em ' + legenda.textContent.trim() +
+                '. Total de registros: ' + tabelaBody.children.length + '.';
+            var primeiroCampo = templateArea.querySelector('input:not([type="hidden"]), select, textarea');
+            if (primeiroCampo) primeiroCampo.focus();
         });
     }
 

@@ -1,0 +1,19 @@
+{% if campo.is_hidden %}
+  {{ campo }}
+{% else %}
+  <div class="campo campo-formulario">
+    {% if campo.use_fieldset %}
+      <fieldset{% if campo.aria_describedby %} aria-describedby="{{ campo.aria_describedby }}"{% endif %}>
+      {{ campo.legend_tag }}
+    {% else %}
+      {{ campo.label_tag }}
+    {% endif %}
+    {% if campo.field.required %}<span class="campo-obrigatorio">Obrigatório</span>{% endif %}
+    {% if campo.help_text %}
+      <div class="ajuda-campo"{% if campo.auto_id %} id="{{ campo.auto_id }}_helptext"{% endif %}>{{ campo.help_text|safe }}</div>
+    {% endif %}
+    {{ campo }}
+    {% include 'includes/mensagem_erro.html' with erros=campo.errors campo=campo only %}
+    {% if campo.use_fieldset %}</fieldset>{% endif %}
+  </div>
+{% endif %}

@@ -892,9 +892,11 @@ class AdicionarConteudoProgramaticoView(ModalCrudMixin, CreateView):
         self.disciplina = get_object_or_404(Disciplina, pk=kwargs['pk'])
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Disponibiliza a disciplina para validar o KP antes de salvar.
         form.instance.disciplina = self.disciplina
-        return super().form_valid(form)
+        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

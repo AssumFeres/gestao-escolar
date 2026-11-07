@@ -1,0 +1,9 @@
+{% if erros %}
+  <div class="erro">
+
+    <div class="mensagem-erro-conteudo">
+      {% if campo %}<strong>Erro no campo {{ campo.label }}:</strong>{% endif %}
+      {{ erros }}
+    </div>
+  </div>
+{% endif %}

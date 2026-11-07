@@ -402,6 +402,23 @@ class ConteudoProgramaticoModelForm(forms.ModelForm):
             'observacao': forms.Textarea(attrs={'rows': 3, 'style': 'width:100%; box-sizing:border-box;'}),
         }
 
+    def clean_ordem(self):
+        ordem = self.cleaned_data['ordem']
+        if self.instance.disciplina_id:
+            existentes = ConteudoProgramatico.objects.filter(
+                disciplina_id=self.instance.disciplina_id, ordem=ordem,
+            )
+            if self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                raise forms.ValidationError(
+                    'Não foi possível salvar porque este número de ordem já está em uso. '
+                    'Informe um número ainda não utilizado. '
+                    'Os dados preenchidos foram mantidos no formulário. '
+                    'Corrija o número de ordem e tente novamente ou feche a janela para cancelar.'
+                )
+        return ordem
+
 
 class ConteudoProgramaticoToggleAtivoForm(forms.ModelForm):
     """Mesmo padrão de DisciplinaToggleAtivoForm, para uma linha de Conteúdo Programático."""

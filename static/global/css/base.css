@@ -13,6 +13,21 @@
   --cor-secundaria: #1f4e79;
   --cor-destaque: #2f75b5;
 
+  /* Ações de formulário — sobrescrever estas variáveis em outros temas. */
+  --botao-salvar-fundo: var(--cor-primaria);
+  --botao-salvar-fundo-hover: var(--cor-primaria-hover);
+  --botao-salvar-texto: #ffffff;
+  --botao-cancelar-fundo: #b50a04;
+  --botao-cancelar-fundo-hover: #920803;
+  --botao-cancelar-texto: #f7f7f7;
+  --foco-anel-interno: #ffffff;
+  --foco-anel-externo: #111827;
+  --modal-fechar-texto: var(--cor-texto);
+  --modal-fechar-texto-hover: var(--cor-primaria);
+  --consulta-fundo: #fff3cd;
+  --consulta-borda: #ffeeba;
+  --consulta-texto: #856404;
+
   /* Fundos */
   --fundo-pagina: #f4f7fa;
   --fundo-card: #ffffff;
@@ -46,6 +61,53 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+.pular-conteudo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pular-conteudo:focus {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10000;
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  background-color: var(--fundo-card);
+  color: var(--cor-primaria);
+  outline: 3px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+#conteudo-principal:focus {
+  outline: 3px solid var(--cor-primaria);
+  outline-offset: -3px;
+}
+
+/* Conteúdo disponível para tecnologias assistivas sem alterar o layout. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ----------------------------------------------------------
@@ -208,6 +270,17 @@ input[type="submit"]:hover {
 .aviso {
   color: var(--cor-aviso);
 }
+
+.mensagem-consulta {
+  background-color: var(--consulta-fundo);
+  border: 1px solid var(--consulta-borda);
+  color: var(--consulta-texto);
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
 .erro {
   color: var(--cor-erro);
 }
@@ -336,6 +409,34 @@ fieldset fieldset legend {
   margin-bottom: 0.15rem;
 }
 
+.campo-formulario .campo-obrigatorio,
+.campo-formulario .ajuda-campo {
+  font-size: 0.875rem;
+  color: var(--cor-texto);
+  margin-bottom: 0.25rem;
+}
+
+.resumo-erros p {
+  margin-top: 0;
+}
+
+.resumo-erros ul {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.resumo-erros a:focus-visible {
+  outline: 3px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+.campo-formulario input:focus-visible,
+.campo-formulario select:focus-visible,
+.campo-formulario textarea:focus-visible {
+  outline: 3px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
 /* Área de uma linha de Formset (Formação, Experiência, Vínculo Formal, Pendência) */
 .formset-bloco table {
   margin-top: 0.8rem;
@@ -365,6 +466,81 @@ button[type="submit"] {
   font-size: 1.05rem;
   padding: 0.7rem 2rem;
   margin-top: 1rem;
+}
+
+/* Ações de formulário: mesma geometria para salvar e cancelar. */
+button.btn-salvar,
+button.btn-cancelar,
+a.btn-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 10rem;
+  max-width: 100%;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 0.7rem 2rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button.btn-salvar {
+  background-color: var(--botao-salvar-fundo);
+  color: var(--botao-salvar-texto);
+}
+
+button.btn-salvar:hover {
+  background-color: var(--botao-salvar-fundo-hover);
+}
+
+button.btn-cancelar,
+a.btn-cancelar {
+  background-color: var(--botao-cancelar-fundo);
+  color: var(--botao-cancelar-texto);
+}
+
+button.btn-cancelar:hover,
+a.btn-cancelar:hover {
+  background-color: var(--botao-cancelar-fundo-hover);
+  color: var(--botao-cancelar-texto);
+}
+
+button:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="button"]:focus-visible,
+input[type="reset"]:focus-visible,
+.botao-link:focus-visible,
+button.btn-salvar:focus-visible,
+button.btn-cancelar:focus-visible,
+a.btn-cancelar:focus-visible,
+a[role="button"]:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--foco-anel-interno),
+    0 0 0 5px var(--foco-anel-externo);
+}
+
+/* Sombras podem ser removidas pelo modo de cores forçadas do sistema. */
+@media (forced-colors: active) {
+  button:focus-visible,
+  input[type="submit"]:focus-visible,
+  input[type="button"]:focus-visible,
+  input[type="reset"]:focus-visible,
+  .botao-link:focus-visible,
+  button.btn-salvar:focus-visible,
+  button.btn-cancelar:focus-visible,
+  a.btn-cancelar:focus-visible,
+  a[role="button"]:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }
 
 /* Link com aparência de botão (ex: "+ Cadastrar nova pessoa" na lista) */
@@ -463,6 +639,11 @@ button[type="submit"] {
 
 .sidebar-grupo-titulo:hover {
   background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-submenu a:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: -3px;
 }
 
 .sidebar-submenu {
@@ -565,6 +746,15 @@ button[type="submit"] {
 /* ==========================================================
    12. MODAL CRUD GENÉRICO
    ========================================================== */
+
+/* Ícone de fechar: não deve herdar o texto branco dos botões de ação. */
+#modal-crud-fechar {
+  color: var(--modal-fechar-texto);
+}
+
+#modal-crud-fechar:hover {
+  color: var(--modal-fechar-texto-hover);
+}
 
 /* Fundo escurecido */
 #modal-crud-overlay {
@@ -811,6 +1001,11 @@ button[type="submit"] {
 
   font-size: 0.9rem;
   line-height: 1.4;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
 }
 
 /* O Django gera os erros dentro de uma <ul class="errorlist"> */
@@ -825,29 +1020,23 @@ button[type="submit"] {
   padding: 0;
 }
 
-.erro {
-  background-color: #f2dede;
-  border: 1px solid #ebccd1;
-  color: #a94442;
-  padding: 12px 16px;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.mensagem-erro-conteudo {
+  min-width: 0;
 }
 
 .icone-erro {
-  font-size: 3rem;
-  line-height: 2;
+  font-size: 1rem;
+  line-height: 1.4;
   flex-shrink: 0;
+  border: 1px solid #ebccd1;
+  border-radius: 4px;
+  padding: 12px 16px;
 }
 
-.erro .errorlist {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.erro a,
+.erro a:hover {
+  color: inherit;
+  text-decoration: underline;
 }
 
 /* ==========================================================

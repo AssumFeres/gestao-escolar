@@ -16,13 +16,14 @@
 
 {% if disciplinas %}
 <table>
+  <caption class="visualmente-oculto">Disciplinas cadastradas, cargas horárias e situação</caption>
   <thead>
     <tr>
-      <th>Sigla</th>
-      <th>Nome</th>
-      <th>Carga Horária Total</th>
-      <th>Situação</th>
-      <th></th>
+      <th scope="col">Sigla</th>
+      <th scope="col">Nome</th>
+      <th scope="col">Carga Horária Total</th>
+      <th scope="col">Situação</th>
+      <th scope="col">Ações</th>
     </tr>
   </thead>
   <tbody>
@@ -34,6 +35,7 @@
       <td>{{ disciplina.ativo|yesno:"Ativa,Inativa" }}</td>
       <td>
         <button type="button" class="btn-abrir-modal-crud btn-crud"
+                aria-label="{{ disciplina.ativo|yesno:'Inativar,Reativar' }} disciplina {{ disciplina.nome }} ({{ disciplina.sigla }})"
                 data-url="{% url 'toggle-ativo-disciplina' pk=disciplina.pk %}">
           {{ disciplina.ativo|yesno:"Inativar,Reativar" }}
         </button>
@@ -46,14 +48,9 @@
 <p>Nenhuma disciplina cadastrada.</p>
 {% endif %}
 
-<div id="modal-crud-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
-    <div id="modal-crud-caixa" style="background-color:#ffffff; padding:24px 28px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:600px; width:90%; position:relative;">
-        <button type="button" id="modal-crud-fechar" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
-        <div id="modal-crud-corpo">Carregando...</div>
-    </div>
-</div>
+{% include 'includes/modal_crud.html' %}
 
-<script src="{% static 'cadastros/js/modal-crud.js' %}"></script>
+<script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
 <p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/lista_disciplinas.html</p>
 {% endblock %}

@@ -38,9 +38,10 @@
         <div class="col-md-7">
             <div class="card p-4 shadow-sm">
                 <h4 class="mb-4">Histórico de Atribuições</h4>
-                <table class="table table-hover table-striped">
+<table class="table table-hover table-striped">
+  <caption class="visualmente-oculto">Histórico de atribuições de instrutores, disciplinas e turmas</caption>
                     <thead class="table-dark">
-                        <tr><th>Instrutor</th><th>Disciplina</th><th>Turma</th></tr>
+                        <tr><th scope="col">Instrutor</th><th scope="col">Disciplina</th><th scope="col">Turma</th></tr>
                     </thead>
                     <tbody>
                         {% for a in atribuigoes %}

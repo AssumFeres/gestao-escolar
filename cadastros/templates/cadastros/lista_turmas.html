@@ -12,20 +12,21 @@
 
 {% if turmas %}
 <table>
+  <caption class="visualmente-oculto">Turmas cadastradas, ofertas de módulo, períodos e situação</caption>
   <thead>
     <tr>
-      <th>Módulo</th>
-      <th>Ano Letivo</th>
-      <th>Turma</th>
-      <th>Sigla</th>
-      <th>Período</th>
-      <th>Situação</th>
+      <th scope="col">Módulo</th>
+      <th scope="col">Ano Letivo</th>
+      <th scope="col">Turma</th>
+      <th scope="col">Sigla</th>
+      <th scope="col">Período</th>
+      <th scope="col">Situação</th>
     </tr>
   </thead>
   <tbody>
     {% for turma in turmas %}
     <tr>
-      <td><a href="{% url 'detalhe-oferta-modulo' pk=turma.oferta_modulo.pk %}">{{ turma.oferta_modulo.modulo.sigla }} - {{ turma.oferta_modulo.modulo.nome }}</a></td>
+      <td><a aria-label="{{ turma.oferta_modulo.modulo.sigla }} - {{ turma.oferta_modulo.modulo.nome }} — oferta da turma {{ turma.nome }} ({{ turma.sigla }})" href="{% url 'detalhe-oferta-modulo' pk=turma.oferta_modulo.pk %}">{{ turma.oferta_modulo.modulo.sigla }} - {{ turma.oferta_modulo.modulo.nome }}</a></td>
       <td>{{ turma.oferta_modulo.ano_letivo }}</td>
       <td>{{ turma.nome }}</td>
       <td>{{ turma.sigla }}</td>

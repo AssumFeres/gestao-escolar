@@ -5,9 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Sistema de Gestao Escolar{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'global/css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'global/css/base.css' %}?v=20261107-7" />
   </head>
   <body>
+    <a href="#conteudo-principal" class="pular-conteudo">Pular para o conteúdo principal</a>
     <header>
       <a href="{% url 'home' %}" class="header-titulo">
         <img src="{% static 'global/img/logo-emca.png' %}" alt="Logo EMCA" class="logo">
@@ -17,22 +18,22 @@
         <!-- Placeholder: ainda não existe login/sessão real (previsto no Backlog).
              Quando existir, troca por {{ request.user.get_full_name }} ou equivalente. -->
         <span class="header-usuario-nome">Usuário</span>
-        <a href="{% url 'lista-turmas' %}">Atribuição</a>
+
       </div>
     </header>
 
     <div class="layout-com-sidebar">
-      <nav class="sidebar" id="sidebar-navegacao">
+      <nav class="sidebar" id="sidebar-navegacao" aria-label="Navegação principal">
         {% for grupo in MENU_NAVEGACAO %}
         <div class="sidebar-grupo{% if grupo.aberto %} aberto{% endif %}">
-          <button type="button" class="sidebar-grupo-titulo">{{ grupo.grupo }}</button>
-          <ul class="sidebar-submenu">
+          <button type="button" class="sidebar-grupo-titulo" aria-expanded="true" aria-controls="sidebar-submenu-{{ forloop.counter }}">{{ grupo.grupo }}</button>
+          <ul class="sidebar-submenu" id="sidebar-submenu-{{ forloop.counter }}">
             {% for item in grupo.itens %}
             <li>
               {% if item.url_name %}
-              <a href="{% url item.url_name %}" class="{% if item.ativo %}ativo{% endif %}">{{ item.label }}</a>
+              <a href="{% url item.url_name %}" class="{% if item.ativo %}ativo{% endif %}"{% if item.ativo %} aria-current="page"{% endif %}>{{ item.label }}</a>
               {% else %}
-              <a href="{% url 'em-construcao' chave=item.chave %}" class="{% if item.ativo %}ativo{% endif %}">{{ item.label }}</a>
+              <a href="{% url 'em-construcao' chave=item.chave %}" class="{% if item.ativo %}ativo{% endif %}"{% if item.ativo %} aria-current="page"{% endif %}>{{ item.label }}</a>
               {% endif %}
             </li>
             {% endfor %}
@@ -41,9 +42,10 @@
         {% endfor %}
       </nav>
 
-      <main>{% block content %}{% endblock %}</main>
+      <main id="conteudo-principal" tabindex="-1">{% block content %}{% endblock %}</main>
     </div>
 
-    <script src="{% static 'global/js/sidebar.js' %}"></script>
+    <script src="{% static 'global/js/sidebar.js' %}?v=20261107-6"></script>
+    <script src="{% static 'global/js/foco-formularios.js' %}?v=20261107-9"></script>
   </body>
 </html>
