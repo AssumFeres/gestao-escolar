@@ -1,0 +1,17 @@
+{% include 'includes/instrucoes_obrigatoriedade.html' with form=form only %}
+{% if form.errors or formacao_formset.total_error_count or experiencia_formset.total_error_count or historico_formset.total_error_count or pendencia_formset.total_error_count %}
+<div class="erro resumo-erros" role="alert">
+    {% include 'includes/icone_erro.html' %}
+    <div class="mensagem-erro-conteudo">
+        <p><strong>Não foi possível salvar. Corrija os erros abaixo.</strong></p>
+        {{ form.non_field_errors }}
+        <ul>
+            {% include 'includes/itens_erros_formulario.html' with form=form only %}
+            {% include 'cadastros/_itens_erros_formset.html' with formset=formacao_formset grupo='Formação' only %}
+            {% include 'cadastros/_itens_erros_formset.html' with formset=experiencia_formset grupo='Experiência' only %}
+            {% include 'cadastros/_itens_erros_formset.html' with formset=historico_formset grupo='Vínculo Formal' only %}
+            {% include 'cadastros/_itens_erros_formset.html' with formset=pendencia_formset grupo='Pendências' only %}
+        </ul>
+    </div>
+</div>
+{% endif %}

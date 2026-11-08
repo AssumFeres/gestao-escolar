@@ -28,7 +28,7 @@
 </p>
 {% endif %}
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Dados da oferta de {{ oferta.modulo.nome }} em {{ oferta.ano_letivo }}</caption>
   <tr>
     <th scope="row" id="detalhe-oferta-modulo-rotulo-1">Situação</th>
@@ -46,12 +46,12 @@
     <th scope="row" id="detalhe-oferta-modulo-rotulo-5">Observação</th>
     <td colspan="3" headers="detalhe-oferta-modulo-rotulo-5">{{ oferta.observacao|default:"-----" }}</td>
   </tr>
-</table>
+</table></div>
 
 <fieldset>
   <legend>Turmas</legend>
   {% if oferta.turmas.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Turmas da oferta de {{ oferta.modulo.nome }} em {{ oferta.ano_letivo }}</caption>
     <thead>
       <tr>
@@ -81,7 +81,7 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% else %}
   <p>Nenhuma turma cadastrada.</p>
   {% endif %}
@@ -95,5 +95,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_oferta_modulo.html</p>
 {% endblock %}

@@ -2,6 +2,6 @@
 {% block title %}{% if editando %}Editar{% else %}Adicionar{% endif %} Formação - Sistema de Gestao Escolar{% endblock %}
 
 {% block content %}
-<p><a href="{% url 'preencher-requisitos-docente' pk=dados_docente.id %}" class="botao-link">&larr; Voltar</a></p>
+<p><a href="{% url 'detalhe-pessoa' pk=dados_docente.atribuicao.pessoa_id %}" class="botao-link">&larr; Voltar</a></p>
 {% include 'cadastros/_form_formacao_fragment.html' %}
 {% endblock %}

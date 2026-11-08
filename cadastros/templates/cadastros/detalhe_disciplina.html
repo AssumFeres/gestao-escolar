@@ -19,7 +19,7 @@
   </button>
 </h2>
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Dados e cargas horárias da disciplina {{ disciplina.nome }}</caption>
   <tr>
     <th scope="row" id="detalhe-disciplina-rotulo-1">Situação</th>
@@ -45,12 +45,12 @@
     <th scope="row" id="detalhe-disciplina-rotulo-8">Horas-Aula (Teórica / Prática)</th>
     <td headers="detalhe-disciplina-rotulo-8">{{ disciplina.hora_aula_teorica }} / {{ disciplina.hora_aula_pratica }}</td>
   </tr>
-</table>
+</table></div>
 
 <fieldset>
   <legend>Conteúdo Programático</legend>
   {% if disciplina.conteudos_programaticos.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Conteúdo programático da disciplina {{ disciplina.nome }}</caption>
     <thead>
       <tr>
@@ -81,7 +81,7 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% else %}
   <p>Nenhum item de Conteúdo Programático cadastrado.</p>
   {% endif %}
@@ -95,5 +95,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_disciplina.html</p>
 {% endblock %}

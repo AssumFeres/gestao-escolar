@@ -363,7 +363,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 <fieldset class="detalhe-fieldset">
   <legend>Histórico consolidado</legend>
 {% if sumario_historico_vinculos %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Histórico consolidado de vínculos de {{ pessoa.nome_completo }}</caption>
   <thead>
     <tr>
@@ -389,7 +389,7 @@ de Gestao Escolar{% endblock %} {% block content %}
     </tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 {% else %}
 <p>Nenhum vínculo cadastrado.</p>
 {% endif %}
@@ -424,7 +424,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.pendencias.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Pendências de {{ atribuicao.funcao.nome }} de {{ pessoa.nome_completo }}</caption>
       <thead>
         <tr>
@@ -453,7 +453,7 @@ de Gestao Escolar{% endblock %} {% block content %}
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+    </table></div>
     {% else %}
     <p>Nenhuma pendência cadastrada.</p>
     {% endif %}
@@ -470,7 +470,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.dados_docente.formacoes.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Formações de {{ atribuicao.funcao.nome }} de {{ pessoa.nome_completo }}</caption>
       <thead>
         <tr>
@@ -503,7 +503,7 @@ de Gestao Escolar{% endblock %} {% block content %}
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+    </table></div>
     {% else %}
     <p>Nenhuma Formação cadastrada.</p>
     {% endif %}
@@ -517,7 +517,7 @@ de Gestao Escolar{% endblock %} {% block content %}
 
 <fieldset class="detalhe-fieldset">
   <legend>Disciplinas Habilitadas (Capacidade)</legend>
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Disciplinas habilitadas de {{ pessoa.nome_completo }}</caption>
     <thead>
       <tr>
@@ -539,7 +539,7 @@ de Gestao Escolar{% endblock %} {% block content %}
         {% endfor %}
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
 </fieldset>
 
 <h3>Experiência Profissional</h3>
@@ -548,7 +548,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.experiencias_profissionais.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Experiências profissionais de {{ atribuicao.funcao.nome }} de {{ pessoa.nome_completo }}</caption>
       <thead>
         <tr>
@@ -579,7 +579,7 @@ de Gestao Escolar{% endblock %} {% block content %}
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+    </table></div>
     {% else %}
     <p>Nenhuma Experiência Profissional cadastrada.</p>
     {% endif %}
@@ -597,7 +597,7 @@ de Gestao Escolar{% endblock %} {% block content %}
   <fieldset class="detalhe-fieldset">
     <legend>{{ atribuicao.funcao.nome }}</legend>
     {% if atribuicao.historico_vinculo_formal.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Histórico de vínculo formal de {{ atribuicao.funcao.nome }} de {{ pessoa.nome_completo }}</caption>
       <thead>
         <tr>
@@ -624,7 +624,7 @@ de Gestao Escolar{% endblock %} {% block content %}
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+    </table></div>
     {% else %}
     <p>Nenhum Vínculo Formal cadastrado.</p>
     {% endif %}
@@ -638,7 +638,6 @@ de Gestao Escolar{% endblock %} {% block content %}
 
 {% include 'includes/modal_crud.html' %}
 
-<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/detalhe.html</p>
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 {% endblock %}

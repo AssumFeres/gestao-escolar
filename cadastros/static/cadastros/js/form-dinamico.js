@@ -42,7 +42,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var categoriasPermitidas = elemento.dataset.categoria
                 .split(',')
                 .map(function (c) { return c.trim(); });
-            var deveMostrar = categoriaAtual !== null && categoriasPermitidas.indexOf(categoriaAtual) !== -1;
+            // Uma resposta inválida não pode esconder os campos que precisam de correção.
+            var temErros = elemento.querySelector('[aria-invalid="true"], .erro');
+            var deveMostrar = temErros || (categoriaAtual !== null && categoriasPermitidas.indexOf(categoriaAtual) !== -1);
             elemento.style.display = deveMostrar ? '' : 'none';
         });
     }
@@ -69,6 +71,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var hiddenArea = bloco.querySelector('.formset-hidden');
         var tabelaBody = bloco.querySelector('table tbody');
         var botaoAdicionar = bloco.querySelector('.btn-adicionar');
+        var recuperando = bloco.dataset.recuperado === 'true';
+        if (!templateArea || !totalFormsInput) {
+            botaoAdicionar.disabled = true;
+            return;
+        }
         var estado = document.createElement('p');
         estado.className = 'visualmente-oculto';
         estado.setAttribute('role', 'status');
@@ -117,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 linha.appendChild(celula);
             });
-            tabelaBody.appendChild(linha);
+            if (!recuperando) tabelaBody.appendChild(linha);
 
             var clone = templateArea.cloneNode(true);
 
@@ -127,19 +134,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 selectsClone[indice].value = selectOriginal.value;
             });
 
-            clone.style.display = 'none';
-            hiddenArea.appendChild(clone);
+            if (recuperando) {
+                // Após erro do servidor, os registros continuam editáveis, inclusive o recém-adicionado.
+                clone.setAttribute('class', 'formset-recuperado');
+                templateArea.parentNode.insertBefore(clone, templateArea);
+            } else {
+                clone.style.display = 'none';
+                hiddenArea.appendChild(clone);
+            }
 
             var novoIndice = indiceAtual + 1;
-            var elementosParaRenomear = templateArea.querySelectorAll('input, select, label');
+            // O registro anterior conserva seus erros; a próxima linha começa sem erros antigos.
+            templateArea.querySelectorAll('.erro, .errorlist').forEach(function (erro) { erro.remove(); });
+            var elementosParaRenomear = templateArea.querySelectorAll('[name], [id], [for], [aria-describedby], [aria-invalid]');
             elementosParaRenomear.forEach(function (elemento) {
-                ['name', 'id', 'for'].forEach(function (atributo) {
+                elemento.removeAttribute('aria-invalid');
+                ['name', 'id', 'for', 'aria-describedby'].forEach(function (atributo) {
                     if (elemento.hasAttribute(atributo)) {
                         var valorAtual = elemento.getAttribute(atributo);
                         var valorNovo = valorAtual.replace(
                             prefix + '-' + indiceAtual + '-',
                             prefix + '-' + novoIndice + '-'
                         );
+                        if (atributo === 'aria-describedby') {
+                            valorNovo = valorNovo.split(/\s+/).filter(function (id) {
+                                return !id.endsWith('_error');
+                            }).join(' ');
+                            if (!valorNovo) {
+                                elemento.removeAttribute(atributo);
+                                return;
+                            }
+                        }
                         elemento.setAttribute(atributo, valorNovo);
                     }
                 });
@@ -152,9 +177,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             totalFormsInput.value = novoIndice + 1;
+            var legendaLinha = templateArea.querySelector('legend');
+            if (legendaLinha) legendaLinha.textContent = 'Registro ' + (novoIndice + 1);
             var legenda = bloco.closest('fieldset').querySelector('legend');
             estado.textContent = 'Registro adicionado em ' + legenda.textContent.trim() +
-                '. Total de registros: ' + tabelaBody.children.length + '.';
+                '. Total de registros: ' + novoIndice + '.';
             var primeiroCampo = templateArea.querySelector('input:not([type="hidden"]), select, textarea');
             if (primeiroCampo) primeiroCampo.focus();
         });

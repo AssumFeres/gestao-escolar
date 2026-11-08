@@ -14,7 +14,7 @@
   </button>
 </h2>
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Dados da ata {{ ata.numero }}</caption>
   <tr>
     <th scope="row" id="detalhe-ata-rotulo-1">Tipo</th>
@@ -32,13 +32,13 @@
     <th scope="row" id="detalhe-ata-rotulo-5">Observação</th>
     <td colspan="3" headers="detalhe-ata-rotulo-5">{{ ata.observacao|default:"-----" }}</td>
   </tr>
-</table>
+</table></div>
 
 {% if ata.finalidade == 'ORIENTACAO' or ata.finalidade == 'CONSELHO_ENSINO' or ata.finalidade == 'OUTRO' %}
 <fieldset>
   <legend>Pessoas Vinculadas</legend>
   {% if ata.pessoas_vinculadas.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Pessoas vinculadas à ata {{ ata.numero }}</caption>
     <thead>
       <tr>
@@ -61,7 +61,7 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% else %}
   <p>Nenhuma pessoa vinculada.</p>
   {% endif %}
@@ -76,5 +76,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_ata.html</p>
 {% endblock %}

@@ -1,0 +1,9 @@
+{% if formset.non_form_errors %}
+    <li>{{ grupo }}: {{ formset.non_form_errors }}</li>
+{% endif %}
+{% for linha in formset %}
+    {% if linha.non_field_errors %}
+        <li>{{ grupo }} — Registro {{ forloop.counter }}: {{ linha.non_field_errors }}</li>
+    {% endif %}
+    {% include 'includes/itens_erros_formulario.html' with form=linha grupo=grupo registro=forloop.counter only %}
+{% endfor %}

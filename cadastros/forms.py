@@ -31,8 +31,49 @@ from .models import (
     ExperienciaProfissional, PendenciaCadastro, AtribuicaoFuncao,
     RequisitoContratacao, Pessoa, Disciplina, ConteudoProgramatico,
     SubModulo, SubModuloDisciplina, Modulo, ModuloSubModulo,
-    OfertaModulo, Turma, Ata, AtaPessoa,
+    OfertaModulo, Turma, Ata, AtaPessoa, SituacaoAtribuicao,
 )
+
+
+# Rótulos de apresentação compartilhados pelos ModelForms, sem alterar os models.
+_ROTULOS_FORMULARIO = {
+    'ano_conclusao': 'Ano de conclusão',
+    'autorizacao_permanencia': 'Autorização de Permanência',
+    'carga_horaria_pratica': 'Carga horária prática',
+    'carga_horaria_programa_de_instrucao': 'Carga horária do programa de instrução',
+    'carga_horaria_teorica': 'Carga horária teórica',
+    'data_emissao_identidade': 'Data de emissão',
+    'data_fim': 'Data de fim',
+    'data_inicio': 'Data de início',
+    'data_nascimento': 'Data de nascimento',
+    'descricao': 'Descrição',
+    'documento_comprobatorio': 'Documento comprobatório',
+    'email': 'E-mail',
+    'endereco_bairro': 'Bairro',
+    'endereco_cep': 'CEP',
+    'endereco_cidade': 'Cidade',
+    'endereco_complemento': 'Complemento',
+    'endereco_logradouro': 'Logradouro',
+    'endereco_numero': 'Número',
+    'endereco_uf': 'UF',
+    'filiacao_1': 'Filiação 1',
+    'filiacao_2': 'Filiação 2',
+    'identidade': 'Identidade (RG)',
+    'modulo': 'Módulo',
+    'nivel_instrucao': 'Nível de instrução',
+    'numero': 'Número',
+    'observacao': 'Observação',
+    'organizacao': 'Organização',
+    'orgao_expedidor_identidade': 'Órgão expedidor',
+    'periodo': 'Período',
+    'raca_cor': 'Raça/Cor',
+    'requisito_contratacao': 'Requisito de Contratação',
+    'submodulo': 'Submódulo',
+    'tipo_formacao': 'Tipo',
+    'uf': 'UF',
+    'uf_naturalidade': 'UF de naturalidade',
+    'vinculo_formal': 'Vínculo Formal',
+}
 
 
 def _validar_data_nascimento_nao_futura(valor):
@@ -98,22 +139,20 @@ class CadastrarPessoaForm(forms.Form):
     # --- Pessoa: endereço ---
     endereco_cep = forms.CharField(max_length=8, label="CEP")
     endereco_logradouro = forms.CharField(max_length=200, label="Logradouro")
-    endereco_numero = forms.CharField(max_length=10, label="Numero")
+    endereco_numero = forms.CharField(max_length=10, label="Número")
     endereco_complemento = forms.CharField(max_length=100, required=False, label="Complemento")
     endereco_bairro = forms.CharField(max_length=100, label="Bairro")
     endereco_cidade = forms.CharField(max_length=100, label="Cidade")
     endereco_uf = forms.CharField(max_length=2, label="UF")
 
     # --- Funcao / AtribuicaoFuncao ---
-    funcao = forms.ModelChoiceField(queryset=Funcao.objects.all(), label="Funcao")
+    funcao = forms.ModelChoiceField(queryset=Funcao.objects.all(), label="Função")
     data_inicio = forms.DateField(
-        label="Data de inicio", widget=forms.DateInput(attrs={'type': 'date'})
+        label="Data de início", widget=forms.DateInput(attrs={'type': 'date'})
     )
     situacao = forms.ChoiceField(
         choices=[('ATIVO', 'Ativo'), ('INATIVO', 'Inativo')],
-        initial="ATIVO", label="Situacao",
-        help_text="Sempre Ativo no cadastro inicial — o campo existe aqui só para "
-                   "compatibilidade com AtribuicaoFuncao.situacao (docs/37)."
+        initial="ATIVO", label="Situação",
     )
 
     # --- AtribuicaoFuncao: Requisitos de Contratação (RBAC 141), todos exceto
@@ -253,6 +292,7 @@ class EditarPessoaForm(forms.ModelForm):
     excluída — só Create/Read/Update.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Pessoa
         fields = [
             'nome_completo', 'data_nascimento', 'email', 'email_2', 'telefone', 'telefone_2',
@@ -281,6 +321,7 @@ class EditarPessoaForm(forms.ModelForm):
 class FormacaoDocenteModelForm(forms.ModelForm):
     """ModelForm para o CRUD independente de FormacaoDocente (Create/Update)."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = FormacaoDocente
         fields = ['tipo_formacao', 'curso', 'entidade', 'cidade', 'uf', 'ano_conclusao']
 
@@ -294,6 +335,7 @@ _WIDGET_OBSERVACAO = forms.Textarea(attrs={
 class HistoricoVinculoFormalModelForm(forms.ModelForm):
     """ModelForm para adicionar um NOVO período de Vínculo Formal a uma AtribuicaoFuncao já existente."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = HistoricoVinculoFormal
         fields = ['vinculo_formal', 'data_inicio', 'data_fim', 'observacao']
         widgets = {
@@ -306,6 +348,7 @@ class HistoricoVinculoFormalModelForm(forms.ModelForm):
 class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
     """ModelForm restrito para ENCERRAR um período de Vínculo Formal já existente — nunca Delete."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = HistoricoVinculoFormal
         fields = ['data_fim', 'observacao']
         widgets = {
@@ -317,6 +360,7 @@ class EncerrarHistoricoVinculoFormalForm(forms.ModelForm):
 class ExperienciaProfissionalModelForm(forms.ModelForm):
     """ModelForm para o CRUD independente de ExperienciaProfissional (Create/Update/Delete)."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = ExperienciaProfissional
         fields = ['organizacao', 'cargo', 'data_inicio', 'data_fim']
         widgets = {
@@ -328,6 +372,7 @@ class ExperienciaProfissionalModelForm(forms.ModelForm):
 class PendenciaCadastroModelForm(forms.ModelForm):
     """ModelForm para CRIAR uma nova PendenciaCadastro — só 'tipo' e 'descricao'."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = PendenciaCadastro
         fields = ['tipo', 'descricao']
 
@@ -335,6 +380,7 @@ class PendenciaCadastroModelForm(forms.ModelForm):
 class EditarPendenciaCadastroForm(forms.ModelForm):
     """ModelForm para EDITAR uma PendenciaCadastro já existente, incluindo marcar como resolvida."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = PendenciaCadastro
         fields = ['tipo', 'descricao', 'resolvida']
 
@@ -346,6 +392,7 @@ class EditarRequisitoContratacaoForm(forms.ModelForm):
     corrigir/completar depois pela tela de detalhe.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = AtribuicaoFuncao
         fields = ['requisito_contratacao', 'documento_comprobatorio']
         widgets = {
@@ -366,6 +413,7 @@ class DisciplinaModelForm(forms.ModelForm):
     que inclui clean(). Mesma trava que já funciona no Admin, sem duplicar código.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Disciplina
         fields = [
             'nome', 'sigla',
@@ -379,6 +427,7 @@ class DisciplinaToggleAtivoForm(forms.ModelForm):
     confirmação (botão simples + confirmação), nunca editável diretamente.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Disciplina
         fields = []
 
@@ -396,6 +445,7 @@ class ConteudoProgramaticoModelForm(forms.ModelForm):
     padrão de Disciplina (rastreabilidade do que foi definido para ser ministrado).
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = ConteudoProgramatico
         fields = ['ordem', 'descricao', 'observacao']
         widgets = {
@@ -423,6 +473,7 @@ class ConteudoProgramaticoModelForm(forms.ModelForm):
 class ConteudoProgramaticoToggleAtivoForm(forms.ModelForm):
     """Mesmo padrão de DisciplinaToggleAtivoForm, para uma linha de Conteúdo Programático."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = ConteudoProgramatico
         fields = []
 
@@ -436,6 +487,7 @@ class ConteudoProgramaticoToggleAtivoForm(forms.ModelForm):
 class SubModuloModelForm(forms.ModelForm):
     """Criar/Editar SubModulo (CRU — sem Delete, mesmo padrão de Disciplina). 'ativo' fica de fora, toggle é ação própria."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = SubModulo
         fields = ['nome', 'sigla']
 
@@ -443,6 +495,7 @@ class SubModuloModelForm(forms.ModelForm):
 class SubModuloToggleAtivoForm(forms.ModelForm):
     """Mesmo padrão de DisciplinaToggleAtivoForm."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = SubModulo
         fields = []
 
@@ -465,6 +518,7 @@ class SubModuloDisciplinaModelForm(forms.ModelForm):
     por este vínculo — decisão confirmada em 05/09/2026, ver docs/34.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = SubModuloDisciplina
         fields = ['disciplina', 'ordem']
 
@@ -491,6 +545,7 @@ class SubModuloDisciplinaModelForm(forms.ModelForm):
 class ModuloModelForm(forms.ModelForm):
     """Criar/Editar Modulo (CRU — sem Delete, mesmo padrão de Disciplina/SubModulo)."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Modulo
         fields = ['nome', 'sigla', 'descricao']
 
@@ -498,6 +553,7 @@ class ModuloModelForm(forms.ModelForm):
 class ModuloToggleAtivoForm(forms.ModelForm):
     """Mesmo padrão de DisciplinaToggleAtivoForm/SubModuloToggleAtivoForm."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Modulo
         fields = []
 
@@ -516,6 +572,7 @@ class ModuloSubModuloModelForm(forms.ModelForm):
     afeta rastreabilidade, ver docs/34).
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = ModuloSubModulo
         fields = ['submodulo', 'ordem']
 
@@ -546,6 +603,7 @@ class OfertaModuloModelForm(forms.ModelForm):
     (decisão de 05/09/2026) — a tela mostra um aviso, sem botão de Reativar.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = OfertaModulo
         fields = ['modulo', 'ano_letivo', 'data_inicio', 'observacao']
         widgets = {
@@ -570,6 +628,7 @@ class EncerrarOfertaModuloForm(forms.ModelForm):
     EncerrarHistoricoVinculoFormalForm.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = OfertaModulo
         fields = ['data_fim']
         widgets = {
@@ -599,6 +658,7 @@ class TurmaModelForm(forms.ModelForm):
     manual (ver docs/39).
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Turma
         fields = ['nome', 'sigla', 'periodo', 'observacao']
         widgets = {
@@ -626,6 +686,7 @@ class TurmaModelForm(forms.ModelForm):
 class AtaModelForm(forms.ModelForm):
     """Criar/Editar Ata — CRU; Delete só pelo Django Admin (decisão de 05/09/2026)."""
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = Ata
         fields = ['numero', 'tipo', 'finalidade', 'data', 'assunto', 'observacao']
         widgets = {
@@ -645,6 +706,7 @@ class AtaPessoaModelForm(forms.ModelForm):
     para o módulo Atribuição quando ele existir.
     """
     class Meta:
+        labels = _ROTULOS_FORMULARIO
         model = AtaPessoa
         fields = ['pessoa']
 
@@ -653,7 +715,7 @@ class AtaPessoaModelForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['pessoa'].queryset = Pessoa.objects.filter(
             atribuicoes__dados_discente__isnull=False,
-            atribuicoes__ativo=True,
+            atribuicoes__situacao=SituacaoAtribuicao.ATIVO,
         ).distinct().order_by('nome_completo')
 
     def clean_pessoa(self):

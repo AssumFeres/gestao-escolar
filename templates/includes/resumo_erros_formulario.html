@@ -1,3 +1,4 @@
+{% include 'includes/instrucoes_obrigatoriedade.html' with form=form only %}
 {% if form.errors %}
   <div class="erro resumo-erros" role="alert">
     {% include 'includes/icone_erro.html' %}
@@ -5,17 +6,7 @@
     <p><strong>Não foi possível salvar. Corrija os erros abaixo.</strong></p>
     {{ form.non_field_errors }}
     <ul>
-      {% for campo in form %}
-        {% if campo.errors %}
-          <li>
-            {% if campo.id_for_label and not campo.is_hidden %}
-              <a href="#{{ campo.id_for_label }}">{{ campo.label }}</a>
-            {% else %}
-              {{ campo.label }}
-            {% endif %}
-          </li>
-        {% endif %}
-      {% endfor %}
+      {% include 'includes/itens_erros_formulario.html' with form=form only %}
     </ul>
     </div>
   </div>

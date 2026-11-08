@@ -1,13 +1,15 @@
-<h3>Confirmar exclusão</h3>
+<h2 class="titulo-formulario">Confirmar exclusão</h2>
 <fieldset class="campo-customizado">
+    <legend class="visualmente-oculto">Confirmação de exclusão</legend>
     <p>Tem certeza que deseja excluir <strong>{{ object }}</strong>? Esta ação não pode ser desfeita.</p>
 </fieldset>
 
-<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+<form method="post" action="{{ request.path }}{% if request.GET.parcial == '1' %}?parcial=1{% endif %}" class="form-modal-crud">
     {% csrf_token %}
+    {% include 'includes/resumo_erros_formulario.html' with form=form only %}
     
-    <button type="submit" style="background-color:#c0392b; color:#ffffff; border:none; padding:8px 20px; border-radius:6px; cursor:pointer;">
+    <button type="submit" class="btn-salvar">
         Excluir
     </button>
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/_confirma_exclusao_fragmenet.html</p>
+    {% include 'includes/cancelar_modal.html' %}
 </form>

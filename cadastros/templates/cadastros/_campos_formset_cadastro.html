@@ -1,0 +1,15 @@
+{% for campo in formset.management_form %}{{ campo }}{% endfor %}
+{% include 'includes/mensagem_erro.html' with erros=formset.non_form_errors only %}
+{% include 'includes/mensagem_erro.html' with erros=formset.management_form.errors only %}
+{% for linha in formset %}
+    <fieldset class="{% if forloop.last %}formset-template{% else %}formset-recuperado{% endif %}">
+        <legend>Registro {{ forloop.counter }}</legend>
+        {% include 'includes/mensagem_erro.html' with erros=linha.non_field_errors only %}
+        <div class="{{ grade }}">
+            {% for campo in linha %}
+                {% include 'includes/campo_formulario.html' with campo=campo only %}
+            {% endfor %}
+        </div>
+    </fieldset>
+{% endfor %}
+<div class="formset-hidden" style="display:none"></div>

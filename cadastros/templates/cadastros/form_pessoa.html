@@ -10,7 +10,7 @@
 
 {{ funcao_categorias|json_script:"funcao-categorias-data" }}
 
-{% include 'includes/mensagem_erro.html' with erros=form.non_field_errors only %}
+{% include 'cadastros/_resumo_erros_cadastro_pessoa.html' %}
 
 <form method="post" id="form-cadastro-pessoa">
     {% csrf_token %}
@@ -19,10 +19,10 @@
         <legend id="selecao-funcao">Função para ser cadastrada</legend>
         <fieldset>
             <legend>Função</legend>
-            <div class="grid-5-colunas">
-                <div class="campo">{{ form.funcao.label_tag }} {{ form.funcao }} {{ form.funcao.errors }}</div>
-                <div class="campo">{{ form.data_inicio.label_tag }} {{ form.data_inicio }} {{ form.data_inicio.errors }}</div>
-                <div class="campo">{{ form.situacao.label_tag }} {{ form.situacao }} {{ form.situacao.errors }}</div>
+            <div class="grid-4-colunas">
+                {% include 'includes/campo_formulario.html' with campo=form.funcao only %}
+                {% include 'includes/campo_formulario.html' with campo=form.data_inicio only %}
+                {% include 'includes/campo_formulario.html' with campo=form.situacao only %}
             </div>
         </fieldset>
     </fieldset>
@@ -33,22 +33,22 @@
         <fieldset>
             <legend>Dados Básicos</legend>
             <div class="grid-5-colunas">
-                <div class="campo">{{ form.nome_completo.label_tag }} {{ form.nome_completo }} {{ form.nome_completo.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.nome_completo only %}
                 <div class="campo">
-                    {{ form.cpf.label_tag }} {{ form.cpf }} {{ form.cpf.errors }}
+                    {% include 'includes/campo_formulario.html' with campo=form.cpf only %}
                     <small id="ajuda-consulta-cpf">Pressione Enter para consultar uma pessoa pelo CPF.</small>
                     <div id="aviso-pessoa-encontrada" role="status" aria-atomic="true"></div>
                 </div>
-                <div class="campo">{{ form.data_nascimento.label_tag }} {{ form.data_nascimento }} {{ form.data_nascimento.errors }}</div>
-                <div class="campo">{{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}</div>
-                <div class="campo">{{ form.telefone.label_tag }} {{ form.telefone }} {{ form.telefone.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.data_nascimento only %}
+                {% include 'includes/campo_formulario.html' with campo=form.email only %}
+                {% include 'includes/campo_formulario.html' with campo=form.telefone only %}
             </div>
 
             <fieldset>
                 <legend>Dados de Contato Complementares</legend>
                 <div class="grid-4-colunas">
-                    <div class="campo">{{ form.email_2.label_tag }} {{ form.email_2 }} {{ form.email_2.errors }}</div>
-                    <div class="campo">{{ form.telefone_2.label_tag }} {{ form.telefone_2 }} {{ form.telefone_2.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.email_2 only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.telefone_2 only %}
                 </div>
             </fieldset>
         </fieldset>
@@ -56,9 +56,9 @@
         <fieldset>
             <legend>Identificadores</legend>
             <div class="grid-3-colunas">
-                <div class="campo">{{ form.codigo_anac.label_tag }} {{ form.codigo_anac }} {{ form.codigo_anac.errors }}</div>
-                <div class="campo">{{ form.registro_matricula.label_tag }} {{ form.registro_matricula }} {{ form.registro_matricula.errors }}</div>
-                <div class="campo">{{ form.registro_aluno.label_tag }} {{ form.registro_aluno }} {{ form.registro_aluno.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.codigo_anac only %}
+                {% include 'includes/campo_formulario.html' with campo=form.registro_matricula only %}
+                {% include 'includes/campo_formulario.html' with campo=form.registro_aluno only %}
             </div>
         </fieldset>
 
@@ -68,48 +68,48 @@
             <fieldset>
                 <legend>Dados Pessoais</legend>
                 <div class="grid-4-colunas">
-                    <div class="campo">{{ form.sexo.label_tag }} {{ form.sexo }} {{ form.sexo.errors }}</div>
-                    <div class="campo">{{ form.raca_cor.label_tag }} {{ form.raca_cor }} {{ form.raca_cor.errors }}</div>
-                    <div class="campo">{{ form.estado_civil.label_tag }} {{ form.estado_civil }} {{ form.estado_civil.errors }}</div>
-                    <div class="campo">{{ form.nivel_instrucao.label_tag }} {{ form.nivel_instrucao }} {{ form.nivel_instrucao.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.sexo only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.raca_cor only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.estado_civil only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.nivel_instrucao only %}
 
-                    <div class="campo">{{ form.naturalidade.label_tag }} {{ form.naturalidade }} {{ form.naturalidade.errors }}</div>
-                    <div class="campo">{{ form.uf_naturalidade.label_tag }} {{ form.uf_naturalidade }} {{ form.uf_naturalidade.errors }}</div>
-                    <div class="campo">{{ form.nacionalidade.label_tag }} {{ form.nacionalidade }} {{ form.nacionalidade.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.naturalidade only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.uf_naturalidade only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.nacionalidade only %}
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend>Identidade (RG)</legend>
                 <div class="grid-3-colunas">
-                    <div class="campo">{{ form.identidade.label_tag }} {{ form.identidade }} {{ form.identidade.errors }}</div>
-                    <div class="campo">{{ form.data_emissao_identidade.label_tag }} {{ form.data_emissao_identidade }} {{ form.data_emissao_identidade.errors }}</div>
-                    <div class="campo">{{ form.orgao_expedidor_identidade.label_tag }} {{ form.orgao_expedidor_identidade }} {{ form.orgao_expedidor_identidade.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.identidade only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.data_emissao_identidade only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.orgao_expedidor_identidade only %}
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend>Passaporte / Permanência</legend>
                 <div class="grid-2-colunas">
-                    <div class="campo">{{ form.passaporte.label_tag }} {{ form.passaporte }} {{ form.passaporte.errors }}</div>
-                    <div class="campo">{{ form.autorizacao_permanencia.label_tag }} {{ form.autorizacao_permanencia }} {{ form.autorizacao_permanencia.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.passaporte only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.autorizacao_permanencia only %}
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend>Título de Eleitor</legend>
                 <div class="grid-3-colunas">
-                    <div class="campo">{{ form.titulo_eleitor.label_tag }} {{ form.titulo_eleitor }} {{ form.titulo_eleitor.errors }}</div>
-                    <div class="campo">{{ form.zona_eleitoral.label_tag }} {{ form.zona_eleitoral }} {{ form.zona_eleitoral.errors }}</div>
-                    <div class="campo">{{ form.secao_eleitoral.label_tag }} {{ form.secao_eleitoral }} {{ form.secao_eleitoral.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.titulo_eleitor only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.zona_eleitoral only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.secao_eleitoral only %}
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend>Filiação</legend>
                 <div class="grid-2-colunas">
-                    <div class="campo">{{ form.filiacao_1.label_tag }} {{ form.filiacao_1 }} {{ form.filiacao_1.errors }}</div>
-                    <div class="campo">{{ form.filiacao_2.label_tag }} {{ form.filiacao_2 }} {{ form.filiacao_2.errors }}</div>
+                    {% include 'includes/campo_formulario.html' with campo=form.filiacao_1 only %}
+                    {% include 'includes/campo_formulario.html' with campo=form.filiacao_2 only %}
                 </div>
             </fieldset>
         </fieldset>
@@ -118,17 +118,17 @@
             <legend>Endereço</legend>
             <div class="grid-4-colunas">
                 <div class="campo">
-                    {{ form.endereco_cep.label_tag }} {{ form.endereco_cep }} {{ form.endereco_cep.errors }}
+                    {% include 'includes/campo_formulario.html' with campo=form.endereco_cep only %}
                     <small id="ajuda-consulta-cep">A consulta é feita ao sair do campo.</small>
                     <div id="status-consulta-cep" role="status" aria-atomic="true"></div>
                 </div>
-                <div class="campo">{{ form.endereco_logradouro.label_tag }} {{ form.endereco_logradouro }} {{ form.endereco_logradouro.errors }}</div>
-                <div class="campo">{{ form.endereco_numero.label_tag }} {{ form.endereco_numero }} {{ form.endereco_numero.errors }}</div>
-                <div class="campo">{{ form.endereco_complemento.label_tag }} {{ form.endereco_complemento }} {{ form.endereco_complemento.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_logradouro only %}
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_numero only %}
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_complemento only %}
 
-                <div class="campo">{{ form.endereco_bairro.label_tag }} {{ form.endereco_bairro }} {{ form.endereco_bairro.errors }}</div>
-                <div class="campo">{{ form.endereco_cidade.label_tag }} {{ form.endereco_cidade }} {{ form.endereco_cidade.errors }}</div>
-                <div class="campo">{{ form.endereco_uf.label_tag }} {{ form.endereco_uf }} {{ form.endereco_uf.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_bairro only %}
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_cidade only %}
+                {% include 'includes/campo_formulario.html' with campo=form.endereco_uf only %}
             </div>
         </fieldset>
     </fieldset>
@@ -138,34 +138,34 @@
 
         <fieldset>
             <legend>Matrícula</legend>
-            <div class="campo">{{ form.codigo_matricula_anac.label_tag }} {{ form.codigo_matricula_anac }} {{ form.codigo_matricula_anac.errors }}</div>
+            {% include 'includes/campo_formulario.html' with campo=form.codigo_matricula_anac only %}
         </fieldset>
 
         <fieldset>
             <legend>Contato de Emergência</legend>
             <div class="grid-3-colunas"> 
-                <div class="campo"><label for="id_contato_emergencia_nome">Nome</label> {{ form.contato_emergencia_nome }} {{ form.contato_emergencia_nome.errors }}</div>
-                <div class="campo"><label for="id_contato_emergencia_parentesco">Parentesco</label> {{ form.contato_emergencia_parentesco }} {{ form.contato_emergencia_parentesco.errors }}</div>
-                <div class="campo"><label for="id_contato_emergencia_telefone">Telefone</label> {{ form.contato_emergencia_telefone }} {{ form.contato_emergencia_telefone.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.contato_emergencia_nome only %}
+                {% include 'includes/campo_formulario.html' with campo=form.contato_emergencia_parentesco only %}
+                {% include 'includes/campo_formulario.html' with campo=form.contato_emergencia_telefone only %}
             </div>
             
             <div class="grid-2-colunas">
-                <div class="campo"><label for="id_contato_emergencia_endereco">Endereço</label> {{ form.contato_emergencia_endereco }} {{ form.contato_emergencia_endereco.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.contato_emergencia_endereco only %}
             </div>
         </fieldset>
 
         <fieldset>
             <legend>Responsável Legal (menor de idade)</legend>
             <div class="grid-2-colunas"> 
-                <div class="campo"><label for="id_responsavel_nome">Nome</label> {{ form.responsavel_nome }} {{ form.responsavel_nome.errors }}</div>
-                <div class="campo"><label for="id_responsavel_qualificacao">Qualificação (pai/mãe/tutor)</label> {{ form.responsavel_qualificacao }} {{ form.responsavel_qualificacao.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.responsavel_nome only %}
+                {% include 'includes/campo_formulario.html' with campo=form.responsavel_qualificacao only %}
             </div>
-            <div class="campo"><label for="id_responsavel_endereco">Endereço</label> {{ form.responsavel_endereco }} {{ form.responsavel_endereco.errors }}</div>
+            {% include 'includes/campo_formulario.html' with campo=form.responsavel_endereco only %}
             <div class="grid-4-colunas">
-                <div class="campo"><label for="id_responsavel_identidade">Identidade</label> {{ form.responsavel_identidade }} {{ form.responsavel_identidade.errors }}</div>
-                <div class="campo"><label for="id_responsavel_orgao_expedidor">Órgão expedidor</label> {{ form.responsavel_orgao_expedidor }} {{ form.responsavel_orgao_expedidor.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.responsavel_identidade only %}
+                {% include 'includes/campo_formulario.html' with campo=form.responsavel_orgao_expedidor only %}
 
-                <div class="campo"><label for="id_responsavel_data_emissao">Data de emissão</label> {{ form.responsavel_data_emissao }} {{ form.responsavel_data_emissao.errors }}</div>
+                {% include 'includes/campo_formulario.html' with campo=form.responsavel_data_emissao only %}
             </div>
         </fieldset>
     </fieldset>
@@ -173,97 +173,72 @@
     <fieldset id="bloco-docente" data-categoria="DOCENTE">
         <legend>Formação (Graduação / Formação Profissional / Aperfeiçoamento) — FE 008</legend>
 
-        <div class="formset-bloco" data-prefix="formacao"
+        <div class="formset-bloco" data-prefix="formacao" data-recuperado="{{ formacao_formset.is_bound|yesno:'true,false' }}"
              data-fields="tipo_formacao,curso,entidade,cidade,uf,ano_conclusao"
              data-labels="Tipo,Curso,Entidade,Cidade,UF,Ano"
              data-obrigatorios-completos="tipo_formacao,curso,entidade,cidade,uf,ano_conclusao"
              data-required="curso">
-            {{ formacao_formset.management_form }}
-
-            <div class="formset-template">
-                <div class="grid-6-colunas">
-                    <div class="campo">{{ formacao_formset.0.tipo_formacao.label_tag }} {{ formacao_formset.0.tipo_formacao }}</div>
-                    <div class="campo">{{ formacao_formset.0.curso.label_tag }} {{ formacao_formset.0.curso }}</div>
-                    <div class="campo">{{ formacao_formset.0.entidade.label_tag }} {{ formacao_formset.0.entidade }}</div>
-                    <div class="campo">{{ formacao_formset.0.cidade.label_tag }} {{ formacao_formset.0.cidade }}</div>
-                    <div class="campo">{{ formacao_formset.0.uf.label_tag }} {{ formacao_formset.0.uf }}</div>
-                    <div class="campo">{{ formacao_formset.0.ano_conclusao.label_tag }} {{ formacao_formset.0.ano_conclusao }}</div>
-                </div>
-            </div>
-            <div class="formset-hidden" style="display:none"></div>
+            {% include 'cadastros/_campos_formset_cadastro.html' with formset=formacao_formset grade='grid-6-colunas' only %}
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-<table>
+{% if not formacao_formset.is_bound %}
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Formações adicionadas ao cadastro</caption>
                 <thead>
                     <tr><th scope="col">Tipo</th><th scope="col">Curso</th><th scope="col">Entidade</th><th scope="col">Cidade</th><th scope="col">UF</th><th scope="col">Ano</th></tr>
                 </thead>
                 <tbody></tbody>
-            </table>
+            </table></div>
+            {% endif %}
         </div>
     </fieldset>
 
     <fieldset id="bloco-gestao" data-categoria="GESTAO">
         <legend>Experiência Profissional (FOP 402)</legend>
 
-        <div class="formset-bloco" data-prefix="experiencia"
+        <div class="formset-bloco" data-prefix="experiencia" data-recuperado="{{ experiencia_formset.is_bound|yesno:'true,false' }}"
              data-fields="organizacao,cargo,data_inicio,data_fim"
              data-labels="Organização,Cargo,Data início,Data fim"
              data-obrigatorios-completos="organizacao,cargo,data_inicio"
              data-required="organizacao">
-            {{ experiencia_formset.management_form }}
-
-            <div class="formset-template">
-                <div class="grid-4-colunas">
-                    <div class="campo">{{ experiencia_formset.0.organizacao.label_tag }} {{ experiencia_formset.0.organizacao }}</div>
-                    <div class="campo">{{ experiencia_formset.0.cargo.label_tag }} {{ experiencia_formset.0.cargo }}</div>
-                    <div class="campo">{{ experiencia_formset.0.data_inicio.label_tag }} {{ experiencia_formset.0.data_inicio }}</div>
-                    <div class="campo">{{ experiencia_formset.0.data_fim.label_tag }} {{ experiencia_formset.0.data_fim }}</div>
-                </div>
-            </div>
-            <div class="formset-hidden" style="display:none"></div>
+            {% include 'cadastros/_campos_formset_cadastro.html' with formset=experiencia_formset grade='grid-4-colunas' only %}
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-<table>
+{% if not experiencia_formset.is_bound %}
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Experiências profissionais adicionadas ao cadastro</caption>
                 <thead>
                     <tr><th scope="col">Organização</th><th scope="col">Cargo</th><th scope="col">Data início</th><th scope="col">Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
-            </table>
+            </table></div>
+            {% endif %}
         </div>
     </fieldset>
 
     <fieldset id="bloco-vinculo-formal" data-categoria="DOCENTE,GESTAO">
         <legend>Histórico de Vínculo Formal (Docente ou Gestão)</legend>
 
-        <div class="formset-bloco" data-prefix="historico"
+        <div class="formset-bloco" data-prefix="historico" data-recuperado="{{ historico_formset.is_bound|yesno:'true,false' }}"
              data-fields="vinculo_formal,data_inicio,data_fim"
              data-labels="Vínculo Formal,Data início,Data fim"
              data-obrigatorios-completos="vinculo_formal,data_inicio"
              data-required="vinculo_formal">
-            {{ historico_formset.management_form }}
-
-            <div class="formset-template">
-                <div class="grid-3-colunas">
-                    <div class="campo">{{ historico_formset.0.vinculo_formal.label_tag }} {{ historico_formset.0.vinculo_formal }}</div>
-                    <div class="campo">{{ historico_formset.0.data_inicio.label_tag }} {{ historico_formset.0.data_inicio }}</div>
-                    <div class="campo">{{ historico_formset.0.data_fim.label_tag }} {{ historico_formset.0.data_fim }}</div>
-                </div>
-            </div>
-            <div class="formset-hidden" style="display:none"></div>
+            {% include 'cadastros/_campos_formset_cadastro.html' with formset=historico_formset grade='grid-3-colunas' only %}
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-<table>
+{% if not historico_formset.is_bound %}
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Vínculos formais adicionados ao cadastro</caption>
                 <thead>
                     <tr><th scope="col">Vínculo Formal</th><th scope="col">Data início</th><th scope="col">Data fim</th></tr>
                 </thead>
                 <tbody></tbody>
-            </table>
+            </table></div>
+            {% endif %}
         </div>
     </fieldset>
 
@@ -271,58 +246,43 @@
         <legend>Requisitos de Contratação (RBAC 141)</legend>
 
         <div class="grid-2-colunas">
-            <div class="campo">
-                {{ form.requisito_contratacao.label_tag }}
-                {{ form.requisito_contratacao }}
-                {{ form.requisito_contratacao.errors }}
-            </div>
+            {% include 'includes/campo_formulario.html' with campo=form.requisito_contratacao only %}
 
-            <div class="campo">
-                {{ form.documento_comprobatorio.label_tag }}
-                {{ form.documento_comprobatorio }}
-                {{ form.documento_comprobatorio.errors }}
-            </div>
+            {% include 'includes/campo_formulario.html' with campo=form.documento_comprobatorio only %}
         </div>
     </fieldset>
 
     <fieldset id="bloco-pendencias">
         <legend>Pendências de Documentação (qualquer categoria)</legend>
 
-        <div class="formset-bloco" data-prefix="pendencia"
+        <div class="formset-bloco" data-prefix="pendencia" data-recuperado="{{ pendencia_formset.is_bound|yesno:'true,false' }}"
              data-fields="tipo,descricao"
              data-labels="Tipo,Descrição"
              data-required="tipo">
-            {{ pendencia_formset.management_form }}
-
-            <div class="formset-template">
-                <div class="grid-2-colunas">
-                    <div class="campo">{{ pendencia_formset.0.tipo.label_tag }} {{ pendencia_formset.0.tipo }}</div>
-                    <div class="campo">{{ pendencia_formset.0.descricao.label_tag }} {{ pendencia_formset.0.descricao }}</div>
-                </div>
-            </div>
-            <div class="formset-hidden" style="display:none"></div>
+            {% include 'cadastros/_campos_formset_cadastro.html' with formset=pendencia_formset grade='grid-2-colunas' only %}
 
             <button type="button" class="btn-adicionar">+ Adicionar</button>
 
-<table>
+{% if not pendencia_formset.is_bound %}
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Pendências adicionadas ao cadastro</caption>
                 <thead>
                     <tr><th scope="col">Tipo</th><th scope="col">Descrição</th></tr>
                 </thead>
                 <tbody></tbody>
-            </table>
+            </table></div>
+            {% endif %}
         </div>
     </fieldset>
 
-    <button type="submit">Salvar</button>
+    <button type="submit" class="btn-salvar">Salvar</button>
 </form>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/form_pessoa.html</p>
 
 {% include 'includes/modal_crud.html' %}
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-8"></script>
 <script src="{% static 'cadastros/js/feedback-consulta.js' %}?v=20261107-8"></script>
 <script src="{% static 'cadastros/js/buscar-cep.js' %}?v=20261107-8"></script>
-<script src="{% static 'cadastros/js/form-dinamico.js' %}?v=20261107-8"></script>
+<script src="{% static 'cadastros/js/form-dinamico.js' %}?v=20261108-2"></script>
 <script src="{% static 'cadastros/js/buscar-cpf.js' %}?v=20261107-8"></script>
 {% endblock %}

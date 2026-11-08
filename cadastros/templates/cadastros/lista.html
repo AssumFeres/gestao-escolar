@@ -17,7 +17,7 @@
      FILTROS
      ====================================================== -->
 
-<form method="get" style="
+<form method="get" data-restaurar-foco-filtros style="
     display: flex;
     align-items: end;
     gap: 16px;
@@ -41,7 +41,7 @@
             name="nome"
             value="{{ filtro_nome }}"
             placeholder="Digite o nome"
-            style="min-width: 260px;"
+            style="min-width: 0; max-width: 100%;"
         >
     </div>
 
@@ -102,7 +102,7 @@
 
     <!-- BOTÃO PESQUISAR -->
     <div>
-        <button type="submit">
+        <button type="submit" id="filtrar-pessoas" data-foco-filtro>
             🔎 Filtrar
         </button>
     </div>
@@ -112,6 +112,8 @@
     <div>
         <a
             href="."
+            id="limpar-filtros-pessoas"
+            data-foco-filtro
             class="botao-link"
             style="background-color: #002060;"
         >
@@ -128,7 +130,7 @@
 
 {% if pessoas %}
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Pessoas cadastradas e suas funções</caption>
 
     <thead>
@@ -198,7 +200,7 @@
 
     </tbody>
 
-</table>
+</table></div>
 
 {% else %}
 

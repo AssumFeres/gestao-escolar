@@ -15,7 +15,7 @@
 </h2>
 
 {% if ofertas %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Ofertas de módulo, anos letivos, datas e situação</caption>
   <thead>
     <tr>
@@ -37,7 +37,7 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 {% else %}
 <p>Nenhuma oferta de módulo cadastrada.</p>
 {% endif %}
@@ -46,5 +46,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/lista_ofertas_modulo.html</p>
 {% endblock %}

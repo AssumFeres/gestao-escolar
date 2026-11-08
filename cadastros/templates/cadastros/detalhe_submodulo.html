@@ -19,7 +19,7 @@
   </button>
 </h2>
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Dados do submódulo {{ submodulo.nome }}</caption>
   <tr>
     <th scope="row" id="detalhe-submodulo-rotulo-1">Situação</th>
@@ -27,12 +27,12 @@
     <th scope="row" id="detalhe-submodulo-rotulo-2">Carga Horária Total (calculada)</th>
     <td headers="detalhe-submodulo-rotulo-2">{{ submodulo.carga_horaria }}h</td>
   </tr>
-</table>
+</table></div>
 
 <fieldset>
   <legend>Disciplinas Vinculadas</legend>
   {% if submodulo.disciplinas_vinculadas.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Disciplinas vinculadas ao submódulo {{ submodulo.nome }}</caption>
     <thead>
       <tr>
@@ -59,7 +59,7 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% else %}
   <p>Nenhuma disciplina vinculada.</p>
   {% endif %}
@@ -73,5 +73,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_submodulo.html</p>
 {% endblock %}

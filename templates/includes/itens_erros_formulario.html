@@ -1,0 +1,13 @@
+{% load acessibilidade %}
+{% for campo in form %}
+    {% if campo.errors %}
+        <li>
+            {% destino_erro campo as destino %}
+            {% if destino %}
+                <a href="#{{ destino }}">{% if grupo %}{{ grupo }} — Registro {{ registro }}: {% endif %}{{ campo.label }}</a>
+            {% else %}
+                {% if grupo %}{{ grupo }} — Registro {{ registro }}: {% endif %}{{ campo.label }}
+            {% endif %}
+        </li>
+    {% endif %}
+{% endfor %}

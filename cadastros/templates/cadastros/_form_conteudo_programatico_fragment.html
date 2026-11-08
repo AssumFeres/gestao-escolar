@@ -1,4 +1,4 @@
-<h3>{% if editando %}Editar{% else %}Novo{% endif %} Item do Conteúdo Programático</h3>
+<h2 class="titulo-formulario">{% if editando %}Editar{% else %}Novo{% endif %} Item do Conteúdo Programático</h2>
 <p>Disciplina: <strong>{{ disciplina.sigla }} - {{ disciplina.nome }}</strong></p>
 
 <form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
@@ -11,5 +11,3 @@
     <button type="submit" form="form-cancelar-conteudo-programatico" class="btn-cancelar" data-fechar-modal-crud>Cancelar</button>
 </form>
 <form id="form-cancelar-conteudo-programatico" method="get" action="{% url 'detalhe-disciplina' pk=disciplina.pk %}"></form>
-
-<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 cadastros/templates/cadastros/_form_conteudo_programatico_fragment.html</p>

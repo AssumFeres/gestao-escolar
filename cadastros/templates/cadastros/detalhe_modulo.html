@@ -19,7 +19,7 @@
   </button>
 </h2>
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Dados do módulo {{ modulo.nome }}</caption>
   <tr>
     <th scope="row" id="detalhe-modulo-rotulo-1">Situação</th>
@@ -31,12 +31,12 @@
     <th scope="row" id="detalhe-modulo-rotulo-3">Descrição</th>
     <td colspan="3" headers="detalhe-modulo-rotulo-3">{{ modulo.descricao|default:"-----" }}</td>
   </tr>
-</table>
+</table></div>
 
 <fieldset>
   <legend>SubModulos Vinculados</legend>
   {% if modulo.submodulos_vinculados.all %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Submódulos vinculados ao módulo {{ modulo.nome }}</caption>
     <thead>
       <tr>
@@ -63,7 +63,7 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% else %}
   <p>Nenhum submódulo vinculado.</p>
   {% endif %}
@@ -77,5 +77,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/detalhe_modulo.html</p>
 {% endblock %}

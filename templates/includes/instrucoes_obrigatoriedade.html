@@ -1,0 +1,5 @@
+{% load acessibilidade %}
+{% possui_campos_obrigatorios form as obrigatorios %}
+{% if obrigatorios_explicitos or obrigatorios %}
+<p class="instrucoes-formulario">Campos marcados com {% indicador_obrigatorio %} são obrigatórios.</p>
+{% endif %}

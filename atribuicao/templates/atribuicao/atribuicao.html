@@ -1,4 +1,6 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
+{% block title %}Atribuição de disciplinas - Sistema de Gestão Escolar{% endblock %}
+{% load acessibilidade %}
 
 {% block content %}
 <div class="container-fluid p-4">
@@ -6,26 +8,27 @@
         <!-- Formulário -->
         <div class="col-md-5">
             <div class="card p-4 shadow-sm">
-                <h4 class="mb-4 text-primary">Nova Atribuição de Disciplina</h4>
+                <h2 class="mb-4 text-primary">Nova Atribuição de Disciplina</h2>
                 <form method="POST">
                     {% csrf_token %}
+                    {% include 'includes/instrucoes_obrigatoriedade.html' with obrigatorios_explicitos=True only %}
                     <div class="mb-3">
-                        <label class="form-label font-weight-bold">Instrutor / Professor</label>
-                        <select name="instrutor" class="form-control form-select" required>
+                        <label for="id_instrutor" class="form-label font-weight-bold">Instrutor / Professor {% indicador_obrigatorio %}</label>
+                        <select id="id_instrutor" name="instrutor" class="form-control form-select" required>
                             <option value="">Selecione um instrutor...</option>
                             {% for i in instrutores %} <option value="{{ i.id }}">{{ i.username }}</option> {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-weight-bold">Disciplina</label>
-                        <select name="disciplina" class="form-control form-select" required>
+                        <label for="id_disciplina" class="form-label font-weight-bold">Disciplina {% indicador_obrigatorio %}</label>
+                        <select id="id_disciplina" name="disciplina" class="form-control form-select" required>
                             <option value="">Selecione a disciplina...</option>
                             {% for d in disciplinas %} <option value="{{ d.id }}">{{ d.nome }}</option> {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-weight-bold">Turma</label>
-                        <select name="turma" class="form-control form-select" required>
+                        <label for="id_turma" class="form-label font-weight-bold">Turma {% indicador_obrigatorio %}</label>
+                        <select id="id_turma" name="turma" class="form-control form-select" required>
                             <option value="">Selecione a turma...</option>
                             {% for t in turmas %} <option value="{{ t.id }}">{{ t.nome }}</option> {% endfor %}
                         </select>
@@ -37,8 +40,8 @@
         <!-- Lista -->
         <div class="col-md-7">
             <div class="card p-4 shadow-sm">
-                <h4 class="mb-4">Histórico de Atribuições</h4>
-<table class="table table-hover table-striped">
+                <h2 class="mb-4">Histórico de Atribuições</h2>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table class="table table-hover table-striped">
   <caption class="visualmente-oculto">Histórico de atribuições de instrutores, disciplinas e turmas</caption>
                     <thead class="table-dark">
                         <tr><th scope="col">Instrutor</th><th scope="col">Disciplina</th><th scope="col">Turma</th></tr>
@@ -50,7 +53,7 @@
                         <tr><td colspan="3" class="text-center text-muted">Nenhuma atribuição realizada até o momento.</td></tr>
                         {% endfor %}
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>

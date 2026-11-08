@@ -1,22 +1,22 @@
-<h3>Revisar Aprovação — {{ turma.nome }}</h3>
+<h2 class="titulo-formulario">Revisar Aprovação — {{ turma.nome }}</h2>
 <p>
     Todos os alunos abaixo estão marcados para aprovar. Desmarque quem
     <strong>não</strong> deve ser aprovado agora (será resolvido individualmente
     depois, via "Editar Status").
 </p>
 
-<form method="post" action="{{ request.path }}?parcial=1" class="form-modal-crud">
+<form method="post" action="{{ request.path }}{% if request.GET.parcial == '1' %}?parcial=1{% endif %}" class="form-modal-crud">
     {% csrf_token %}
-    {{ form.non_field_errors }}
+    {% include 'includes/resumo_erros_formulario.html' with form=form only %}
     {% for matricula, campo in form.linhas %}
     <div class="campo" style="flex-direction: row; align-items: center; gap: 8px;">
         {{ campo }}
+        {% include 'includes/mensagem_erro.html' with erros=campo.errors campo=campo only %}
         <label for="{{ campo.id_for_label }}">{{ matricula.atribuicao_funcao.pessoa.nome_completo }}</label>
     </div>
     {% empty %}
     <p>Nenhum aluno ainda Cursando nesta Turma.</p>
     {% endfor %}
-    <button type="submit">Confirmar Aprovações</button>
+    <button type="submit" class="btn-salvar">Confirmar Aprovações</button>
+    {% include 'includes/cancelar_modal.html' %}
 </form>
-
-<p style="margin-top:12px; color:#999; font-size:0.7rem;">📄 atribuicao/templates/atribuicao/_form_revisar_aprovacao_fragment.html</p>

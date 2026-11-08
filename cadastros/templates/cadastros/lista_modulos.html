@@ -15,7 +15,7 @@
 </h2>
 
 {% if modulos %}
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Módulos cadastrados, cargas horárias e situação</caption>
   <thead>
     <tr>
@@ -42,7 +42,7 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 {% else %}
 <p>Nenhum módulo cadastrado.</p>
 {% endif %}
@@ -51,5 +51,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 cadastros/templates/cadastros/lista_modulos.html</p>
 {% endblock %}

@@ -12,6 +12,7 @@
   --cor-primaria-hover: #001640;
   --cor-secundaria: #1f4e79;
   --cor-destaque: #2f75b5;
+  --cor-link: #26669f;
 
   /* Ações de formulário — sobrescrever estas variáveis em outros temas. */
   --botao-salvar-fundo: var(--cor-primaria);
@@ -35,15 +36,17 @@
 
   /* Bordas */
   --cor-borda: #cbd5e1;
+  --cor-borda-controle: #7b8794;
 
   /* Textos */
   --cor-texto: #1e293b;
-  --cor-texto-secundario: #64748b;
+  --cor-texto-secundario: #526178;
 
   /* Estados */
   --cor-sucesso: #198754;
   --cor-aviso: #b7791f;
   --cor-erro: #c62828;
+  --cor-indicador-obrigatorio: var(--botao-cancelar-fundo);
 }
 
 /* ----------------------------------------------------------
@@ -197,7 +200,7 @@ th {
    6. LINKS
    ---------------------------------------------------------- */
 a {
-  color: var(--cor-destaque);
+  color: var(--cor-link);
 }
 
 a:hover {
@@ -226,11 +229,18 @@ input[type="date"],
 input[type="number"],
 select,
 textarea {
-  border: 1px solid var(--cor-borda);
+  border: 1px solid var(--cor-borda-controle);
   border-radius: 4px;
   padding: 0.4rem 0.6rem;
   background-color: var(--fundo-card);
   color: var(--cor-texto);
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 input:focus,
@@ -291,6 +301,7 @@ input[type="submit"]:hover {
 
 /* Fieldset de nível 1 (bloco por categoria: Dados da Pessoa, Discente, etc.) */
 fieldset {
+  min-width: 0;
   background-color: var(--fundo-card);
   border: 1px solid var(--cor-borda);
   border-radius: 6px;
@@ -409,11 +420,22 @@ fieldset fieldset legend {
   margin-bottom: 0.15rem;
 }
 
-.campo-formulario .campo-obrigatorio,
 .campo-formulario .ajuda-campo {
   font-size: 0.875rem;
   color: var(--cor-texto);
   margin-bottom: 0.25rem;
+}
+
+.campo-obrigatorio {
+  color: var(--cor-indicador-obrigatorio);
+  font-size: 1.15em;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.instrucoes-formulario {
+  color: var(--cor-texto);
+  font-size: 0.875rem;
 }
 
 .resumo-erros p {
@@ -430,6 +452,10 @@ fieldset fieldset legend {
   outline-offset: 2px;
 }
 
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
 .campo-formulario input:focus-visible,
 .campo-formulario select:focus-visible,
 .campo-formulario textarea:focus-visible {
@@ -526,8 +552,20 @@ a[role="button"]:focus-visible {
     0 0 0 5px var(--foco-anel-externo);
 }
 
+.header-titulo:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--foco-anel-interno),
+    0 0 0 5px var(--foco-anel-externo);
+}
+
 /* Sombras podem ser removidas pelo modo de cores forçadas do sistema. */
 @media (forced-colors: active) {
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  a:focus-visible,
+  .tabela-responsiva:focus-visible,
   button:focus-visible,
   input[type="submit"]:focus-visible,
   input[type="button"]:focus-visible,
@@ -561,6 +599,8 @@ a[role="button"]:focus-visible {
 
 /* Logo no cabeçalho, ao lado do título — agora é um <a> (leva para a Home) */
 .header-titulo {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -700,6 +740,26 @@ a[role="button"]:focus-visible {
   display: none;
 }
 
+@media (max-width: 700px) {
+  .layout-com-sidebar {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: 0 0 auto;
+  }
+
+  header,
+  main {
+    padding: 1rem;
+  }
+
+  header h1 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* ----------------------------------------------------------
    11. POPUPS / MODAIS
    ---------------------------------------------------------- */
@@ -734,6 +794,51 @@ a[role="button"]:focus-visible {
   margin-bottom: 0.8rem;
   padding-bottom: 0.3rem;
   border-bottom: 2px solid var(--cor-primaria);
+}
+
+.popup-pessoa-editar .coluna-formulario h3 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--cor-primaria);
+  font-size: 1rem;
+}
+
+/* Mantém o desenho dos títulos ao corrigir o nível semântico. */
+.titulo-formulario {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cor-secundaria);
+}
+
+.tabela-responsiva {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.4rem;
+  box-sizing: border-box;
+}
+
+.tabela-responsiva:focus-visible {
+  outline: 3px solid var(--cor-primaria);
+  outline-offset: -3px;
+}
+
+.registro-instrucao-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.registro-instrucao-formulario {
+  flex: 1 1 20rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.registro-instrucao-historico {
+  flex: 2 1 25rem;
+  min-width: 0;
 }
 
 /* Área do botão */
@@ -1057,6 +1162,7 @@ a[role="button"]:focus-visible {
 
 /* Cada informação da ficha */
 .dado-detalhe {
+  overflow-wrap: anywhere;
   background-color: var(--fundo-secao);
   border: 1px solid var(--cor-borda);
   border-radius: 5px;
@@ -1076,4 +1182,29 @@ a[role="button"]:focus-visible {
   color: var(--cor-texto-secundario);
 
   margin-bottom: 0.15rem;
+}
+
+@media (max-width: 1000px) {
+  .grid-detalhes-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-detalhes-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (forced-colors: active) {
+  .campo-formulario input:focus-visible,
+  .campo-formulario select:focus-visible,
+  .campo-formulario textarea:focus-visible,
+  .tabela-responsiva:focus-visible,
+  .header-titulo:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }

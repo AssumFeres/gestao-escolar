@@ -17,7 +17,7 @@
   <span style="{% if turma.situacao == 'ENCERRADA' %}color:#002060; text-decoration:underline;{% else %}color:#999;{% endif %}">Encerrada</span>
 </p>
 
-<table>
+<div class="tabela-responsiva" tabindex="0" role="region" aria-label="Rolagem da tabela"><table>
   <caption class="visualmente-oculto">Alunos e situação das matrículas da turma {{ turma.nome }}</caption>
   <thead>
     <tr>
@@ -55,7 +55,7 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 
 <div style="margin-top:1rem;">
   <button type="button" class="btn-abrir-modal-crud btn-crud"
@@ -98,5 +98,4 @@
 
 <script src="{% static 'cadastros/js/modal-crud.js' %}?v=20261107-7"></script>
 
-<p style="margin-top:24px; color:#999; font-size:0.75rem;">📄 atribuicao/templates/atribuicao/gerenciar_turma.html</p>
 {% endblock %}
